@@ -2,18 +2,39 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { MdEmail, MdLock, MdVisibility, MdVisibilityOff } from "react-icons/md";
+import {
+  MdPerson,
+  MdEmail,
+  MdLock,
+  MdVisibility,
+  MdVisibilityOff,
+} from "react-icons/md";
 
-export default function LoginForm() {
+export default function RegisterForm() {
+  const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [rememberMe, setRememberMe] = useState(false);
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [agreeToTerms, setAgreeToTerms] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Handle login logic
-    console.log("Login attempted with:", { email, password, rememberMe });
+    if (password !== confirmPassword) {
+      alert("Passwords do not match");
+      return;
+    }
+    if (!agreeToTerms) {
+      alert("Please agree to the Terms & Condition");
+      return;
+    }
+    // TODO: Handle registration logic
+    console.log("Registration attempted with:", {
+      fullName,
+      email,
+      password,
+    });
   };
 
   return (
@@ -30,17 +51,41 @@ export default function LoginForm() {
       </div>
 
       <div className="w-full lg:w-1/2 flex flex-col justify-center items-center p-4 sm:p-6 md:p-8 lg:p-12">
-        <div className="w-full max-w-md">
-          <div className="mb-6 sm:mb-8">
+        <div className="w-full max-w-md space-y-3 sm:space-y-4">
+          {/* Header */}
+          <div className="mb-6 text-start">
             <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
-              Welcome Back
+              Get Started Now
             </h2>
             <p className="text-gray-600 text-xs sm:text-sm">
-              Sign in to your account
+              Let's create your account
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-2.5 sm:space-y-3">
+            <div>
+              <label
+                htmlFor="fullName"
+                className="block text-xs sm:text-sm font-medium text-gray-700 mb-2"
+              >
+                Full Name
+              </label>
+              <div className="relative">
+                <div className="absolute left-4 top-1/2 transform -translate-y-1/2">
+                  <MdPerson className="w-5 h-5 text-gray-400" />
+                </div>
+                <input
+                  id="fullName"
+                  type="text"
+                  placeholder="jomnus"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  className="w-full pl-12 pr-4 py-2 sm:py-3 text-sm sm:text-base border-2 border-gray-200 rounded-full focus:outline-none focus:border-[#0058BC] focus:ring-1 focus:ring-[#0058BC] transition duration-200"
+                  required
+                />
+              </div>
+            </div>
+
             <div>
               <label
                 htmlFor="email"
@@ -78,7 +123,7 @@ export default function LoginForm() {
                 <input
                   id="password"
                   type={showPassword ? "text" : "password"}
-                  placeholder="Enter your password"
+                  placeholder="Set your password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full pl-12 pr-12 py-2 sm:py-3 text-sm sm:text-base border-2 border-gray-200 rounded-full focus:outline-none focus:border-[#0058BC] focus:ring-1 focus:ring-[#0058BC] transition duration-200"
@@ -98,31 +143,67 @@ export default function LoginForm() {
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between pt-2 gap-2 sm:gap-0">
-              <label className="flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                  className="w-4 h-4 accent-blue-600 cursor-pointer rounded"
-                />
-                <span className="ml-2 text-xs sm:text-sm text-gray-700">
-                  Remember me
-                </span>
-              </label>
-              <Link
-                href="/auth/forgotpassword"
-                className="text-xs sm:text-sm text-blue-600 hover:text-blue-700 font-medium"
+            <div>
+              <label
+                htmlFor="confirmPassword"
+                className="block text-xs sm:text-sm font-medium text-gray-700 mb-2"
               >
-                Forgot Password
-              </Link>
+                Confirm Password
+              </label>
+              <div className="relative">
+                <div className="absolute left-4 top-1/2 transform -translate-y-1/2">
+                  <MdLock className="w-5 h-5 text-gray-400" />
+                </div>
+                <input
+                  id="confirmPassword"
+                  type={showConfirmPassword ? "text" : "password"}
+                  placeholder="Confirm your password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full pl-12 pr-12 py-2 sm:py-3 text-sm sm:text-base border-2 border-gray-200 rounded-full focus:outline-none focus:border-[#0058BC] focus:ring-1 focus:ring-[#0058BC] transition"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  {showConfirmPassword ? (
+                    <MdVisibility className="w-5 h-5" />
+                  ) : (
+                    <MdVisibilityOff className="w-5 h-5" />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            <div className="flex items-start pt-2 space-x-2">
+              <input
+                id="terms"
+                type="checkbox"
+                checked={agreeToTerms}
+                onChange={(e) => setAgreeToTerms(e.target.checked)}
+                className="w-4 h-4 accent-blue-600 cursor-pointer rounded mt-0.5"
+              />
+              <label
+                htmlFor="terms"
+                className="text-xs sm:text-sm text-gray-700 flex flex-col sm:flex-row sm:items-center gap-1"
+              >
+                I agree to{" "}
+                <Link
+                  href="/terms-condition"
+                  className="text-blue-600 hover:text-blue-700 font-medium"
+                >
+                  Term & Condition
+                </Link>
+              </label>
             </div>
 
             <button
               type="submit"
               className="w-full bg-[#0058BC] text-white font-semibold py-2.5 sm:py-3.5 px-4 text-sm sm:text-base rounded-full transition duration-200 mt-4"
             >
-              Sign In
+              Sign up
             </button>
 
             <div className="flex items-center gap-3 sm:gap-4">
@@ -136,18 +217,18 @@ export default function LoginForm() {
               className="w-full flex items-center justify-center gap-2 border-2 border-[#0058BC] text-[#0058BC] font-semibold py-2.5 sm:py-3 px-4 text-sm sm:text-base rounded-full transition duration-200"
             >
               <img src="/Image/Google.png" className="w-10" alt="" />
-              Sign in with Google
+              Sign up with Google
             </button>
           </form>
 
-          <div className="mt-6 sm:mt-8 text-center">
+          <div className="mt-6 text-center">
             <p className="text-gray-600 text-xs sm:text-sm">
-              Don't have an account?{" "}
+              Already have an account?{" "}
               <Link
-                href="/auth/register"
+                href="/auth/signin"
                 className="text-[#0058BC]  font-semibold"
               >
-                Sign up
+                Sign in
               </Link>
             </p>
           </div>
