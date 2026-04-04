@@ -44,7 +44,7 @@ export default function MainBody() {
 
         {/* 1. HERO SECTION */}
         <motion.section
-            className="max-w-7xl mx-auto px-8 py-12 md:py-20 grid md:grid-cols-2 gap-12 items-center"
+            className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-16 lg:py-20 grid md:grid-cols-2 gap-8 md:gap-12 items-center"
             initial={shouldReduceMotion ? false : "hidden"}
             whileInView={shouldReduceMotion ? undefined : "show"}
             variants={staggerContainer}
@@ -61,21 +61,21 @@ export default function MainBody() {
           </motion.span>
 
             {/*content*/}
-            <motion.h1 className="text-5xl md:text-6xl font-extrabold mt-6 leading-[1.1] text-slate-900" variants={staggerItem}>
+            <motion.h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold mt-6 leading-[1.1] text-slate-900" variants={staggerItem}>
               The Marketplace <br />
               for <span className="text-blue-600">Every</span> <span className="text-orange-500">Task</span>
             </motion.h1>
 
-            <motion.p className="mt-6 text-slate-500 text-lg max-w-md leading-relaxed" variants={staggerItem}>
+            <motion.p className="mt-6 text-slate-500 text-base sm:text-lg max-w-md leading-relaxed" variants={staggerItem}>
               Join a trusted ecosystem where local experts handle your errands,
               deliveries, and creative needs with professional care.
             </motion.p>
 
             {/*buttons*/}
-            <motion.div className="flex flex-wrap gap-4 mt-8" variants={staggerItem}>
+            <motion.div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-8" variants={staggerItem}>
 
               <motion.button
-                className="bg-blue-600 text-white px-8 py-3.5 rounded-xl font-bold hover:bg-blue-700 transition shadow-lg shadow-blue-200"
+                className="bg-blue-600 text-white px-8 py-3.5 rounded-xl font-bold hover:bg-blue-700 transition shadow-lg shadow-blue-200 w-full sm:w-auto"
                 whileHover={shouldReduceMotion ? undefined : { scale: 1.03 }}
                 whileTap={shouldReduceMotion ? undefined : { scale: 0.98 }}
               >
@@ -83,7 +83,7 @@ export default function MainBody() {
               </motion.button>
 
               <motion.button
-                className="bg-orange-500 text-white px-8 py-3.5 rounded-xl font-bold hover:bg-orange-600 transition shadow-lg shadow-orange-200"
+                className="bg-orange-500 text-white px-8 py-3.5 rounded-xl font-bold hover:bg-orange-600 transition shadow-lg shadow-orange-200 w-full sm:w-auto"
                 whileHover={shouldReduceMotion ? undefined : { scale: 1.03 }}
                 whileTap={shouldReduceMotion ? undefined : { scale: 0.98 }}
               >
@@ -104,9 +104,9 @@ export default function MainBody() {
           >
 
 
-            <div className="relative w-120 aspect-square">
+            <div className="relative w-full max-w-[320px] sm:max-w-[420px] lg:max-w-[480px] aspect-square">
 
-              <div className="bg-blue-50 rounded-[60px] w-120 h-120 grid place-items-center relative overflow-hidden z-0"></div>
+              <div className="bg-blue-50 rounded-[36px] sm:rounded-[48px] lg:rounded-[60px] w-full h-full grid place-items-center relative overflow-hidden z-0"></div>
 
               <motion.div
                   className="absolute inset-0 flex items-center justify-center z-10"
@@ -114,14 +114,14 @@ export default function MainBody() {
                   transition={shouldReduceMotion ? undefined : { duration: 10, repeat: Infinity, ease: "linear" }}
               >
 
-                <div className="bg-orange-400 w-100 h-100 rounded-3xl flex flex-col items-center justify-center shadow-2xl">
+                <div className="bg-orange-400 w-[85%] h-[85%] rounded-2xl sm:rounded-3xl flex flex-col items-center justify-center shadow-2xl">
 
                   <Image
                       src="/images/jomnus.png"
                       alt="jomnus"
                       width={800}
                       height={50}
-                      className="rounded-md"
+                      className="rounded-md w-[90%] h-auto"
                   />
 
                 </div>
@@ -136,14 +136,14 @@ export default function MainBody() {
 
 
         {/* 2. HOW IT WORKS */}
-        <motion.section className="py-24 bg-slate-50/50" {...fadeUp()}>
+        <motion.section className="py-16 sm:py-20 md:py-24 bg-slate-50/50" {...fadeUp()}>
 
-          <div className="max-w-7xl mx-auto px-8">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
-            <motion.h2 className="text-center text-3xl font-extrabold text-slate-900 mb-16" {...fadeUp(0.05)}>How It Works</motion.h2>
+            <motion.h2 className="text-center text-2xl sm:text-3xl font-extrabold text-slate-900 mb-12 md:mb-16" {...fadeUp(0.05)}>How It Works</motion.h2>
 
             <motion.div
-              className="grid md:grid-cols-3 gap-16"
+              className="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-12 lg:gap-16"
               initial={shouldReduceMotion ? false : "hidden"}
               whileInView={shouldReduceMotion ? undefined : "show"}
               viewport={{ once: false, amount: 0.2 }}
@@ -165,7 +165,7 @@ export default function MainBody() {
                     </div>
 
                     <h3 className="font-bold text-xl mb-3 text-slate-900">{step.title}</h3>
-                    <p className="text-slate-500 text-sm leading-relaxed max-w-62.5">{step.desc}</p>
+                    <p className="text-slate-500 text-sm leading-relaxed max-w-[260px]">{step.desc}</p>
 
                   </motion.div>
               ))}
@@ -179,17 +179,17 @@ export default function MainBody() {
 
 
         {/* 3. INTEGRITY SECTION */}
-        <motion.section className="max-w-7xl mx-auto px-8 py-24 grid md:grid-cols-2 gap-20 items-center" {...fadeUp()}>
+        <motion.section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20 md:py-24 grid md:grid-cols-2 gap-10 lg:gap-20 items-center" {...fadeUp()}>
 
           <motion.div
-            className="grid grid-cols-2 gap-6"
+            className="grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-6"
             initial={shouldReduceMotion ? false : "hidden"}
             whileInView={shouldReduceMotion ? undefined : "show"}
             viewport={{ once: false, amount: 0.2 }}
             variants={staggerContainer}
           >
 
-            <motion.div className="bg-[#FFF4E5] p-8 rounded-3xl border border-orange-50 transform translate-y-4" variants={staggerItem}>
+            <motion.div className="bg-[#FFF4E5] p-6 sm:p-8 rounded-3xl border border-orange-50 transform sm:translate-y-4" variants={staggerItem}>
 
               <ShieldCheck className="text-orange-500 mb-4" />
 
@@ -198,7 +198,7 @@ export default function MainBody() {
 
             </motion.div>
 
-            <motion.div className="bg-[#F0F7FF] p-8 rounded-3xl border border-blue-50" variants={staggerItem}>
+            <motion.div className="bg-[#F0F7FF] p-6 sm:p-8 rounded-3xl border border-blue-50" variants={staggerItem}>
 
               <Star className="text-blue-500 mb-4" />
 
@@ -207,7 +207,7 @@ export default function MainBody() {
 
             </motion.div>
 
-            <motion.div className="bg-[#F0F7FF] p-8 rounded-3xl border border-blue-50 transform translate-y-4" variants={staggerItem}>
+            <motion.div className="bg-[#F0F7FF] p-6 sm:p-8 rounded-3xl border border-blue-50 transform sm:translate-y-4" variants={staggerItem}>
 
               <Star className="text-blue-500 mb-4" />
               <h4 className="font-bold text-slate-900 mb-2">Reputation</h4>
@@ -216,7 +216,7 @@ export default function MainBody() {
 
             </motion.div>
 
-            <motion.div className="bg-[#FFF4E5] p-8 rounded-3xl border border-orange-50" variants={staggerItem}>
+            <motion.div className="bg-[#FFF4E5] p-6 sm:p-8 rounded-3xl border border-orange-50" variants={staggerItem}>
 
               <MessageSquare className="text-orange-500 mb-4" />
 
@@ -230,15 +230,15 @@ export default function MainBody() {
 
           <motion.div {...fadeUp(0.12)}>
 
-            <h2 className="text-4xl font-extrabold text-slate-900 mb-6 leading-tight">
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 mb-6 leading-tight">
               Marketplace Integrity <br />by Design.
             </h2>
 
-            <p className="text-slate-500 mb-8 leading-relaxed text-lg">
+            <p className="text-slate-500 mb-8 leading-relaxed text-base sm:text-lg">
               We've built TaskExchange on a foundation of radical transparency. Our "Trusted Curator" model ensures that every interaction is backed by rigorous security protocols and a community-driven reputation engine.
             </p>
 
-            <div className="bg-blue-50 border border-blue-100 p-5 rounded-2xl flex items-center gap-4">
+            <div className="bg-blue-50 border border-blue-100 p-5 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center gap-4">
 
               <div className="bg-blue-600 text-white p-2 rounded-lg">
                 <ShieldCheck size={20} />
@@ -258,16 +258,16 @@ export default function MainBody() {
 
 
         {/* 4. TOP PERFORMERS */}
-        <motion.section className="py-24 max-w-7xl mx-auto px-8" {...fadeUp()}>
+        <motion.section className="py-16 sm:py-20 md:py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" {...fadeUp()}>
 
-          <motion.div className="flex justify-between items-end mb-12" {...fadeUp(0.06)}>
+          <motion.div className="flex flex-col sm:flex-row justify-between sm:items-end gap-4 mb-10 md:mb-12" {...fadeUp(0.06)}>
             <div>
               <h2 className="text-3xl font-extrabold text-slate-900">Meet Top Performers</h2>
               <p className="text-slate-500 mt-2">The most reliable experts in our community.</p>
             </div>
 
             {/* Navigation Buttons */}
-            <div className="flex gap-3">
+            <div className="flex gap-3 self-end sm:self-auto">
               <motion.button
                 className="p-3 border border-slate-200 rounded-full hover:bg-white hover:shadow-md transition"
                 whileHover={shouldReduceMotion ? undefined : { x: -2, scale: 1.06 }}
@@ -289,7 +289,7 @@ export default function MainBody() {
 
           {/* Performers cards */}
           <motion.div
-            className="grid md:grid-cols-3 gap-8"
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8"
             initial={shouldReduceMotion ? false : "hidden"}
             whileInView={shouldReduceMotion ? undefined : "show"}
             viewport={{ once: false, amount: 0.2 }}
@@ -326,7 +326,7 @@ export default function MainBody() {
 
                 <motion.div
                     key={i}
-                    className="bg-white p-8 rounded-4xl border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition duration-300"
+                    className="bg-white p-6 sm:p-8 rounded-4xl border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition duration-300"
                     variants={staggerItem}
                 >
 
@@ -358,7 +358,7 @@ export default function MainBody() {
 
 
                   {/* Performer tags */}
-                  <div className="flex gap-2 mb-8">
+                  <div className="flex flex-wrap gap-2 mb-8">
                     {user.tags.map((tag) => (
                         <span
                             key={tag}
@@ -394,25 +394,25 @@ export default function MainBody() {
 
 
         {/* 5. CTA SECTION */}
-        <motion.section className="max-w-7xl mx-auto px-8 pb-24" {...fadeUp()}>
+        <motion.section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16 sm:pb-20 md:pb-24" {...fadeUp()}>
 
-          <motion.div className="bg-blue-600 rounded-[50px] py-20 px-8 text-center text-white relative overflow-hidden shadow-2xl shadow-blue-200" {...fadeUp(0.06)}>
+          <motion.div className="bg-blue-600 rounded-[28px] sm:rounded-[40px] lg:rounded-[50px] py-12 sm:py-16 md:py-20 px-5 sm:px-8 text-center text-white relative overflow-hidden shadow-2xl shadow-blue-200" {...fadeUp(0.06)}>
 
             {/* circles in the box */}
-            <div className="absolute top-0 right-0 w-80 h-80 bg-orange-400 rounded-full -mr-32 -mt-32 opacity-20" />
-            <div className="absolute bottom-0 left-0 w-40 h-40 bg-orange-400 rounded-full -ml-16 -mb-16 opacity-10" />
+            <div className="absolute top-0 right-0 w-52 h-52 sm:w-80 sm:h-80 bg-orange-400 rounded-full -mr-24 sm:-mr-32 -mt-24 sm:-mt-32 opacity-20" />
+            <div className="absolute bottom-0 left-0 w-28 h-28 sm:w-40 sm:h-40 bg-orange-400 rounded-full -ml-12 sm:-ml-16 -mb-12 sm:-mb-16 opacity-10" />
 
             {/*content*/}
             <div className="relative z-10 max-w-2xl mx-auto">
-              <h2 className="text-4xl md:text-5xl font-extrabold mb-6">Ready to get things done?</h2>
-              <p className="text-blue-100 text-lg mb-10 opacity-90">
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold mb-6">Ready to get things done?</h2>
+              <p className="text-blue-100 text-base sm:text-lg mb-8 sm:mb-10 opacity-90">
                 Join the TaskExchange community today and reclaim your time.
                 Get professional help for any task, big or small.
               </p>
 
 
               <motion.button
-                className="bg-white text-blue-600 px-12 py-4 rounded-2xl font-black text-lg hover:bg-blue-50 transition transform hover:scale-105 shadow-xl"
+                className="bg-white text-blue-600 px-10 sm:px-12 py-4 rounded-2xl font-black text-base sm:text-lg hover:bg-blue-50 transition transform hover:scale-105 shadow-xl w-full sm:w-auto"
                 animate={
                   shouldReduceMotion
                     ? undefined

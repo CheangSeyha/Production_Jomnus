@@ -61,7 +61,7 @@ export default function AboutUsBody() {
 
             {/* 1. HERO SECTION */}
             <motion.section
-                className="max-w-7xl mx-auto px-8 py-16 grid md:grid-cols-2 gap-12 items-center"
+                className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-14 md:py-16 grid md:grid-cols-2 gap-8 md:gap-12 items-center"
                 initial={shouldReduceMotion ? false : "hidden"}
                 whileInView={shouldReduceMotion ? undefined : "show"}
                 variants={staggerContainer}
@@ -74,11 +74,11 @@ export default function AboutUsBody() {
                         Our Mission
                     </span>
 
-                    <h1 className="text-5xl font-extrabold mt-6 leading-tight text-slate-900">
+                    <h1 className="text-4xl sm:text-5xl font-extrabold mt-6 leading-tight text-slate-900">
                         Connecting <br />Peoples to help people.
                     </h1>
 
-                    <p className="mt-6 text-slate-500 text-lg leading-relaxed max-w-lg">
+                    <p className="mt-6 text-slate-500 text-base sm:text-lg leading-relaxed max-w-lg">
                         We created this platform to connect people who need help with
                         trusted local experts. It's about building a community where
                         individuals can support each other, share their skills, and earn
@@ -109,10 +109,10 @@ export default function AboutUsBody() {
 
 
             {/* 2. ORIGIN STORY */}
-            <motion.section className="bg-slate-50 py-24" {...fadeUp()}>
+            <motion.section className="bg-slate-50 py-16 sm:py-20 md:py-24" {...fadeUp()}>
 
-                <motion.div className="max-w-7xl mx-auto px-8 grid md:grid-cols-2 gap-16 items-start" {...fadeUp(0.06)}>
-                    <h2 className="text-4xl font-extrabold leading-tight text-slate-900">
+                <motion.div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid md:grid-cols-2 gap-8 md:gap-16 items-start" {...fadeUp(0.06)}>
+                    <h2 className="text-3xl sm:text-4xl font-extrabold leading-tight text-slate-900">
                         Born from a simple <br />
                         need: <span className="text-blue-600">connection</span> <br />
                         and <span className="text-orange-500">trust</span>.
@@ -138,10 +138,10 @@ export default function AboutUsBody() {
 
 
             {/* 3. VALUES SECTION */}
-            <motion.section className="py-24 max-w-7xl mx-auto px-8" {...fadeUp()}>
+            <motion.section className="py-16 sm:py-20 md:py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" {...fadeUp()}>
 
                 <motion.div className="text-center mb-16" {...fadeUp(0.04)}>
-                    <h2 className="text-3xl font-extrabold text-slate-900">Values that Drive Us</h2>
+                    <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900">Values that Drive Us</h2>
                     <motion.div
                         className="w-16 h-1 bg-blue-600 mx-auto mt-4 rounded-full"
                         animate={shouldReduceMotion ? undefined : { scaleX: [1, 1.18, 1] }}
@@ -151,7 +151,7 @@ export default function AboutUsBody() {
 
 
                 <motion.div
-                    className="grid md:grid-cols-4 gap-8"
+                    className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8"
                     initial={shouldReduceMotion ? false : 'hidden'}
                     whileInView={shouldReduceMotion ? undefined : 'show'}
                     viewport={{ once: false, amount: 0.2 }}
@@ -184,7 +184,7 @@ export default function AboutUsBody() {
 
 
             {/* 4. STATS BANNER */}
-            <motion.section className="bg-blue-600 py-16 h-60 relative overflow-hidden" {...fadeUp()}>
+            <motion.section className="bg-blue-600 py-14 sm:py-16 relative overflow-hidden" {...fadeUp()}>
 
                 <motion.div
                     className="absolute top-1/2 left-0 w-48 h-48 rounded-full bg-orange-300/15 -translate-y-1/2"
@@ -195,20 +195,20 @@ export default function AboutUsBody() {
                     animate={drift(-16, 14, 13, 0.4)}
                 />
 
-                <motion.div className="max-w-7xl mx-auto px-8 grid md:grid-cols-3 gap-12 text-center text-white" {...fadeUp(0.08)}>
+                <motion.div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 sm:grid-cols-3 gap-8 sm:gap-12 text-center text-white" {...fadeUp(0.08)}>
 
                     <div>
-                        <div className="text-5xl font-black mb-2">1k+</div>
+                        <div className="text-4xl sm:text-5xl font-black mb-2">1k+</div>
                         <div className="text-blue-100 text-sm font-bold uppercase tracking-widest">Tasks Completed</div>
                     </div>
 
                     <div>
-                        <div className="text-5xl font-black mb-2">100</div>
+                        <div className="text-4xl sm:text-5xl font-black mb-2">100</div>
                         <div className="text-blue-100 text-sm font-bold uppercase tracking-widest">Expert Performers</div>
                     </div>
 
                     <div>
-                        <div className="text-5xl font-black mb-2">24/7</div>
+                        <div className="text-4xl sm:text-5xl font-black mb-2">24/7</div>
                         <div className="text-blue-100 text-sm font-bold uppercase tracking-widest">Customer Support</div>
                     </div>
 
@@ -220,19 +220,19 @@ export default function AboutUsBody() {
 
 
             {/* 5. THE VISIONARIES (TEAM) */}
-            <motion.section className="py-24 bg-blue-50/30" {...fadeUp()}>
+            <motion.section className="py-16 sm:py-20 md:py-24 bg-blue-50/30" {...fadeUp()}>
 
-                <div className="max-w-7xl mx-auto px-8">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
                     <motion.div className="mb-16" {...fadeUp(0.05)}>
 
-                        <h2 className="text-3xl font-extrabold text-slate-900">The Visionaries</h2>
+                        <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900">The Visionaries</h2>
                         <p className="text-slate-500 mt-2">Meet the team dedicated to making this vision a reality.</p>
                     </motion.div>
 
 
                     <motion.div
-                        className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2"
+                        className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"
                         initial={shouldReduceMotion ? false : 'hidden'}
                         whileInView={shouldReduceMotion ? undefined : 'show'}
                         viewport={{ once: false, amount: 0.2 }}
@@ -242,12 +242,12 @@ export default function AboutUsBody() {
 
                             <motion.div key={i} className="group" variants={staggerItem} animate={float(5, 6.5, i * 0.18)}>
 
-                                <div className={`${member.color} w-60 aspect-square rounded-3xl mb-4 flex items-center justify-center border border-slate-100 shadow-sm overflow-hidden transition-all group-hover:shadow-lg group-hover:-translate-y-1`}>
+                                <div className={`${member.color} w-full aspect-square rounded-2xl sm:rounded-3xl mb-3 sm:mb-4 flex items-center justify-center border border-slate-100 shadow-sm overflow-hidden transition-all group-hover:shadow-lg group-hover:-translate-y-1`}>
                                     {member.image ? (
                                         <img
                                             src={member.image}
                                             alt={member.name}
-                                            className="w-300 h-full object-cover"
+                                            className="w-full h-full object-cover"
                                         />
                                     ) : (
 
@@ -256,7 +256,7 @@ export default function AboutUsBody() {
                                         </div>
                                     )}
                                 </div>
-                                <h4 className="font-bold text-slate-900 text-sm uppercase tracking-wide">
+                                <h4 className="font-bold text-slate-900 text-xs sm:text-sm uppercase tracking-wide">
                                     {member.name}
                                 </h4>
                                 <p className="text-blue-600 text-[11px] font-bold">
@@ -269,9 +269,9 @@ export default function AboutUsBody() {
             </motion.section>
 
             {/*join*/}
-            <motion.section className="max-w-7xl mx-auto px-8 py-20" {...fadeUp()}>
+            <motion.section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-18 md:py-20" {...fadeUp()}>
 
-                <motion.div className="bg-orange-400 rounded-[40px] p-12 text-center text-white relative overflow-hidden" {...fadeUp(0.06)}>
+                <motion.div className="bg-orange-400 rounded-[24px] sm:rounded-[32px] md:rounded-[40px] p-6 sm:p-10 md:p-12 text-center text-white relative overflow-hidden" {...fadeUp(0.06)}>
 
                     <motion.div
                         className="absolute top-0 right-0 w-32 h-32 bg-blue-500 rounded-full -mr-16 -mt-16"
@@ -282,15 +282,15 @@ export default function AboutUsBody() {
                         animate={drift(-8, 8, 9, 0.5)}
                     />
 
-                    <h2 className="text-4xl font-extrabold mb-4 relative z-10">Join the Movement</h2>
+                    <h2 className="text-3xl sm:text-4xl font-extrabold mb-4 relative z-10">Join the Movement</h2>
 
-                    <p className="text-orange-50 mb-10 max-w-lg mx-auto relative z-10 leading-relaxed">
+                    <p className="text-orange-50 text-sm sm:text-base mb-8 sm:mb-10 max-w-lg mx-auto relative z-10 leading-relaxed">
                         Experience the next generation of community-driven task management.
                         Secure, trusted, and local.
                     </p>
 
                     <motion.button
-                        className="bg-white text-orange-500 px-10 py-4 rounded-2xl font-bold hover:bg-orange-50 transition relative z-10 shadow-xl"
+                        className="bg-white text-orange-500 px-8 sm:px-10 py-3.5 sm:py-4 rounded-2xl font-bold hover:bg-orange-50 transition relative z-10 shadow-xl w-full sm:w-auto"
                         animate={shouldReduceMotion ? undefined : { scale: [1, 1.04, 1] }}
                         transition={shouldReduceMotion ? undefined : { duration: 2.8, repeat: Infinity, ease: 'easeInOut' }}
                         whileHover={shouldReduceMotion ? undefined : { scale: 1.08 }}

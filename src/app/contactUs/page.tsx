@@ -62,7 +62,7 @@ export default function ContactUsBody() {
 
             {/* 1. HERO SECTION */}
             <motion.section
-                className="max-w-7xl mx-auto px-8 py-16 grid md:grid-cols-2 gap-12 items-center"
+                className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-14 md:py-16 grid md:grid-cols-2 gap-8 md:gap-12 items-center"
                 initial={shouldReduceMotion ? false : 'hidden'}
                 whileInView={shouldReduceMotion ? undefined : 'show'}
                 variants={staggerContainer}
@@ -76,23 +76,23 @@ export default function ContactUsBody() {
                     >
                         Support Center
                     </motion.span>
-                    <motion.h1 className="text-5xl font-extrabold mt-6 leading-tight text-slate-900" variants={staggerItem}>
+                    <motion.h1 className="text-4xl sm:text-5xl font-extrabold mt-6 leading-tight text-slate-900" variants={staggerItem}>
                         We&apos;re Here to <br /><span className="text-blue-600">Help.</span>
                     </motion.h1>
-                    <motion.p className="mt-6 text-slate-500 text-lg leading-relaxed max-w-md" variants={staggerItem}>
+                    <motion.p className="mt-6 text-slate-500 text-base sm:text-lg leading-relaxed max-w-md" variants={staggerItem}>
                         Whether you&apos;re looking for technical support, billing inquiries,
                         or just want to say hi, our community-focused team is ready to assist.
                     </motion.p>
                 </motion.div>
 
                 <motion.div className="relative flex justify-center" variants={staggerItem} animate={float(10, 7, 0.2)}>
-                    <div className="relative w-full max-w-130 aspect-4/3">
+                    <div className="relative w-full max-w-[320px] sm:max-w-[420px] lg:max-w-[520px] aspect-4/3">
                         <motion.div
                             className="absolute -top-6 -right-6 w-28 h-28 rounded-full bg-blue-100 blur-2xl opacity-70"
                             animate={drift(-10, 8, 14, 0)}
                         />
                         <motion.div
-                            className="absolute inset-0 rounded-[40px] overflow-hidden shadow-2xl z-10"
+                            className="absolute inset-0 rounded-[24px] sm:rounded-[32px] md:rounded-[40px] overflow-hidden shadow-2xl z-10"
                             animate={shouldReduceMotion ? undefined : { rotate: [0.5, -0.5, 0.5] }}
                             transition={shouldReduceMotion ? undefined : { duration: 9, repeat: Infinity, ease: 'easeInOut' }}
                         >
@@ -112,16 +112,16 @@ export default function ContactUsBody() {
 
 
             {/* 2. FORM & INFO SECTION */}
-            <motion.section className="max-w-7xl mx-auto px-8 py-12" {...fadeUp(0.08)}>
-                <div className="grid lg:grid-cols-3 gap-8">
+            <motion.section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12" {...fadeUp(0.08)}>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
                     {/* Contact Form */}
                     <motion.div
-                        className="lg:col-span-2 bg-white border border-slate-100 shadow-sm rounded-3xl p-8 md:p-12"
+                        className="lg:col-span-2 bg-white border border-slate-100 shadow-sm rounded-3xl p-5 sm:p-8 md:p-12"
                         {...fadeUp(0.12)}
                     >
-                        <h2 className="text-2xl font-bold text-slate-900 mb-8">Send us a message</h2>
+                        <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-6 sm:mb-8">Send us a message</h2>
                         <form className="space-y-6">
-                            <div className="grid md:grid-cols-2 gap-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6">
                                 <div className="space-y-2">
                                     <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Full Name</label>
                                     <input type="text" placeholder="PUSOM" className="w-full bg-slate-50 border-none rounded-xl p-4 text-slate-900 placeholder:text-slate-300 outline-none focus:ring-2 focus:ring-blue-100 transition" />
@@ -148,7 +148,7 @@ export default function ContactUsBody() {
 
                             <motion.button
                                 type="submit"
-                                className="bg-blue-600 text-white px-8 py-4 rounded-xl font-bold hover:bg-blue-700 transition shadow-lg shadow-blue-100"
+                                className="bg-blue-600 text-white px-8 py-4 rounded-xl font-bold hover:bg-blue-700 transition shadow-lg shadow-blue-100 w-full sm:w-auto"
                                 animate={shouldReduceMotion ? undefined : { scale: [1, 1.02, 1] }}
                                 transition={shouldReduceMotion ? undefined : { duration: 2.8, repeat: Infinity, ease: 'easeInOut' }}
                                 whileHover={shouldReduceMotion ? undefined : { scale: 1.05 }}
@@ -163,7 +163,7 @@ export default function ContactUsBody() {
 
                     {/* Quick Info Cards */}
                     <motion.div
-                        className="space-y-4"
+                        className="space-y-4 sm:space-y-5"
                         initial={shouldReduceMotion ? false : 'hidden'}
                         whileInView={shouldReduceMotion ? undefined : 'show'}
                         viewport={{ once: false, amount: 0.2 }}
@@ -176,7 +176,7 @@ export default function ContactUsBody() {
                         ].map((card, i) => (
                             <motion.div
                                 key={i}
-                                className="bg-blue-50/50 border border-blue-50 p-6 rounded-3xl group cursor-pointer hover:bg-blue-50 transition"
+                                className="bg-blue-50/50 border border-blue-50 p-5 sm:p-6 rounded-3xl group cursor-pointer hover:bg-blue-50 transition"
                                 variants={staggerItem}
                                 animate={float(4, 5.5, i * 0.25)}
                             >
@@ -184,7 +184,7 @@ export default function ContactUsBody() {
                                     {card.icon}
                                 </div>
                                 <h3 className="font-bold text-slate-900 mb-1">{card.title}</h3>
-                                <p className="text-sm text-slate-600 mb-1">{card.detail}</p>
+                                <p className="text-sm text-slate-600 mb-1 break-words">{card.detail}</p>
                                 {card.sub && <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">{card.sub}</p>}
                                 {card.link && (
                                     <div className="flex items-center gap-2 text-blue-600 text-xs font-bold mt-2">
@@ -198,9 +198,9 @@ export default function ContactUsBody() {
             </motion.section>
 
             {/* 3. COMMON QUESTIONS (FAQ) */}
-            <motion.section className="py-24 max-w-7xl mx-auto px-8" {...fadeUp(0.08)}>
-                <motion.div className="text-center mb-16" {...fadeUp(0.05)}>
-                    <h2 className="text-3xl font-extrabold text-slate-900">Common Questions</h2>
+            <motion.section className="py-16 sm:py-20 md:py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" {...fadeUp(0.08)}>
+                <motion.div className="text-center mb-12 md:mb-16" {...fadeUp(0.05)}>
+                    <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900">Common Questions</h2>
                     <motion.p
                         className="text-slate-500 mt-4 max-w-lg mx-auto"
                         animate={shouldReduceMotion ? undefined : { opacity: [0.8, 1, 0.8] }}
@@ -211,7 +211,7 @@ export default function ContactUsBody() {
                 </motion.div>
 
                 <motion.div
-                    className="grid md:grid-cols-2 lg:grid-cols-3 gap-6"
+                    className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6"
                     initial={shouldReduceMotion ? false : 'hidden'}
                     whileInView={shouldReduceMotion ? undefined : 'show'}
                     viewport={{ once: false, amount: 0.2 }}
@@ -227,7 +227,7 @@ export default function ContactUsBody() {
                     ].map((item, i) => (
                         <motion.div
                             key={i}
-                            className="p-8 rounded-3xl border border-slate-50 hover:bg-orange-100 transition"
+                            className="p-6 sm:p-8 rounded-3xl border border-slate-50 hover:bg-orange-100 transition"
                             variants={staggerItem}
                             animate={float(3, 6 + (i % 3), i * 0.15)}
                         >

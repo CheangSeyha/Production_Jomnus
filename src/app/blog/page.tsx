@@ -50,7 +50,7 @@ export default function BlogBody() {
 
             {/* 1. FEATURED ARTICLE */}
             <motion.section
-                className="max-w-7xl mx-auto px-8 py-12 grid md:grid-cols-2 gap-12 items-center"
+                className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12 grid md:grid-cols-2 gap-8 md:gap-12 items-center"
                 initial={shouldReduceMotion ? false : 'hidden'}
                 whileInView={shouldReduceMotion ? undefined : 'show'}
                 variants={staggerContainer}
@@ -68,7 +68,7 @@ export default function BlogBody() {
                 </motion.div>
 
 
-                <motion.div className="space-y-6" variants={staggerItem}>
+                <motion.div className="space-y-5 sm:space-y-6" variants={staggerItem}>
                     <motion.span
                         className="text-blue-600 font-bold bg-blue-50 px-3 py-1 rounded-lg text-[10px] uppercase tracking-widest inline-flex"
                         animate={shouldReduceMotion ? undefined : { y: [0, -2, 0] }}
@@ -76,7 +76,7 @@ export default function BlogBody() {
                     >
                         Featured Article
                     </motion.span>
-                    <motion.h1 className="text-4xl md:text-5xl font-black text-slate-900 leading-tight" variants={staggerItem}>
+                    <motion.h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 leading-tight" variants={staggerItem}>
                         How to Earn Your <br />First $500 on <br />TaskExchange
                     </motion.h1>
                     <motion.div className="flex items-center gap-3" variants={staggerItem}>
@@ -89,7 +89,7 @@ export default function BlogBody() {
                         </div>
                     </motion.div>
                     <motion.button
-                        className="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-blue-700 transition"
+                        className="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold inline-flex items-center justify-center gap-2 hover:bg-blue-700 transition w-full sm:w-auto"
                         variants={staggerItem}
                         animate={shouldReduceMotion ? undefined : { scale: [1, 1.02, 1] }}
                         transition={shouldReduceMotion ? undefined : { duration: 3.2, repeat: Infinity, ease: 'easeInOut' }}
@@ -105,7 +105,7 @@ export default function BlogBody() {
 
             {/* 2. CATEGORY FILTERS */}
             <motion.section
-                className="max-w-7xl mx-auto px-8 py-8 flex flex-wrap gap-3"
+                className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 flex flex-wrap gap-3"
                 initial={shouldReduceMotion ? false : 'hidden'}
                 whileInView={shouldReduceMotion ? undefined : 'show'}
                 variants={staggerContainer}
@@ -129,7 +129,7 @@ export default function BlogBody() {
 
             {/* 3. MAIN CONTENT GRID */}
             <motion.section
-                className="max-w-7xl mx-auto px-8 py-12 grid lg:grid-cols-3 gap-12"
+                className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12 grid lg:grid-cols-3 gap-8 lg:gap-12"
                 initial={shouldReduceMotion ? false : 'hidden'}
                 whileInView={shouldReduceMotion ? undefined : 'show'}
                 variants={staggerContainer}
@@ -137,12 +137,12 @@ export default function BlogBody() {
             >
                 {/* Latest Journal Entries (Left/Center Columns) */}
                 <motion.div className="lg:col-span-2" variants={staggerItem}>
-                    <motion.div className="flex items-center gap-4 mb-10" {...fadeUp(0.04)}>
+                    <motion.div className="flex items-center gap-3 sm:gap-4 mb-8 sm:mb-10" {...fadeUp(0.04)}>
                         <div className="h-0.5 w-8 bg-blue-600"></div>
-                        <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tight">The Latest Journal Entries</h2>
+                        <h2 className="text-xl sm:text-2xl font-black text-slate-900 uppercase tracking-tight">The Latest Journal Entries</h2>
                     </motion.div>
 
-                    <div className="grid md:grid-cols-2 gap-x-8 gap-y-12">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 lg:gap-x-8 gap-y-10 sm:gap-y-12">
                         {posts.map((post, i) => (
                             <motion.div
                                 key={i}
@@ -160,7 +160,7 @@ export default function BlogBody() {
                                 <div className="flex items-center gap-2 text-slate-400 text-[10px] font-bold mb-3">
                                     <Clock size={12} /> {post.readTime}
                                 </div>
-                                <h3 className="text-xl font-bold text-slate-900 mb-3 leading-snug group-hover:text-blue-600 transition">
+                                <h3 className="text-lg sm:text-xl font-bold text-slate-900 mb-3 leading-snug group-hover:text-blue-600 transition">
                                     {post.title}
                                 </h3>
                                 <p className="text-sm text-slate-500 leading-relaxed line-clamp-3 mb-4">
@@ -173,7 +173,7 @@ export default function BlogBody() {
                         ))}
                     </div>
 
-                    <motion.div className="mt-16 flex justify-center" {...fadeUp(0.1)}>
+                    <motion.div className="mt-12 sm:mt-16 flex justify-center" {...fadeUp(0.1)}>
                         <motion.button
                             className="bg-slate-100 text-slate-900 px-10 py-3 rounded-xl font-bold hover:bg-slate-200 transition"
                             animate={shouldReduceMotion ? undefined : { scale: [1, 1.02, 1] }}
@@ -188,7 +188,7 @@ export default function BlogBody() {
 
 
                 {/* Sidebar (Right Column) */}
-                <motion.div className="space-y-12" variants={staggerItem}>
+                <motion.div className="space-y-8 sm:space-y-12" variants={staggerItem}>
 
 
 
@@ -198,7 +198,7 @@ export default function BlogBody() {
                             <ExternalLink size={20} />
                             <h3 className="font-black text-slate-900 uppercase tracking-widest text-sm">Popular Now</h3>
                         </div>
-                        <ul className="space-y-6">
+                        <ul className="space-y-5 sm:space-y-6">
                             {[
                                 { rank: "01", title: "10 Most In-Demand Skills for 2026", cat: "Marketplace News" },
                                 { rank: "02", title: "The Psychology of Pricing Your Service", cat: "Tasker Guides" },
@@ -210,7 +210,7 @@ export default function BlogBody() {
                                     animate={float(2, 5.5 + i, i * 0.12)}
                                     whileHover={shouldReduceMotion ? undefined : { x: 4 }}
                                 >
-                                    <span className="text-3xl font-black text-blue-200 group-hover:text-blue-600 transition">{item.rank}</span>
+                                    <span className="text-2xl sm:text-3xl font-black text-blue-200 group-hover:text-blue-600 transition">{item.rank}</span>
                                     <div>
                                         <h4 className="text-sm font-bold text-slate-900 leading-snug mb-1">{item.title}</h4>
                                         <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">{item.cat}</p>
@@ -224,7 +224,7 @@ export default function BlogBody() {
 
                     {/* Sidebar CTA Card */}
                     <motion.div
-                        className="bg-blue-600 rounded-4xl p-8 text-white relative overflow-hidden"
+                        className="bg-blue-600 rounded-3xl sm:rounded-4xl p-6 sm:p-8 text-white relative overflow-hidden"
                         {...fadeUp(0.12)}
                     >
                         <motion.div
@@ -232,7 +232,7 @@ export default function BlogBody() {
                             animate={shouldReduceMotion ? undefined : { scale: [1, 1.12, 1] }}
                             transition={shouldReduceMotion ? undefined : { duration: 6, repeat: Infinity, ease: 'easeInOut' }}
                         />
-                        <h3 className="text-2xl font-black mb-4 relative z-10">Join The Journal Weekly</h3>
+                        <h3 className="text-xl sm:text-2xl font-black mb-4 relative z-10">Join The Journal Weekly</h3>
                         <p className="text-blue-100 text-xs mb-8 leading-relaxed opacity-90 relative z-10">
                             Get the latest success stories, task alerts, and safety tips delivered straight to your inbox.
                         </p>
