@@ -9,6 +9,7 @@ import {
   MdVisibility,
   MdVisibilityOff,
 } from "react-icons/md";
+import GoogleOAuthButton from "./google-oauth-button";
 
 export default function RegisterForm() {
   const [fullName, setFullName] = useState("");
@@ -212,13 +213,7 @@ export default function RegisterForm() {
               <div className="flex-1 h-px bg-gray-300"></div>
             </div>
 
-            <button
-              type="button"
-              className="w-full flex items-center justify-center gap-2 border-2 border-[#0058BC] text-[#0058BC] font-semibold py-2.5 sm:py-3 px-4 text-sm sm:text-base rounded-full transition duration-200"
-            >
-              <img src="/Image/Google.png" className="w-10" alt="" />
-              Sign up with Google
-            </button>
+            <GoogleOAuthButton />
           </form>
 
           <div className="mt-6 text-center">
