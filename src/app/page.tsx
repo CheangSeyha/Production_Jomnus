@@ -10,10 +10,12 @@ import {
   ArrowLeft
 } from 'lucide-react';
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { motion, useReducedMotion } from "motion/react";
 
 export default function MainBody() {
   const shouldReduceMotion = useReducedMotion();
+  const router = useRouter();
 
   const fadeUp = (delay = 0) => ({
     initial: shouldReduceMotion ? {} : { opacity: 0, y: 20 },
@@ -75,6 +77,8 @@ export default function MainBody() {
             <motion.div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-8" variants={staggerItem}>
 
               <motion.button
+                type="button"
+                onClick={() => router.push("/auth/register")}
                 className="bg-blue-600 text-white px-8 py-3.5 rounded-xl font-bold hover:bg-blue-700 transition shadow-lg shadow-blue-200 w-full sm:w-auto"
                 whileHover={shouldReduceMotion ? undefined : { scale: 1.03 }}
                 whileTap={shouldReduceMotion ? undefined : { scale: 0.98 }}
@@ -83,6 +87,8 @@ export default function MainBody() {
               </motion.button>
 
               <motion.button
+                type="button"
+                onClick={() => router.push("/auth/register")}
                 className="bg-orange-500 text-white px-8 py-3.5 rounded-xl font-bold hover:bg-orange-600 transition shadow-lg shadow-orange-200 w-full sm:w-auto"
                 whileHover={shouldReduceMotion ? undefined : { scale: 1.03 }}
                 whileTap={shouldReduceMotion ? undefined : { scale: 0.98 }}
@@ -91,7 +97,6 @@ export default function MainBody() {
               </motion.button>
 
             </motion.div>
-
 
           </motion.div>
 
@@ -412,6 +417,8 @@ export default function MainBody() {
 
 
               <motion.button
+                  type="button"
+                  onClick={() => router.push("/auth/register")}
                 className="bg-white text-blue-600 px-10 sm:px-12 py-4 rounded-2xl font-black text-base sm:text-lg hover:bg-blue-50 transition transform hover:scale-105 shadow-xl w-full sm:w-auto"
                 animate={
                   shouldReduceMotion

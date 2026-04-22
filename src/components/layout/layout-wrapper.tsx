@@ -11,14 +11,15 @@ export default function LayoutWrapper({
 }) {
   const pathname = usePathname();
 
-  // Check if current page is an auth page
   const isAuthPage = pathname.startsWith("/auth");
+  const isDashboardPage = pathname === "/dashboard" || pathname.startsWith("/dashboard/");
+  const hideGlobalChrome = isAuthPage || isDashboardPage;
 
   return (
     <div className="flex min-h-screen flex-col">
-      {!isAuthPage && <Navbar />}
+      {!hideGlobalChrome && <Navbar />}
       <main className="flex-1">{children}</main>
-      {!isAuthPage && <Footer />}
+      {!hideGlobalChrome && <Footer />}
     </div>
   );
 }
