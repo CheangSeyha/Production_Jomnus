@@ -4,18 +4,53 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { MdEmail, MdLock, MdVisibility, MdVisibilityOff } from "react-icons/md";
 import GoogleOAuthButton from "./google-oauth-button";
+import axios from "axios";
+import { useRouter } from "next/navigation";
 
 export default function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const router = useRouter();
+  // const handleSubmit = (e: React.FormEvent) => {
+  //   e.preventDefault();
+  //   // TODO: Handle login logic
+  //   console.log("Login attempted with:", { email, password, rememberMe });
+  // };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // TODO: Handle login logic
-    console.log("Login attempted with:", { email, password, rememberMe });
-  };
+  const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+
+  try {
+    const res = await axios.post(
+      "http://localhost:3001/api/auth/login",
+      {
+        email,
+        password,
+      },
+      {
+        withCredentials: true,
+      }
+    );
+
+    const user = res.data.user;
+
+    if (user.role === "ADMIN") {
+      router.push("/admin/dashboard");
+    } else if (user.role === "REQUESTER") {
+      router.push("/dashboard");
+    } else if (user.role === "PERFORMER") {
+      router.push("/dashboard");
+    } else {
+      router.push("/");
+    }
+
+  } catch (err: any) {
+    console.error("Login failed:", err.response?.data || err.message);
+    alert("Invalid email or password");
+  }
+};
 
   return (
     <div className="flex h-screen bg-white p-4 sm:p-6 md:p-8 lg:p-12">

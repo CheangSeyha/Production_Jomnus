@@ -24,7 +24,7 @@ export default function DashboardPage() {
     }, [router, searchParams]);
 
     return (
-        <main className="min-h-screen flex items-center justify-center bg-[#f4f7ff]">
+        <main className="min-h-screen flex items-center justify-center bg-[#f4f7ff] ">
             <div className="text-center">
                 <h1 className="text-3xl font-semibold text-[#0d1b2a]">Active Task</h1>
                 <p className="mt-3 text-[#4a5568]">You are logged in successfully.</p>

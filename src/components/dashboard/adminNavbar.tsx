@@ -2,7 +2,7 @@ import React from 'react';
 import Image from 'next/image';
 import { Search, Bell } from 'lucide-react';
 
-const Header = () => {
+const AdminHeader = () => {
     return (
         <header className="sticky top-0 z-40 flex h-20 w-full items-center justify-between border-b border-gray-100 bg-white px-8">
             {/* Left: Logo Section */}
@@ -58,4 +58,4 @@ const Header = () => {
     );
 };
 
-export default Header;
+export default AdminHeader;
