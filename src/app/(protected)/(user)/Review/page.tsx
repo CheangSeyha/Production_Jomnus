@@ -6,13 +6,13 @@ import { Star, ThumbsUp, Reply, ChevronDown } from 'lucide-react';
 type Review = {
     id: number;
     reviewerName: string;
+    reviewerImage?: string;
     revieweeName?: string;
     rating: number;
     comment: string;
     created_at: string;
     assignment_id: number;
 };
-
 
 function ReviewPage() {
     const [reviews, setReviews] = useState<Review[]>([]);

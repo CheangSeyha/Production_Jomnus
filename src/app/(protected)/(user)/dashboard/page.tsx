@@ -11,6 +11,22 @@ type Category = {
   description?: string;
 };
 
+type TaskApi = {
+    id: number;
+    title: string;
+    description?: string | null;
+    location_text?: string | null;
+    price: number;
+    created_at: string;
+    deadline: string;
+    requester_id?: number;
+    requester?: {
+        id: number;
+        fullName: string;
+        profileImage?: string | null;
+    } | null;
+};
+
 type Task = {
   id: number;
   title: string;

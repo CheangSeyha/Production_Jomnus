@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-export default function DashboardPage() {
+export default function SettingPage() {
     const router = useRouter();
     const searchParams = useSearchParams();
 
