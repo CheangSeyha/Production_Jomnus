@@ -18,7 +18,7 @@ export default function AdminLayout({ children }: UserLayoutProps) {
 
         <Sidebar />
 
-        <main className="flex-1 p-6 md:ml-64">
+        <main className="flex-1 p-2 md:ml-4">
           {children}
         </main>
 
