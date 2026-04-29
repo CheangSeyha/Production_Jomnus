@@ -16,6 +16,22 @@ type Category = {
   description?: string;
 };
 
+type TaskApi = {
+    id: number;
+    title: string;
+    description?: string | null;
+    location_text?: string | null;
+    price: number;
+    created_at: string;
+    deadline: string;
+    requester_id?: number;
+    requester?: {
+        id: number;
+        fullName: string;
+        profileImage?: string | null;
+    } | null;
+};
+
 type Task = {
     id: number;
     title: string;
@@ -24,11 +40,14 @@ type Task = {
     price: number;
     createdAt: string;
     deadline: string;
-    priority: "Urgent" | "Normal" | "Low";
-    requesterName: string;
-    requestCount: number;
-};
+    requesterId: number | null;
 
+    requester?: {
+        id: number;
+        fullName: string;
+        profileImage?: string | null;
+    } | null;
+};
 
 const API_BASE_URL = (
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api"
@@ -75,8 +94,22 @@ export default function DashboardPage() {
                     throw new Error(`Failed to fetch tasks (${res.status})`);
                 }
 
-                const data: Task[] = await res.json();
-                setTasks(data);
+                const data: TaskApi[] = await res.json();
+                const normalized: Task[] = data.map((task) => ({
+                    id: task.id,
+                    title: task.title,
+                    description: task.description ?? "",
+                    locationText: task.location_text ?? "",
+                    price: task.price,
+                    createdAt: task.created_at,
+                    deadline: task.deadline,
+                    requesterId: task.requester_id ?? task.requester?.id ?? null,
+
+                    requester: task.requester ?? null,
+                }));
+                console.log("TASK API RESPONSE:", data);
+
+                setTasks(normalized);
 
             } catch (error) {
                 console.error("Error loading tasks:", error);
@@ -217,14 +250,17 @@ export default function DashboardPage() {
                                         <div className="flex items-center gap-3">
                                             <div className="w-12 h-12 rounded-full bg-slate-200 overflow-hidden">
                                                 <img
-                                                    src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${task.requesterName}`}
+                                                    src={
+                                                        task.requester?.profileImage ||
+                                                        `https://api.dicebear.com/7.x/avataaars/svg?seed=${task.requester?.fullName ?? task.requesterId ?? "unknown"}`
+                                                    }
                                                     alt="User"
                                                 />
                                             </div>
 
                                             <div>
                                                 <h3 className="font-bold text-slate-900">
-                                                    {task.requesterName}
+                                                    {task.requester?.fullName || `Requester #${task.requesterId ?? "N/A"}`}
                                                 </h3>
 
                                                 <p className="text-xs text-slate-500">
