@@ -13,11 +13,12 @@ import {
   Bell,
   LogOut,
 } from "lucide-react";
-import axios from "axios";
+import { useAuthStore } from "@/store/authStore";
 
 const AdminSidebar = () => {
   const pathname = usePathname();
   const router = useRouter();
+  const logout = useAuthStore((state) => state.logout);
 
   const mainNav = [
     { name: "Dashboard", icon: LayoutGrid, href: "/admin/dashboard" },
@@ -31,17 +32,7 @@ const AdminSidebar = () => {
 
   const handleLogout = async () => {
     try {
-      await axios.post(
-        "http://localhost:3001/api/auth/logout",
-        {},
-        {
-          withCredentials: true,
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("access_token")}`,
-          },
-        }
-      );
-
+      await logout();
       router.replace("/auth/signin");
     } catch (err) {
       console.error("Logout failed", err);

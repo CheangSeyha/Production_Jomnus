@@ -10,6 +10,7 @@ import {
   MdCheck,
 } from "react-icons/md";
 import { RxArrowLeft } from "react-icons/rx";
+import { authService } from "@/services/authService";
 
 type Step = "email" | "otp" | "newPassword" | "success";
 
@@ -22,6 +23,8 @@ export default function ForgotPasswordForm() {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [timeLeft, setTimeLeft] = useState(300); // 5 minutes in seconds
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [message, setMessage] = useState("");
 
   // Timer for OTP resend
   useEffect(() => {
@@ -62,37 +65,62 @@ export default function ForgotPasswordForm() {
     }
   };
 
-  const handleEmailSubmit = (e: React.FormEvent) => {
+  const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) return;
-    // TODO: Send OTP to email
-    console.log("Sending OTP to:", email);
-    setStep("otp");
-    setTimeLeft(300);
+    setMessage("");
+    setIsSubmitting(true);
+    try {
+      const response = await authService.forgotPassword({ email });
+      setMessage(response.message || "OTP has been sent to your email.");
+      setStep("otp");
+      setTimeLeft(300);
+    } catch (error) {
+      const errMessage =
+        error instanceof Error ? error.message : "Failed to request password reset";
+      setMessage(errMessage);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleOtpSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const otpValue = otp.join("");
-    if (otpValue.length !== 6) return;
-    // TODO: Verify OTP
-    console.log("Verifying OTP:", otpValue);
+    if (otpValue.length !== 6) {
+      setMessage("Please enter the 6-digit OTP");
+      return;
+    }
+    setMessage("");
     setStep("newPassword");
   };
 
-  const handlePasswordSubmit = (e: React.FormEvent) => {
+  const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setMessage("");
     if (newPassword !== confirmPassword) {
-      alert("Passwords do not match");
+      setMessage("Passwords do not match");
       return;
     }
     if (newPassword.length < 8) {
-      alert("Password must be at least 8 characters");
+      setMessage("Password must be at least 8 characters");
       return;
     }
-    // TODO: Reset password
-    console.log("Resetting password");
-    setStep("success");
+    setIsSubmitting(true);
+    try {
+      await authService.resetPassword({
+        email,
+        otp: otp.join(""),
+        password: newPassword,
+      });
+      setStep("success");
+    } catch (error) {
+      const errMessage =
+        error instanceof Error ? error.message : "Failed to reset password";
+      setMessage(errMessage);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleBackToSignIn = () => {
@@ -208,10 +236,14 @@ export default function ForgotPasswordForm() {
 
                 <button
                   type="submit"
+                  disabled={isSubmitting}
                   className="w-full bg-[#0058BC] text-white font-semibold py-2.5 sm:py-3 px-4 text-sm sm:text-base rounded-full transition duration-200 mt-4 sm:mt-6"
                 >
-                  Submit
+                  {isSubmitting ? "Submitting..." : "Submit"}
                 </button>
+                {message && (
+                  <p className="text-xs text-center text-red-500">{message}</p>
+                )}
               </form>
             </>
           )}
@@ -257,10 +289,14 @@ export default function ForgotPasswordForm() {
 
                 <button
                   type="submit"
+                  disabled={isSubmitting}
                   className="w-full bg-[#0058BC] text-white font-semibold py-2.5 sm:py-3 px-4 text-sm sm:text-base rounded-full transition duration-200"
                 >
                   Verify
                 </button>
+                {message && (
+                  <p className="text-xs text-center text-red-500">{message}</p>
+                )}
 
                 <div className="text-center">
                   <p className="text-gray-600 text-xs sm:text-sm">
@@ -368,10 +404,14 @@ export default function ForgotPasswordForm() {
 
                 <button
                   type="submit"
+                  disabled={isSubmitting}
                   className="w-full bg-[#0058BC]  text-white font-semibold py-2.5 sm:py-3 px-4 text-sm sm:text-base rounded-full transition duration-200 mt-4 sm:mt-6"
                 >
-                  Save New Password
+                  {isSubmitting ? "Saving..." : "Save New Password"}
                 </button>
+                {message && (
+                  <p className="text-xs text-center text-red-500">{message}</p>
+                )}
               </form>
 
               <div className="text-center mt-4 sm:mt-6">

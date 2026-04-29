@@ -4,53 +4,35 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { MdEmail, MdLock, MdVisibility, MdVisibilityOff } from "react-icons/md";
 import GoogleOAuthButton from "./google-oauth-button";
-import axios from "axios";
 import { useRouter } from "next/navigation";
+import { useAuthStore } from "@/store/authStore";
 
 export default function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [formError, setFormError] = useState("");
   const router = useRouter();
-  // const handleSubmit = (e: React.FormEvent) => {
-  //   e.preventDefault();
-  //   // TODO: Handle login logic
-  //   console.log("Login attempted with:", { email, password, rememberMe });
-  // };
+  const { login, isLoading } = useAuthStore();
 
   const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
+    e.preventDefault();
+    setFormError("");
 
-  try {
-    const res = await axios.post(
-      "http://localhost:3001/api/auth/login",
-      {
-        email,
-        password,
-      },
-      {
-        withCredentials: true,
+    try {
+      const user = await login({ email, password });
+      if (user.role === "ADMIN") {
+        router.push("/admin/dashboard");
+      } else {
+        router.push("/dashboard");
       }
-    );
-
-    const user = res.data.user;
-
-    if (user.role === "ADMIN") {
-      router.push("/admin/dashboard");
-    } else if (user.role === "REQUESTER") {
-      router.push("/dashboard");
-    } else if (user.role === "PERFORMER") {
-      router.push("/dashboard");
-    } else {
-      router.push("/");
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Invalid email or password";
+      setFormError(message);
     }
-
-  } catch (err: any) {
-    console.error("Login failed:", err.response?.data || err.message);
-    alert("Invalid email or password");
-  }
-};
+  };
 
   return (
     <div className="flex h-screen bg-white p-4 sm:p-6 md:p-8 lg:p-12">
@@ -156,10 +138,14 @@ export default function LoginForm() {
 
             <button
               type="submit"
+              disabled={isLoading}
               className="w-full bg-[#0058BC] text-white font-semibold py-2.5 sm:py-3.5 px-4 text-sm sm:text-base rounded-full transition duration-200 mt-4"
             >
-              Sign In
+              {isLoading ? "Signing In..." : "Sign In"}
             </button>
+            {formError && (
+              <p className="text-sm text-red-500 text-center">{formError}</p>
+            )}
 
             <div className="flex items-center gap-3 sm:gap-4">
               <div className="flex-1 h-px bg-gray-300"></div>
