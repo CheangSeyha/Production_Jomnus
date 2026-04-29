@@ -3,15 +3,12 @@
 import { useRouter } from "next/navigation";
 import CreateTaskLayout from "@/components/myrequest/CreateTaskLayout";
 import StepIndicator from "@/components/myrequest/StepIndicator";
-import TaskDetailsForm from "@/components/myrequest/TaskDetailsForm";
-import ScheduleForm from "@/components/myrequest/ScheduleForm";
-import BudgetForm from "@/components/myrequest/BudgetForm";
+import WorkerPreferencesForm from "@/components/myrequest/WorkerPreferencesForm";
 import DraftTasks from "@/components/myrequest/DraftTasks";
 import { useTaskStore } from "@/store/taskStore";
 
-export default function CreateTaskPage() {
+export default function Step2Page() {
   const router = useRouter();
-
   const { form, setField } = useTaskStore();
 
   const handleChange = (name: string, value: any) => {
@@ -19,37 +16,20 @@ export default function CreateTaskPage() {
   };
 
   const handleNext = () => {
-    if (!form.title) {
-      alert("Title is required");
-      return;
-    }
-
-    if (!form.categoryId) {
-      alert("Please select a category");
-      return;
-    }
-
-    if (!form.deadline) {
-      alert("Please select a deadline");
-      return;
-    }
-
-    router.push("/myrequest/create/step2");
+    router.push("/myrequest/create/step3");
   };
 
   return (
     <CreateTaskLayout draftTasks={<DraftTasks />}>
-      <StepIndicator currentStep={1} totalSteps={3} />
+      <StepIndicator currentStep={2} totalSteps={3} />
 
       <div className="space-y-8">
-        <TaskDetailsForm form={form} onChange={handleChange} />
-        <ScheduleForm form={form} onChange={handleChange} />
-        <BudgetForm form={form} onChange={handleChange} />
+        <WorkerPreferencesForm form={form} onChange={handleChange} />
 
-        <div className="flex gap-3 pt-6 border-t border-gray-200">
+        <div className="flex gap-3 pt-6 border-t">
           <button
             onClick={() => router.back()}
-            className="px-6 py-3 border border-gray-300 rounded-lg"
+            className="px-6 py-3 border rounded-lg"
           >
             Back
           </button>
