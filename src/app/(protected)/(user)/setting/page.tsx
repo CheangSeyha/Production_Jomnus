@@ -8,13 +8,9 @@ import Specializations from "@/components/setting/Specializations";
 import WorkHistory from "@/components/setting/WorkHistory";
 import ProfileHeader from "@/components/setting/ProfileHeader";
 
-export default function SettingsPage() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  
-  const [loading, setLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
-  const [saveSuccess, setSaveSuccess] = useState(false);
+export default function SettingPage() {
+    const router = useRouter();
+    const searchParams = useSearchParams();
 
   const [formData, setFormData] = useState<any>({
     id: null,

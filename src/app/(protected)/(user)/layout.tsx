@@ -2,30 +2,23 @@
 
 import type { ReactNode } from "react";
 import Sidebar from "@/components/dashboard/userSidebar";
-import Navbar from "@/components/homepage/header";
+import Navbar from "@/components/dashboard/userNavbar";
 import Footer from "@/components/dashboard/footer";
-type UserLayoutProps = {
-  children: ReactNode;
+
+type DashboardLayoutProps = {
+    children: ReactNode;
 };
 
-export default function AdminLayout({ children }: UserLayoutProps) {
-  return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
-
-      <Navbar />
-
-      <div className="flex flex-1">
-
-        <Sidebar />
-
-        <main className="flex-1 p-2 md:ml-4">
-          {children}
-        </main>
-
-      </div>
-
-      <Footer />
-
-    </div>
-  );
+export default function DashboardLayout({ children }: DashboardLayoutProps) {
+    return (
+        <div className="min-h-screen w-full bg-white">
+            <Navbar />
+            <div className="mx-auto flex w-full flex-col md:flex-row">
+                <Sidebar />
+                <main className="min-w-0 flex-1 p-4 sm:p-6 md:p-8">{children}</main>
+            </div>
+            <Footer/>
+        </div>
+    );
 }
+
