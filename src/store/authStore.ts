@@ -1,0 +1,85 @@
+import { create } from "zustand";
+import { authService } from "@/services/authService";
+import { AuthUser, LoginPayload, RegisterPayload } from "@/types/auth";
+
+type AuthState = {
+  user: AuthUser | null;
+  accessToken: string | null;
+  isLoading: boolean;
+  error: string | null;
+  login: (payload: LoginPayload) => Promise<AuthUser>;
+  register: (payload: RegisterPayload) => Promise<AuthUser>;
+  logout: () => Promise<void>;
+  clearError: () => void;
+};
+
+const getErrorMessage = (error: unknown): string => {
+  if (typeof error === "object" && error !== null) {
+    const maybeAxiosError = error as {
+      response?: { data?: { message?: string | string[] } };
+      message?: string;
+    };
+
+    const responseMessage = maybeAxiosError.response?.data?.message;
+    if (Array.isArray(responseMessage)) return responseMessage[0] || "Request failed";
+    if (typeof responseMessage === "string") return responseMessage;
+    if (maybeAxiosError.message) return maybeAxiosError.message;
+  }
+
+  return "Something went wrong";
+};
+
+export const useAuthStore = create<AuthState>((set, get) => ({
+  user: null,
+  accessToken: typeof window !== "undefined" ? localStorage.getItem("access_token") : null,
+  isLoading: false,
+  error: null,
+
+  async login(payload) {
+    set({ isLoading: true, error: null });
+    try {
+      const data = await authService.login(payload);
+      localStorage.setItem("access_token", data.accessToken);
+      localStorage.setItem("user_role", data.user.role);
+      set({ user: data.user, accessToken: data.accessToken, isLoading: false });
+      return data.user;
+    } catch (error) {
+      const message = getErrorMessage(error);
+      set({ error: message, isLoading: false });
+      throw new Error(message);
+    }
+  },
+
+  async register(payload) {
+    set({ isLoading: true, error: null });
+    try {
+      const data = await authService.register(payload);
+      localStorage.setItem("access_token", data.accessToken);
+      localStorage.setItem("user_role", data.user.role);
+      set({ user: data.user, accessToken: data.accessToken, isLoading: false });
+      return data.user;
+    } catch (error) {
+      const message = getErrorMessage(error);
+      set({ error: message, isLoading: false });
+      throw new Error(message);
+    }
+  },
+
+  async logout() {
+    const token = get().accessToken || localStorage.getItem("access_token");
+
+    try {
+      if (token) {
+        await authService.logout(token);
+      }
+    } finally {
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("user_role");
+      set({ user: null, accessToken: null, error: null, isLoading: false });
+    }
+  },
+
+  clearError() {
+    set({ error: null });
+  },
+}));

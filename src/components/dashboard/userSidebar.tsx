@@ -14,11 +14,12 @@ import {
   HelpCircle,
   LogOut
 } from 'lucide-react';
-import axios from 'axios';
+import { useAuthStore } from '@/store/authStore';
 
 const Sidebar = () => {
   const pathname = usePathname();
   const router = useRouter();
+  const logout = useAuthStore((state) => state.logout);
 
   const mainNav = [
     { name: 'Dashboard', icon: LayoutGrid, href: '/dashboard' },
@@ -37,17 +38,7 @@ const Sidebar = () => {
 
   const handleLogout = async () => {
     try {
-      await axios.post(
-        "http://localhost:3001/api/auth/logout",
-        {},
-        {
-          withCredentials: true,
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("access_token")}`,
-          },
-        }
-      );
-
+      await logout();
       router.replace("/");
     } catch (err) {
       console.error("Logout failed", err);
@@ -56,7 +47,7 @@ const Sidebar = () => {
 
 
   return (
-      <aside className="flex w-full flex-col border-b border-slate-100 bg-white px-4 py-6 md:sticky md:top-20 md:h-[calc(100vh-5rem)] md:w-64 md:self-start md:overflow-y-auto md:border-b-0 md:border-r">
+      <aside className="flex w-full flex-col border-b border-slate-100 bg-white px-4 py-6 md:h-full md:w-64 md:self-start md:overflow-y-auto md:border-b-0 md:border-r">
         {/* Main Navigation */}
         <nav className="flex-1 space-y-2">
           {mainNav.map((item) => {

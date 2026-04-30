@@ -7,7 +7,12 @@ const API_BASE_URL = (
 
 export default function GoogleOAuthButton() {
   const handleGoogleRedirect = () => {
-    window.location.href = `${API_BASE_URL}/auth/google`;
+    const query = new URLSearchParams({
+      prompt: "login consent select_account",
+      max_age: "0",
+    }).toString();
+
+    window.location.href = `${API_BASE_URL}/auth/google?${query}`;
   };
 
   return (

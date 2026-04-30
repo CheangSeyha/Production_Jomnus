@@ -10,6 +10,8 @@ import {
   MdVisibilityOff,
 } from "react-icons/md";
 import GoogleOAuthButton from "./google-oauth-button";
+import { useRouter } from "next/navigation";
+import { useAuthStore } from "@/store/authStore";
 
 export default function RegisterForm() {
   const [fullName, setFullName] = useState("");
@@ -19,23 +21,39 @@ export default function RegisterForm() {
   const [agreeToTerms, setAgreeToTerms] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [formError, setFormError] = useState("");
+  const router = useRouter();
+  const { register, isLoading } = useAuthStore();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFormError("");
+
     if (password !== confirmPassword) {
-      alert("Passwords do not match");
+      setFormError("Passwords do not match");
       return;
     }
     if (!agreeToTerms) {
-      alert("Please agree to the Terms & Condition");
+      setFormError("Please agree to the Terms & Condition");
       return;
     }
-    // TODO: Handle registration logic
-    console.log("Registration attempted with:", {
-      fullName,
-      email,
-      password,
-    });
+
+    try {
+      const user = await register({
+        fullName,
+        email,
+        password,
+        confirmPassword,
+      });
+      if (user.role === "ADMIN") {
+        router.push("/admin/dashboard");
+      } else {
+        router.push("/dashboard");
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Registration failed";
+      setFormError(message);
+    }
   };
 
   return (
@@ -202,10 +220,14 @@ export default function RegisterForm() {
 
             <button
               type="submit"
+              disabled={isLoading}
               className="w-full bg-[#0058BC] text-white font-semibold py-2.5 sm:py-3.5 px-4 text-sm sm:text-base rounded-full transition duration-200 mt-4"
             >
-              Sign up
+              {isLoading ? "Signing up..." : "Sign up"}
             </button>
+            {formError && (
+              <p className="text-sm text-red-500 text-center">{formError}</p>
+            )}
 
             <div className="flex items-center gap-3 sm:gap-4">
               <div className="flex-1 h-px bg-gray-300"></div>
