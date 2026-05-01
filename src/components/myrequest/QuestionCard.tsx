@@ -1,6 +1,6 @@
 "use client";
 
-import { User, MessageCircle, ChevronDown } from "lucide-react";
+import { ChevronDown, MessageCircle, Send, User } from "lucide-react";
 import { useState } from "react";
 
 type QuestionProps = {
@@ -23,49 +23,58 @@ export default function QuestionCard({
   const [isExpanded, setIsExpanded] = useState(false);
 
   return (
-    <div className="border border-gray-200 rounded-lg overflow-hidden">
-      <div
+    <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+      <button
+        type="button"
         onClick={() => setIsExpanded(!isExpanded)}
-        className="p-4 cursor-pointer hover:bg-gray-50 transition-colors"
+        className="w-full p-4 text-left transition hover:bg-slate-50"
       >
         <div className="flex items-start gap-3">
-          <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-white text-sm flex-shrink-0">
+          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-sky-600 text-sm text-white">
             <User size={16} />
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="font-medium text-gray-900">{workerName}</p>
-            <p className="text-sm text-gray-600 mt-1 line-clamp-2">{question}</p>
-            <p className="text-xs text-gray-500 mt-1">{timeAgo}</p>
+          <div className="min-w-0 flex-1">
+            <p className="font-semibold text-slate-950">{workerName}</p>
+            <p className="mt-1 line-clamp-2 text-sm leading-6 text-slate-600">
+              {question}
+            </p>
+            <p className="mt-1 text-xs text-slate-400">{timeAgo}</p>
           </div>
           <ChevronDown
             size={20}
-            className={`text-gray-400 flex-shrink-0 transition-transform ${
+            className={`flex-shrink-0 text-slate-400 transition-transform ${
               isExpanded ? "rotate-180" : ""
             }`}
           />
         </div>
-      </div>
+      </button>
 
       {isExpanded && (
-        <div className="border-t border-gray-200 bg-gray-50 p-4">
+        <div className="border-t border-slate-200 bg-slate-50 p-4">
           <div className="mb-4">
-            <p className="text-sm font-medium text-gray-700 mb-2">Full Question:</p>
-            <p className="text-sm text-gray-600">{question}</p>
+            <p className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-950">
+              <MessageCircle size={16} className="text-sky-700" />
+              Full Question
+            </p>
+            <p className="text-sm leading-6 text-slate-600">{question}</p>
           </div>
 
           {isAnswered && answer ? (
-            <div className="bg-white border border-green-200 rounded p-3">
-              <p className="text-sm font-medium text-green-900 mb-1">Your Answer:</p>
-              <p className="text-sm text-gray-700">{answer}</p>
+            <div className="rounded-lg border border-emerald-200 bg-white p-3">
+              <p className="mb-1 text-sm font-semibold text-emerald-900">
+                Your Answer
+              </p>
+              <p className="text-sm leading-6 text-slate-700">{answer}</p>
             </div>
           ) : (
             <div className="flex gap-2">
               <input
                 type="text"
                 placeholder="Type your answer..."
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="h-10 flex-1 rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
               />
-              <button className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors">
+              <button className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-sky-600 px-4 text-sm font-semibold text-white transition hover:bg-sky-700">
+                <Send size={15} />
                 Reply
               </button>
             </div>
