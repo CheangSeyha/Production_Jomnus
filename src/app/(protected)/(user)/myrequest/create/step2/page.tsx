@@ -1,10 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import CreateTaskLayout from "@/components/myrequest/CreateTaskLayout";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import StepIndicator from "@/components/myrequest/StepIndicator";
 import WorkerPreferencesForm from "@/components/myrequest/WorkerPreferencesForm";
-import DraftTasks from "@/components/myrequest/DraftTasks";
 import { useTaskStore } from "@/store/taskStore";
 
 export default function Step2Page() {
@@ -20,28 +19,31 @@ export default function Step2Page() {
   };
 
   return (
-    <CreateTaskLayout draftTasks={<DraftTasks />}>
-      <StepIndicator currentStep={2} totalSteps={3} />
+    <div className="min-h-screen overflow-y-auto bg-slate-50">
+      <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:py-10">
+        <StepIndicator currentStep={2} />
+        <div className="space-y-5">
+          <WorkerPreferencesForm form={form} onChange={handleChange} />
 
-      <div className="space-y-8">
-        <WorkerPreferencesForm form={form} onChange={handleChange} />
+          <div className="flex gap-3 pt-2">
+            <button
+              onClick={() => router.back()}
+              className="inline-flex h-11 items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+            >
+              <ArrowLeft size={16} />
+              Back
+            </button>
 
-        <div className="flex gap-3 pt-6 border-t">
-          <button
-            onClick={() => router.back()}
-            className="px-6 py-3 border rounded-lg"
-          >
-            Back
-          </button>
-
-          <button
-            onClick={handleNext}
-            className="ml-auto px-8 py-3 bg-blue-600 text-white rounded-lg"
-          >
-            Next
-          </button>
+            <button
+              onClick={handleNext}
+              className="ml-auto inline-flex h-11 items-center gap-2 rounded-lg bg-sky-600 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-700"
+            >
+              Next
+              <ArrowRight size={16} />
+            </button>
+          </div>
         </div>
       </div>
-    </CreateTaskLayout>
+    </div>
   );
 }

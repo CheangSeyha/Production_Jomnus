@@ -1,7 +1,7 @@
 "use client";
 
 import FormSection from "./FormSection";
-import { FileText, AlertCircle } from "lucide-react";
+import { AlertCircle, CalendarClock, DollarSign, FileText, MapPin, Tag } from "lucide-react";
 
 type TaskOverviewProps = {
   task: {
@@ -36,82 +36,100 @@ export default function TaskOverview({ task }: TaskOverviewProps) {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Task Overview */}
-      <FormSection title="Task Overview" icon={<FileText size={20} />}>
+    <div className="space-y-5">
+      <FormSection
+        title="Task Overview"
+        description="Review the core details before posting."
+        icon={<FileText size={18} />}
+      >
         <div className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
+            <label className="mb-1 block text-xs font-semibold uppercase text-slate-500">
               Title
             </label>
-            <p className="text-gray-900 font-medium">{task.title}</p>
+            <p className="text-base font-semibold text-slate-950">
+              {task.title || "Not provided"}
+            </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="rounded-lg bg-slate-50 p-4">
+              <label className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase text-slate-500">
+                <Tag size={14} />
                 Category
               </label>
-              <span className="inline-block bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-medium">
+              <span className="inline-block rounded-full bg-sky-50 px-3 py-1 text-sm font-semibold text-sky-700 ring-1 ring-sky-200">
                 {task.categoryId ? `Category #${task.categoryId}` : "Not selected"}
               </span>
             </div>
-            <div>
-              <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
+            <div className="rounded-lg bg-slate-50 p-4">
+              <label className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase text-slate-500">
+                <MapPin size={14} />
                 Location
               </label>
-              <p className="text-gray-900">{task.locationText || "Not specified"}</p>
+              <p className="text-sm font-medium text-slate-950">
+                {task.locationText || "Not specified"}
+              </p>
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-gray-500 uppercase mb-2">
+            <label className="mb-2 block text-xs font-semibold uppercase text-slate-500">
               Description
             </label>
-            <p className="text-gray-700 leading-relaxed">{task.description}</p>
+            <p className="leading-7 text-slate-700">
+              {task.description || "Not provided"}
+            </p>
           </div>
         </div>
       </FormSection>
 
-      {/* Logistics & Budget */}
-      <FormSection title="Logistics & Budget">
-        <div className="grid grid-cols-3 gap-4">
-          <div>
-            <label className="block text-xs font-semibold text-gray-500 uppercase mb-2">
+      <FormSection
+        title="Logistics & Budget"
+        description="Confirm the timing and payment details."
+        icon={<CalendarClock size={18} />}
+      >
+        <div className="grid gap-4 md:grid-cols-3">
+          <div className="rounded-lg bg-slate-50 p-4">
+            <label className="mb-2 block text-xs font-semibold uppercase text-slate-500">
               Start Time
             </label>
-            <p className="text-gray-900 font-medium text-sm">
+            <p className="text-sm font-medium leading-6 text-slate-950">
               {formatDate(task.startDate || "")}
             </p>
           </div>
-          <div>
-            <label className="block text-xs font-semibold text-gray-500 uppercase mb-2">
+          <div className="rounded-lg bg-slate-50 p-4">
+            <label className="mb-2 block text-xs font-semibold uppercase text-slate-500">
               Deadline
             </label>
-            <p className="text-gray-900 font-medium text-sm">
+            <p className="text-sm font-medium leading-6 text-slate-950">
               {formatDate(task.deadline)}
             </p>
           </div>
-          <div>
-            <label className="block text-xs font-semibold text-gray-500 uppercase mb-2">
+          <div className="rounded-lg bg-slate-50 p-4">
+            <label className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase text-slate-500">
+              <DollarSign size={14} />
               Offered Price
             </label>
-            <p className="text-blue-600 font-bold text-lg">
+            <p className="text-xl font-bold text-slate-950">
               ${Number(task.price || 0).toFixed(2)}
             </p>
           </div>
         </div>
       </FormSection>
 
-      {/* Selection Rules */}
-      <FormSection title="Selection Rules">
+      <FormSection
+        title="Selection Rules"
+        description="These rules will guide how workers apply."
+        icon={<AlertCircle size={18} />}
+      >
         <div className="space-y-3">
           {task.autoAccept && (
-            <div className="flex items-start gap-3 p-3 bg-green-50 border border-green-200 rounded-lg">
-              <AlertCircle size={18} className="text-green-600 flex-shrink-0 mt-0.5" />
+            <div className="flex items-start gap-3 rounded-lg border border-emerald-200 bg-emerald-50 p-4">
+              <AlertCircle size={18} className="mt-0.5 flex-shrink-0 text-emerald-700" />
               <div>
-                <p className="text-sm font-medium text-green-900">Auto-Accept Enabled</p>
-                <p className="text-xs text-green-700 mt-1">
+                <p className="text-sm font-semibold text-emerald-950">Auto-Accept Enabled</p>
+                <p className="mt-1 text-sm leading-6 text-emerald-800">
                   Will automatically accept bids from workers with {task.minRating}+ rating
                 </p>
               </div>
@@ -119,20 +137,20 @@ export default function TaskOverview({ task }: TaskOverviewProps) {
           )}
 
           {task.hiddenBids && (
-            <div className="flex items-start gap-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-              <AlertCircle size={18} className="text-amber-600 flex-shrink-0 mt-0.5" />
+            <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4">
+              <AlertCircle size={18} className="mt-0.5 flex-shrink-0 text-amber-700" />
               <div>
-                <p className="text-sm font-medium text-amber-900">Hidden Bids</p>
-                <p className="text-xs text-amber-700 mt-1">
+                <p className="text-sm font-semibold text-amber-950">Hidden Bids</p>
+                <p className="mt-1 text-sm leading-6 text-amber-800">
                   Workers won't see other bids or offers
                 </p>
               </div>
             </div>
           )}
 
-          <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-            <p className="text-sm font-medium text-blue-900">Bidding Model</p>
-            <p className="text-xs text-blue-700 mt-1">
+          <div className="rounded-lg border border-sky-200 bg-sky-50 p-4">
+            <p className="text-sm font-semibold text-sky-950">Bidding Model</p>
+            <p className="mt-1 text-sm leading-6 text-sky-800">
               Open bidding - Workers can submit proposals at any time
             </p>
           </div>

@@ -1,7 +1,5 @@
 "use client";
 
-import { ChevronDown } from "lucide-react";
-
 type TabsProps = {
   tabs: Array<{
     id: string;
@@ -14,21 +12,27 @@ type TabsProps = {
 
 export default function TaskTabs({ tabs, activeTab, onTabChange }: TabsProps) {
   return (
-    <div className="border-b border-gray-200 mb-6">
+    <div className="mb-6 border-b border-slate-200">
       <div className="flex gap-1 overflow-x-auto">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => onTabChange(tab.id)}
-            className={`px-4 py-3 font-medium text-sm whitespace-nowrap transition-colors border-b-2 ${
+            className={`whitespace-nowrap border-b-2 px-4 py-3 text-sm font-semibold transition-colors ${
               activeTab === tab.id
-                ? "border-blue-600 text-blue-600"
-                : "border-transparent text-gray-600 hover:text-gray-900"
+                ? "border-sky-600 text-sky-700"
+                : "border-transparent text-slate-500 hover:text-slate-950"
             }`}
           >
             {tab.label}
             {tab.count !== undefined && (
-              <span className="ml-2 text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full">
+              <span
+                className={`ml-2 rounded-full px-2 py-0.5 text-xs ${
+                  activeTab === tab.id
+                    ? "bg-sky-50 text-sky-700"
+                    : "bg-slate-100 text-slate-600"
+                }`}
+              >
                 {tab.count}
               </span>
             )}
