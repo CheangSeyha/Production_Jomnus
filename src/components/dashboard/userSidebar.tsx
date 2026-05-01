@@ -32,7 +32,6 @@ const Sidebar = () => {
   ];
 
   const bottomNav = [
-    // { name: 'Support', icon: HelpCircle, color: 'text-slate-600' },
     { name: 'Sign Out', icon: LogOut, color: 'text-red-500', href: '/' },
   ];
 
@@ -47,7 +46,7 @@ const Sidebar = () => {
 
 
   return (
-      <aside className="flex w-full flex-col border-b border-slate-100 bg-white px-4 py-6 md:h-full md:w-64 md:self-start md:overflow-y-auto md:border-b-0 md:border-r">
+      <aside className="h-full px-4 py-6">
         {/* Main Navigation */}
         <nav className="flex-1 space-y-2">
           {mainNav.map((item) => {

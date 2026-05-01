@@ -8,16 +8,31 @@ import Footer from "@/components/dashboard/footer";
 type DashboardLayoutProps = {
   children: ReactNode;
 };
-
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
-    <div className="flex min-h-screen w-full flex-col bg-white">
+    <div className="min-h-screen bg-gray-50">
       <Navbar />
-      <div className="mx-auto flex w-full flex-1 min-h-0 flex-col md:flex-row">
-        <Sidebar />
-        <main className="min-w-0 min-h-0 flex-1 overflow-hidden">{children}</main>
+
+      <div className="flex">
+
+        {/* FIXED SIDEBAR */}
+        <aside className="fixed top-[64px] left-0 h-[calc(100vh-64px)] w-64 border-r border-gray-200 bg-white overflow-y-auto">
+          <Sidebar />
+        </aside>
+
+        {/* MAIN AREA */}
+        <div className="ml-64 flex-1 flex flex-col min-h-[calc(100vh-64px)]">
+
+          {/* CONTENT */}
+          <main className="flex-1 p-6">
+            {children}
+          </main>
+
+          {/* FOOTER ONLY FOR MAIN */}
+          <Footer />
+
+        </div>
       </div>
-      <Footer />
     </div>
   );
 }
