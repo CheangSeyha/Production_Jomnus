@@ -23,6 +23,9 @@ export default function SettingPage() {
   });
 
   const [rawData, setRawData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
   const tokenFromUrl = searchParams.get("token");
 
@@ -62,92 +65,6 @@ export default function SettingPage() {
     const { name, value } = e.target;
     setFormData((prev: any) => ({ ...prev, [name]: value }));
   };
-
-//   const handleSave = async () => {
-//   setIsSaving(true);
-//   setSaveSuccess(false);
-//   try {
-//     const token = localStorage.getItem("access_token");
-
-//     const formDataPayload = new FormData();
-
-//     // 1. Append text fields
-//     formDataPayload.append("fullName", formData.fullName || "");
-//     formDataPayload.append("phone", formData.phone || "");
-//     formDataPayload.append("locationText", formData.locationText || "");
-//     formDataPayload.append("travelRadius", (formData.travelRadius || 0).toString());
-//     formDataPayload.append("bio", formData.bio || "");
-
-//     // 2. Append the physical image file
-//     // IMPORTANT: Ensure "file" matches your @FileInterceptor('file') in NestJS
-//     if (formData.imageFile) {
-//       formDataPayload.append("file", formData.imageFile);
-//     }
-
-//     // 3. Send the request
-//     await axios.patch("http://localhost:3001/api/users/me", formDataPayload, {
-//       headers: { 
-//         Authorization: `Bearer ${token}`,
-//               "Content-Type": "application/json",
-//         // REMOVED "Content-Type": "multipart/form-data" 
-//         // Let the browser set the boundary automatically
-//       },
-      
-//     });
-    
-    
-//     setSaveSuccess(true);
-//     // Optional: Refresh local data or rawData here to reflect saved changes
-//     setTimeout(() => setSaveSuccess(false), 3000);
-//   } catch (error: any) {
-//     console.error("Save failed:", error.response?.data || error.message);
-    
-//     // Check if it's a validation error from NestJS
-//     const errorMessage = error.response?.data?.message || "Failed to save changes.";
-//     alert(Array.isArray(errorMessage) ? errorMessage.join(", ") : errorMessage);
-//   } finally {
-//     setIsSaving(false);
-//   }
-// };
-
-// const handleSave = async () => {
-//   setIsSaving(true);
-//   setSaveSuccess(false);
-
-//   try {
-//     const token = localStorage.getItem("access_token");
-
-//     await axios.patch(
-//       "http://localhost:3001/api/users/me",
-//       {
-//         fullName: formData.fullName || "",
-//         phone: formData.phone || "",
-//         locationText: formData.locationText || "",
-//         travelRadius: Number(formData.travelRadius || 0),
-//         bio: formData.bio || "",
-//         profileImage:"",
-//   //       profileImage:
-//   // typeof formData.profileImage === "string"
-//   //   ? formData.profileImage
-//   //   : "",
-//       },
-//       {
-//         headers: {  Authorization: `Bearer ${token}` },
-//       }
-//     );
-
-//     setSaveSuccess(true);
-//     setTimeout(() => setSaveSuccess(false), 3000);
-
-//   } catch (error: any) {
-//   console.log("FULL ERROR OBJECT:", error);
-//   console.log("STATUS:", error?.response?.status);
-//   console.log("DATA:", error?.response?.data);
-//   console.log("MESSAGE:", error?.message);
-// } finally {
-//     setIsSaving(false);
-//   }
-// };
 
 const handleSave = async () => {
   setIsSaving(true);
@@ -303,7 +220,7 @@ const uploadProfileImage = async (file: File) => {
           <WorkHistory data={rawData?.projects} />
         </section>
 
-        <Specializations data={rawData?.specializations} />
+        {/* <Specializations data={rawData?.specializations} /> */}
       </div>
     </div>
   );
