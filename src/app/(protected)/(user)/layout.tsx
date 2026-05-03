@@ -1,38 +1,46 @@
 // src/app/(protected)/(admin)/admin/layout.tsx
 
 import type { ReactNode } from "react";
-import Sidebar from "@/components/dashboard/userSidebar";
-import Navbar from "@/components/dashboard/userNavbar";
+
 import Footer from "@/components/dashboard/footer";
+import Sidebar from "@/components/dashboard/sidebar";
+import Header from "@/components/dashboard/header";
 
 type DashboardLayoutProps = {
   children: ReactNode;
 };
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navbar />
+    <div className="min-h-screen">
+      <Header/>
+      <div className="flex flex-col">
+        <div className="flex z-10">
 
-      <div className="flex">
+          {/* FIXED SIDEBAR */}
+          <aside className="mt-4 fixed top-[64px] left-0 h-[calc(100vh-64px)] w-70 border-r border-gray-200 bg-white overflow-y-auto">
+            <Sidebar role="user"/>
+          </aside>
 
-        {/* FIXED SIDEBAR */}
-        <aside className="fixed top-[64px] left-0 h-[calc(100vh-64px)] w-64 border-r border-gray-200 bg-white overflow-y-auto">
-          <Sidebar />
-        </aside>
+          {/* MAIN AREA */}
+          <div className="ml-64 flex-1 flex flex-col min-h-[calc(100vh-64px)]">
 
-        {/* MAIN AREA */}
-        <div className="ml-64 flex-1 flex flex-col min-h-[calc(100vh-64px)]">
+            {/* CONTENT */}
+            <main className="flex-1 p-6">
+              {children}
+            </main>
 
-          {/* CONTENT */}
-          <main className="flex-1 p-6">
-            {children}
-          </main>
 
-          {/* FOOTER ONLY FOR MAIN */}
-          <Footer />
 
+          </div>
+        </div>        
+        {/* FOOTER ONLY FOR MAIN */}
+        <div className="z-20">
+          <Footer/> 
         </div>
+                     
       </div>
+
+
     </div>
   );
 }
