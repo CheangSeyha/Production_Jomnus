@@ -7,6 +7,8 @@ type TaskForm = {
   deadline: string;
   startDate?: string;
   locationText?: string;
+  latitude?: number;
+  longitude?: number;
   requiredWorkers?: number;
   categoryId?: number;
 

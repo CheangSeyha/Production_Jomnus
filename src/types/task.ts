@@ -4,6 +4,8 @@ export interface CreateTaskDto {
   price: number;
   deadline: string;
   locationText?: string;
+  latitude?: number;
+  longitude?: number;
   requiredWorkers?: number;
   startDate?: string;
   categoryId?: number;
