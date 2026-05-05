@@ -220,7 +220,7 @@ const uploadProfileImage = async (file: File) => {
           <WorkHistory data={rawData?.projects} />
         </section>
 
-        {/* <Specializations data={rawData?.specializations} /> */}
+        <Specializations data={rawData?.specializations} />
       </div>
     </div>
   );
