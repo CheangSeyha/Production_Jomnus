@@ -27,7 +27,7 @@ export default function TaskDetailsForm({ form, onChange }: Props) {
     const data = await res.json();
 
     onChange("locationText", data.display_name);
-
+    
     setShowMap(false);
   };
 

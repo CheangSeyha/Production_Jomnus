@@ -36,6 +36,8 @@ export const useTaskStore = create<TaskStore>((set) => ({
     startDate: "",
     locationText: "",
     requiredWorkers: 1,
+    latitude: undefined,
+    longitude: undefined,
     categoryId: undefined,
 
     autoAccept: false,
@@ -60,6 +62,8 @@ export const useTaskStore = create<TaskStore>((set) => ({
         deadline: "",
         startDate: "",
         locationText: "",
+        latitude: undefined,
+        longitude: undefined,
         requiredWorkers: 1,
         categoryId: undefined,
 

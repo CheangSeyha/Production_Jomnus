@@ -1,12 +1,16 @@
-export interface CreateTaskDto {
+export type Task = {
+  id: number;
   title: string;
-  description: string;
-  price: number;
-  deadline: string;
+  description?: string;
   locationText?: string;
   latitude?: number;
   longitude?: number;
-  requiredWorkers?: number;
-  startDate?: string;
-  categoryId?: number;
-}
+  price: number;
+  createdAt: string;
+  deadline: string;
+  requesterName: string;
+
+  // optional extras
+  priority?: "Urgent" | "Normal" | "Low";
+  requestCount?: number;
+};
