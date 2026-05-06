@@ -11,18 +11,39 @@ export default function MyRequestPage() {
   const router = useRouter();
   const { tasks, setTasks } = useTaskListStore();
   const [query, setQuery] = useState("");
+  const [filter, setFilter] = useState("ALL");
 
   const filteredTasks = useMemo(() => {
+    let result = tasks;
+
+    // SEARCH
     const normalizedQuery = query.trim().toLowerCase();
 
-    if (!normalizedQuery) return tasks;
+    if (normalizedQuery) {
+      result = result.filter((task) => {
+        return [
+          task.title,
+          task.description,
+          task.status,
+          task.location_text,
+        ]
+          .filter(Boolean)
+          .some((value) =>
+            String(value).toLowerCase().includes(normalizedQuery)
+          );
+      });
+    }
 
-    return tasks.filter((task) => {
-      return [task.title, task.description, task.status, task.location_text]
-        .filter(Boolean)
-        .some((value) => String(value).toLowerCase().includes(normalizedQuery));
-    });
-  }, [query, tasks]);
+    // FILTER
+    if (filter !== "ALL") {
+      result = result.filter((task) => {
+        return task.status === filter;
+      });
+    }
+
+    return result;
+  }, [query, tasks, filter]);
+
 
   useEffect(() => {
     const fetchTasks = async () => {
@@ -39,6 +60,8 @@ export default function MyRequestPage() {
 
     fetchTasks();
   }, []);
+
+
 
   return (
     <div className="min-h-screen overflow-y-auto bg-slate-50">
@@ -65,23 +88,65 @@ export default function MyRequestPage() {
           </button>
         </div>
 
-        <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+
+          {/* SEARCH */}
           <div className="relative max-w-md flex-1">
             <Search
               size={17}
               className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
             />
+
             <input
-              className="h-11 w-full rounded-lg border border-slate-200 bg-white pl-10 pr-4 text-sm outline-none transition placeholder:text-slate-400 focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
+              className="
+                h-11 w-full rounded-xl
+                border border-slate-200 bg-white
+                pl-10 pr-4 text-sm outline-none
+                transition placeholder:text-slate-400
+                focus:border-sky-500 focus:ring-4 focus:ring-sky-100
+              "
               placeholder="Search requests"
               type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />
           </div>
-          <p className="text-sm text-slate-500">
-            {filteredTasks.length} {filteredTasks.length === 1 ? "request" : "requests"}
-          </p>
+
+          {/* TOGGLES */}
+          <div className="flex flex-wrap gap-2">
+
+            {[
+              { label: "All Tasks", value: "ALL" },
+              { label: "Posted", value: "POSTED" },
+              { label: "In Progress", value: "IN_PROGRESS" },
+              { label: "Completed", value: "COMPLETED" },
+              { label: "Cancelled", value: "CANCELLED" },
+            ].map((item) => (
+              <button
+                key={item.value}
+                onClick={() => setFilter(item.value)}
+                className={`
+                  px-4 py-2 rounded-xl text-sm font-semibold
+                  transition-all duration-200
+
+                  ${
+                    filter === item.value
+                      ? "bg-blue-600 text-white shadow-md"
+                      : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-100"
+                  }
+                `}
+              >
+                {item.label}
+              </button>
+            ))}
+
+          </div>
+
+          {/* COUNT */}
+          <div className="text-sm text-slate-500 whitespace-nowrap">
+            {filteredTasks.length}{" "}
+            {filteredTasks.length === 1 ? "request" : "requests"}
+          </div>
         </div>
 
         {tasks.length === 0 ? (
