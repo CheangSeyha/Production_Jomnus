@@ -5,8 +5,8 @@ export default function Footer() {
     const currentYear = new Date().getFullYear();
 
     return (
-        <footer className="w-full bg-slate-100 pt-10 pb-5 border-t border-slate-100 mt-auto">
-            <div className="w-full px-8 grid md:grid-cols-5 gap-12">
+        <footer className="w-full bg-slate-50 pt-20 pb-10 border-t border-slate-100 mt-auto">
+            <div className="max-w-7xl mx-auto px-8 grid md:grid-cols-5 gap-12">
                 {/* Branding Column */}
                 <div className="col-span-2">
                     <div>
@@ -63,7 +63,7 @@ export default function Footer() {
             </div>
 
             {/* Newsletter and Copyright Section */}
-            <div className="w-full px-8 mt-16">
+            <div className="max-w-7xl mx-auto px-8 mt-16">
                 <div className="bg-white p-6 rounded-2xl border border-slate-200 flex flex-col md:flex-row items-center justify-between gap-6">
                     <div>
                         <h6 className="font-bold text-sm text-slate-900">

@@ -41,13 +41,14 @@ export default function Header({ role = "user" }: Props) {
       "
     >
 					{/* LEFT: BIG LOGO */}
-			<div className="flex items-center gap-3 min-w-[220px]">
+			<div className="flex items-center gap-3 min-w-55">
 				<Image
 					src="/images/logo.png"
 					alt="Logo"
 					width={200}
-					height={200}
-					className="h-30 w-auto object-contain"
+					height={80}
+					className="object-contain"
+					style={{ height: 'auto' }}
 					priority
 				/>
 			</div>
@@ -63,7 +64,7 @@ export default function Header({ role = "user" }: Props) {
             type="text"
             placeholder="Search tasks..."
             className="
-              h-11 w-[260px] lg:w-[320px]
+              h-11 w-65 lg:w-[320px]
               rounded-xl
               bg-white/70
               pl-10 pr-4
@@ -167,6 +168,7 @@ export default function Header({ role = "user" }: Props) {
             </div>
           )}
         </div>
+
       </div>
     </header>
   );
