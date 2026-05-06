@@ -33,6 +33,8 @@ export default function Step3Page() {
           locationText: form.locationText,
           requiredWorkers: form.requiredWorkers ?? 1,
           categoryIds: [form.categoryId],
+          latitude: form.latitude, 
+          longitude: form.longitude,  
 
           // Step 2 fields
           auto_accept_top_rated: form.autoAccept,
