@@ -23,118 +23,130 @@ export default function Navbar() {
   ];
 
   return (
-    <header className="sticky top-0 left-0 right-0 z-50 w-full border-b border-slate-200/70 bg-white/90 shadow-[0_6px_24px_rgba(15,23,42,0.06)] backdrop-blur-md">
-      <nav className="flex h-22 w-full items-center justify-between px-4 py-4 sm:px-6 md:mx-auto md:max-w-7xl lg:px-8">
-        <div className="flex items-center gap-4 sm:gap-8 lg:gap-10">
-          {/* Logo */}
-          <Link href="/" aria-label="Go to home">
-            <Image
-              src="/images/logo.png"
-              alt="Logo"
-              width={140}
-              height={48}
-              className="rounded-md"
-              style={{ height: 'auto' }}
-            />
-          </Link>
+    <header className="sticky top-0 z-50 w-full bg-white border-b border-slate-200/70">
+      <nav className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="flex h-16 sm:h-18 md:h-20 items-center justify-between">
+          {/* LEFT: Logo + Desktop Nav */}
+          <div className="flex items-center gap-2 sm:gap-4 md:gap-8 lg:gap-12 flex-1 min-w-0">
 
-          {/* Desktop Links */}
-          <div className="hidden items-center gap-2 text-sm font-semibold text-slate-700 md:flex">
-            {links.map((link) => {
-              const isActive = pathname === link.href; // check if current page
-              return (
-                <Link
-                  key={link.name}
-                  href={link.href}
-                  className={`rounded-full px-3 py-2 transition ${
-                    isActive
-                      ? "bg-blue-50 text-blue-700 shadow-sm"
-                      : "hover:bg-slate-100 hover:text-blue-600"
-                  }`}
-                >
-                  {link.name}
-                </Link>
-              );
-            })}
+            {/* Logo */}
+            <Link href="/" aria-label="Home" className="shrink-0 inline-block">
+              <Image
+                src="/images/logo.png"
+                alt="Jomnus"
+                width={100}
+                height={32}
+                className="w-20 sm:w-24 md:w-28 lg:w-32 object-contain"
+                style={{ height: "auto" }}
+                priority
+              />
+            </Link>
+
+            {/* Desktop Navigation */}
+            <div className="hidden lg:flex items-center gap-1">
+              {links.map((link) => {
+                const isActive = pathname === link.href;
+                return (
+                  <Link
+                    key={link.name}
+                    href={link.href}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      isActive
+                        ? "bg-blue-50/80 text-blue-600"
+                        : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+                    }`}
+                  >
+                    {link.name}
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* RIGHT: Auth Buttons (Desktop) + Mobile Menu Button */}
+          <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+            {/* Desktop Auth Buttons */}
+            <div className="hidden md:flex items-center gap-2 sm:gap-3">
+              <a
+                href="/auth/signin"
+                className="px-4 lg:px-5 py-2 text-slate-700 text-sm font-medium rounded-lg hover:bg-slate-100 transition-colors"
+              >
+                Log In
+              </a>
+              <a
+                href="/auth/register"
+                className="px-4 lg:px-5 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+              >
+                Sign Up
+              </a>
+            </div>
+
+            {/* Mobile Menu Button */}
+            <button
+              type="button"
+              className="md:hidden p-2 hover:bg-slate-100 rounded-lg transition text-slate-600"
+              aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
+              aria-expanded={isMobileMenuOpen}
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            >
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                {isMobileMenuOpen ? (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                ) : (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                )}
+              </svg>
+            </button>
           </div>
         </div>
 
-        <div className="hidden items-center gap-3 text-sm font-semibold md:flex">
-          {/*<span className="cursor-pointer text-slate-500 hover:text-slate-900">*/}
-          {/*  English (US)*/}
-          {/*</span>*/}
-          <a
-            href="/auth/signin"
-            className="rounded-xl px-4 py-2 text-slate-700 transition hover:bg-slate-100"
-          >
-            Log In
-          </a>
-          <a
-            href="/auth/register"
-            className="rounded-xl bg-linear-to-r from-blue-600 to-blue-700 px-5 py-2 text-white shadow-[0_8px_20px_rgba(37,99,235,0.35)] transition hover:from-blue-700 hover:to-blue-800"
-          >
-            Sign Up
-          </a>
-        </div>
+        {/* Mobile Menu */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden border-t border-slate-200/70 py-4 space-y-3 bg-slate-50/50">
+            {/* Mobile Navigation */}
+            <div className="space-y-1">
+              {links.map((link) => {
+                const isActive = pathname === link.href;
+                return (
+                  <Link
+                    key={link.name}
+                    href={link.href}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={`block px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                      isActive
+                        ? "bg-blue-50 text-blue-600 font-semibold"
+                        : "text-slate-700 hover:bg-white hover:text-slate-900"
+                    }`}
+                  >
+                    {link.name}
+                  </Link>
+                );
+              })}
+            </div>
 
-        <button
-          type="button"
-          className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white p-2 text-slate-700 shadow-sm transition hover:bg-slate-100 active:scale-95 md:hidden"
-          aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
-          aria-expanded={isMobileMenuOpen}
-          onClick={() => setIsMobileMenuOpen((prev) => !prev)}
-        >
-          <svg
-            className="h-6 w-6"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-          >
-            {isMobileMenuOpen ? (
-              <path d="M18 6 6 18M6 6l12 12" />
-            ) : (
-              <path d="M3 6h18M3 12h18M3 18h18" />
-            )}
-          </svg>
-        </button>
+            {/* Mobile Auth Buttons */}
+            <div className="grid grid-cols-2 gap-3 pt-2 border-t border-slate-200/70">
+              <a
+                href="/auth/signin"
+                className="px-4 py-2.5 text-center text-sm font-medium text-slate-700 border border-slate-300 rounded-lg hover:bg-slate-100 transition-colors"
+              >
+                Log In
+              </a>
+              <a
+                href="/auth/register"
+                className="px-4 py-2.5 text-center text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Sign Up
+              </a>
+            </div>
+          </div>
+        )}
       </nav>
-
-      {isMobileMenuOpen && (
-        <div className="w-full border-t border-slate-100 bg-white/95 px-4 pb-4 pt-3 shadow-[0_14px_30px_rgba(15,23,42,0.12)] backdrop-blur-sm md:hidden">
-          <div className="flex flex-col gap-1 text-sm font-medium">
-            {links.map((link) => {
-              const isActive = pathname === link.href;
-              return (
-                <Link
-                  key={link.name}
-                  href={link.href}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className={`rounded-xl px-3 py-2.5 transition ${
-                    isActive
-                      ? "bg-blue-50 text-blue-700 font-bold"
-                      : "text-slate-700 hover:bg-slate-100 hover:text-blue-600"
-                  }`}
-                >
-                  {link.name}
-                </Link>
-              );
-            })}
-          </div>
-
-          <div className="mt-3 grid grid-cols-2 gap-2">
-            <button className="rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100">
-              Log In
-            </button>
-            <button className="rounded-xl bg-linear-to-r from-blue-600 to-blue-700 px-3 py-2.5 text-sm font-semibold text-white transition hover:from-blue-700 hover:to-blue-800">
-              Sign Up
-            </button>
-          </div>
-        </div>
-      )}
     </header>
   );
 }

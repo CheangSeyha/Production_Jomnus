@@ -1,5 +1,8 @@
 // src/app/(protected)/(user)/layout.tsx
 
+"use client";
+
+import { useState } from "react";
 import type { ReactNode } from "react";
 import Sidebar from "@/components/dashboard/sidebar";
 import Navbar from "@/components/dashboard/header";
@@ -10,12 +13,18 @@ type DashboardLayoutProps = {
 };
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
   return (
-    <div className="min-h-screen w-full bg-white">
-      <Navbar />
-      <div className="mx-auto flex w-full pl-10 pr- flex-col md:flex-row">
-        <Sidebar role={"user"} />
-        <main className="min-w-0 flex-1 p-4 sm:p-6 md:p-8 overflow-y-auto h-[calc(100vh-64px)]">
+    <div className="min-h-screen w-full bg-white flex flex-col">
+      <Navbar onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
+      <div className="flex flex-1 overflow-hidden">
+        <Sidebar
+          role={"user"}
+          isOpen={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
+        />
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8">
           {children}
         </main>
       </div>
