@@ -1,9 +1,12 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link"; // Import Link for navigation
 import { Search, Bell, ChevronDown, Settings, LogOut } from "lucide-react";
 import { useUserStore } from "@/store/userStore";
+
 import { useState, useRef, useEffect } from "react";
+import { useNotificationStore } from "@/store/userNotificationStore";
 
 type Props = {
   role?: "user" | "admin";
@@ -11,6 +14,7 @@ type Props = {
 
 export default function Header({ role = "user" }: Props) {
   const user = useUserStore((s) => s.user);
+  const unreadCount = useNotificationStore((s) => s.unreadCount); // Get unread count from Zustand
 
   const avatar =
     user?.profileImage ||
@@ -40,18 +44,18 @@ export default function Header({ role = "user" }: Props) {
         border-b border-slate-200/60
       "
     >
-					{/* LEFT: BIG LOGO */}
-			<div className="flex items-center gap-3 min-w-55">
-				<Image
-					src="/images/logo.png"
-					alt="Logo"
-					width={200}
-					height={80}
-					className="object-contain"
-					style={{ height: 'auto' }}
-					priority
-				/>
-			</div>
+      {/* LEFT: BIG LOGO */}
+      <div className="flex items-center gap-3 min-w-55">
+        <Image
+          src="/images/logo.png"
+          alt="Logo"
+          width={200}
+          height={80}
+          className="object-contain"
+          style={{ height: 'auto' }}
+          priority
+        />
+      </div>
 
       {/* RIGHT */}
       <div className="flex items-center gap-4">
@@ -59,7 +63,6 @@ export default function Header({ role = "user" }: Props) {
         {/* SEARCH */}
         <div className="relative hidden md:block">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-
           <input
             type="text"
             placeholder="Search tasks..."
@@ -80,8 +83,9 @@ export default function Header({ role = "user" }: Props) {
           />
         </div>
 
-        {/* NOTIFICATION */}
-        <button
+        {/* NOTIFICATION - Changed from button to Link */}
+        <Link
+          href="/notifications"
           className="
             relative p-2 rounded-xl
             hover:bg-white/60
@@ -89,8 +93,13 @@ export default function Header({ role = "user" }: Props) {
           "
         >
           <Bell className="h-5 w-5 text-slate-600" />
-          <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-red-500" />
-        </button>
+          {/* Display actual count if > 0, otherwise hide badge */}
+          {unreadCount > 0 && (
+            <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white border-2 border-white">
+              {unreadCount > 9 ? "9+" : unreadCount}
+            </span>
+          )}
+        </Link>
 
         {/* PROFILE DROPDOWN */}
         <div className="relative" ref={dropdownRef}>
@@ -168,7 +177,6 @@ export default function Header({ role = "user" }: Props) {
             </div>
           )}
         </div>
-
       </div>
     </header>
   );
