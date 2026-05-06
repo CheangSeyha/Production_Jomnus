@@ -32,7 +32,7 @@ export default function Sidebar({ role }: Props) {
   const userNav = [
     { name: "Dashboard", icon: LayoutGrid, href: "/dashboard" },
     { name: "Active Tasks", icon: ClipboardCheck, href: "/activetask" },
-    { name: "Reviews", icon: Star, href: "/review" },
+    { name: "Reviews", icon: Star, href: "/Review" },
     { name: "My Tasks", icon: ShoppingBag, href: "/mytask" },
     { name: "My Requests", icon: Handshake, href: "/myrequest" },
     { name: "Messages", icon: MessageSquare, href: "/message" },

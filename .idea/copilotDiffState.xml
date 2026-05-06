@@ -3,6 +3,15 @@
   <component name="CopilotDiffPersistence">
     <option name="pendingDiffs">
       <map>
+        <entry key="/layout (snapshot).tsx">
+          <value>
+            <PendingDiffInfo>
+              <option name="filePath" value="/layout (snapshot).tsx" />
+              <option name="originalContent" value="// src/app/(protected)/(admin)/admin/layout.tsx&#10;&#10;import type { ReactNode } from &quot;react&quot;;&#10;import Sidebar from &quot;@/components/dashboard/sidebar&quot;;&#10;import Navbar from &quot;@/components/dashboard/header&quot;;&#10;import Footer from &quot;@/components/dashboard/footer&quot;;&#10;&#10;type DashboardLayoutProps = {&#10;  children: ReactNode;&#10;};&#10;&#10;export default function DashboardLayout({ children }: DashboardLayoutProps) {&#10;  return (&#10;      &lt;div className=&quot;min-h-screen w-full bg-white&quot;&gt;&#10;        &lt;Navbar /&gt;&#10;        &lt;div className=&quot;mx-auto flex w-full max-w-screen-2xl flex-col md:flex-row&quot;&gt;&#10;          &lt;Sidebar role={&quot;user&quot;} /&gt;&#10;          &lt;main className=&quot;min-w-0 flex-1 p-4 sm:p-6 md:p-8&quot;&gt;{children}&lt;/main&gt;&#10;        &lt;/div&gt;&#10;        &lt;Footer/&gt;&#10;      &lt;/div&gt;&#10;  );&#10;}" />
+              <option name="updatedContent" value="// src/app/(protected)/(admin)/admin/layout.tsx&#10;&#10;import type { ReactNode } from &quot;react&quot;;&#10;import Sidebar from &quot;@/components/dashboard/sidebar&quot;;&#10;import Navbar from &quot;@/components/dashboard/header&quot;;&#10;import Footer from &quot;@/components/dashboard/footer&quot;;&#10;&#10;type DashboardLayoutProps = {&#10;  children: ReactNode;&#10;};&#10;&#10;export default function DashboardLayout({ children }: DashboardLayoutProps) {&#10;  return (&#10;      &lt;div className=&quot;min-h-screen w-full bg-white&quot;&gt;&#10;        &lt;Navbar /&gt;&#10;        &lt;div className=&quot;mx-auto flex w-full max-w-screen-2xl flex-col md:flex-row&quot;&gt;&#10;          &lt;Sidebar role={&quot;user&quot;} /&gt;&#10;          &lt;main className=&quot;min-w-0 flex-1 p-4 sm:p-6 md:p-8 overflow-y-auto h-[calc(100vh-64px)]&quot;&gt;{children}&lt;/main&gt;&#10;        &lt;/div&gt;&#10;        &lt;Footer/&gt;&#10;      &lt;/div&gt;&#10;  );&#10;}" />
+            </PendingDiffInfo>
+          </value>
+        </entry>
         <entry key="/page (snapshot).tsx">
           <value>
             <PendingDiffInfo>
