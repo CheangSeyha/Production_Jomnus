@@ -9,8 +9,8 @@ type Category = {
 };
 
 type Props = {
-  value: number;
-  onChange: (value: number) => void;
+  value: number | undefined;
+  onChange: (value: number | undefined) => void;
 };
 
 export default function CategoryDropdown({ value, onChange }: Props) {
@@ -20,10 +20,10 @@ export default function CategoryDropdown({ value, onChange }: Props) {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const res = await axios.get("http://localhost:3001/api/categories");
-        setCategories(res.data);
-      } catch (err) {
-        console.error("Failed to fetch categories", err);
+        const response = await axios.get("/api/categories");
+        setCategories(response.data);
+      } catch (error) {
+        console.error("Failed to fetch categories:", error);
       } finally {
         setLoading(false);
       }
@@ -34,29 +34,24 @@ export default function CategoryDropdown({ value, onChange }: Props) {
 
   return (
     <select
-        value={value}
+        value={value || ""}
         onChange={(e) => {
-        const value = e.target.value;
+        const val = e.target.value;
 
-        if (value === "") {
+        if (val === "") {
             onChange(undefined);
         } else {
-            onChange(Number(value)); 
+            onChange(Number(val)); 
         }
         }}
         className="w-full px-4 py-3 border border-gray-200 rounded-lg"
     >
       <option value="">Select Category</option>
-
-      {loading ? (
-        <option>Loading...</option>
-      ) : (
-        categories.map((cat) => (
-          <option key={cat.id} value={cat.id}>
-            {cat.name}
-          </option>
-        ))
-      )}
+      {categories.map((category) => (
+        <option key={category.id} value={category.id}>
+          {category.name}
+        </option>
+      ))}
     </select>
   );
 }
