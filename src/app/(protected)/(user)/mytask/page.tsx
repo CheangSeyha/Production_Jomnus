@@ -1,231 +1,297 @@
 "use client";
 
-import { useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import React, { useState } from 'react';
+import { useEffect, useState } from "react";
+import axios from "axios";
+import Link from "next/link";
 import {
-    Clock,
-    Upload,
-    Edit3
-} from 'lucide-react';
+  Clock,
+  MapPin,
+  ChevronRight,
+  Briefcase,
+  CheckCircle2,
+  XCircle,
+  Loader2,
+} from "lucide-react";
 
+type Application = {
+  id: number;
+  status: string;
+  offered_price: number;
+  applied_at: string;
 
-export default function MyTaskPage() {
-    const router = useRouter();
-    const searchParams = useSearchParams();
+  task: {
+    id: number;
+    title: string;
+    description: string;
+    location_text?: string;
+    deadline: string;
+    price: number;
+    status: string;
 
-    const [activeTab, setActiveTab] = useState('In Progress');
-
-    type MyTaskApi = {
-        assignmentId: number;
-        status: string;
-        acceptedPrice: number;
-        task: {
-            id: number;
-            title: string;
-            description?: string | null;
-            price: number;
-            deadline: string;
-            locationText?: string | null;
-        } | null;
-        requester: {
-            id: number;
-            fullName: string;
-            profileImage?: string | null;
-        } | null;
+    requester: {
+      fullName: string;
+      profileImage?: string;
     };
+  };
+};
 
-    type TaskCard = {
-        assignmentId: number;
-        status: string;
-        acceptedPrice: number;
-        taskId: number;
-        title: string;
-        description: string;
-        price: number;
-        deadline: string;
-        locationText: string;
-        requester: {
-            id: number;
-            fullName: string;
-            profileImage?: string | null;
-        } | null;
-    };
+export default function MyTasksPage() {
+  const [applications, setApplications] = useState<Application[]>([]);
+  const [loading, setLoading] = useState(true);
 
-    const API_BASE_URL = (
-        process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api"
-    ).replace(/\/$/, "");
-
-    const [tasks, setTasks] = useState<TaskCard[]>([]);
-    const [isLoadingTasks, setIsLoadingTasks] = useState(false);
-
-    useEffect(() => {
-        const token = searchParams.get("token");
-
-        if (token) {
-            localStorage.setItem("access_token", token);
-
-            router.replace("/dashboard");
-            return;
+  const fetchMyApplications = async () => {
+    try {
+      const res = await axios.get(
+        "http://localhost:3001/api/applications/me",
+        {
+          withCredentials: true,
         }
+      );
 
-        const existingToken = localStorage.getItem("access_token");
-        if (!existingToken) {
-            router.replace("/auth/signin");
-            return;
-        }
+      setApplications(res.data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-        const loadTasks = async () => {
-            try {
-                setIsLoadingTasks(true);
-                const res = await fetch(`${API_BASE_URL}/assignments/my`, {
-                    method: "GET",
-                    headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${existingToken}`,
-                    },
-                });
+  useEffect(() => {
+    fetchMyApplications();
+  }, []);
 
-                if (!res.ok) {
-                    throw new Error(`Failed to fetch tasks (${res.status})`);
-                }
-
-                const data: MyTaskApi[] = await res.json();
-                const normalized: TaskCard[] = data
-                    .filter((item) => item.task)
-                    .map((item) => ({
-                        assignmentId: item.assignmentId,
-                        status: item.status,
-                        acceptedPrice: item.acceptedPrice,
-                        taskId: item.task?.id ?? 0,
-                        title: item.task?.title ?? "",
-                        description: item.task?.description ?? "",
-                        price: item.task?.price ?? item.acceptedPrice,
-                        deadline: item.task?.deadline ?? "",
-                        locationText: item.task?.locationText ?? "",
-                        requester: item.requester ?? null,
-                    }));
-
-                setTasks(normalized);
-            } catch (error) {
-                console.error("Error loading tasks:", error);
-            } finally {
-                setIsLoadingTasks(false);
-            }
+  const getStatusUI = (status: string) => {
+    switch (status) {
+      case "ACCEPTED":
+        return {
+          icon: <CheckCircle2 size={14} />,
+          className: "bg-green-100 text-green-700",
+          label: "Accepted",
         };
 
-        loadTasks();
+      case "REJECTED":
+        return {
+          icon: <XCircle size={14} />,
+          className: "bg-red-100 text-red-700",
+          label: "Rejected",
+        };
 
-    }, [router, searchParams]);
+      default:
+        return {
+          icon: <Loader2 size={14} />,
+          className: "bg-yellow-100 text-yellow-700",
+          label: "Pending",
+        };
+    }
+  };
 
-
-    const tabs = ['In Progress', 'Bidding', 'Completed', 'Drafts'];
-
+  if (loading) {
     return (
-        <div className="min-h-screen bg-white p-8">
-            <div className="max-w-7xl mx-auto">
-
-                {/*/!* Navigation Tabs *!/*/}
-                {/*<div className="flex gap-8 border-b border-slate-200 mb-8">*/}
-                {/*    {tabs.map((tab) => (*/}
-                {/*        <button*/}
-                {/*            key={tab}*/}
-                {/*            onClick={() => setActiveTab(tab)}*/}
-                {/*            className={`pb-4 text-sm font-bold transition-all relative ${*/}
-                {/*                activeTab === tab ? 'text-blue-600' : 'text-slate-400 hover:text-slate-600'*/}
-                {/*            }`}*/}
-                {/*        >*/}
-                {/*            {tab}*/}
-                {/*            {activeTab === tab && (*/}
-                {/*                <div className="absolute bottom-0 left-0 right-0 h-1 bg-blue-600 rounded-t-full" />*/}
-                {/*            )}*/}
-                {/*        </button>*/}
-                {/*    ))}*/}
-                {/*</div>*/}
-
-                {/* Task Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-8">
-                    {isLoadingTasks && (
-                        <div className="text-slate-500">Loading tasks...</div>
-                    )}
-
-                    {!isLoadingTasks && tasks.length === 0 && (
-                        <div className="text-slate-500">No assigned tasks yet.</div>
-                    )}
-
-                    {!isLoadingTasks && tasks.map((task) => (
-                        <div key={task.assignmentId} className="bg-white rounded-3xl overflow-hidden shadow-sm border border-slate-100 flex flex-col">
-
-                            {/* Content Section */}
-                            <div className="p-5 flex-1 flex flex-col">
-                                <div className="flex items-start justify-between gap-3 mb-4">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-12 h-12 rounded-full bg-slate-100 overflow-hidden">
-                                            <img
-                                                src={
-                                                    task.requester?.profileImage ||
-                                                    `https://api.dicebear.com/7.x/avataaars/svg?seed=${task.requester?.fullName ?? task.requester?.id ?? "unknown"}`
-                                                }
-                                                alt={task.requester?.fullName ?? "Requester"}
-                                            />
-                                        </div>
-                                        <div>
-                                            <h3 className="font-bold text-slate-900">
-                                                {task.requester?.fullName ?? "Unknown requester"}
-                                            </h3>
-                                            <p className="text-xs text-slate-500">
-                                                Task #{task.taskId}
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <div className="text-right">
-                                        <div className="text-2xl font-black text-blue-600">${task.price}</div>
-                                        <div className="text-[10px] font-bold uppercase text-slate-400">
-                                            {task.status.replace("_", " ")}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <h3 className="font-extrabold text-slate-900 text-lg leading-tight mb-2">
-                                    {task.title}
-                                </h3>
-
-                                {task.description && (
-                                    <p className="text-slate-600 text-sm mb-4">
-                                        {task.description}
-                                    </p>
-                                )}
-
-                                <div className="mb-6 space-y-2">
-                                    <div className="flex items-center gap-1.5 text-xs font-bold text-slate-400">
-                                        <Clock size={14} /> {task.deadline ? new Date(task.deadline).toLocaleDateString() : "No deadline"}
-                                    </div>
-                                    <div className="text-xs font-semibold text-slate-500">
-                                        {task.locationText || "No location"}
-                                    </div>
-                                </div>
-
-                                {/* Action Buttons */}
-                                <div className="mt-auto">
-                                    {task.status === 'IN_PROGRESS' ? (
-                                        <button className="w-full bg-blue-600 text-white py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-blue-700 transition-colors">
-                                            <Upload size={18} /> Upload Proof
-                                        </button>
-                                    ) : task.status === 'COMPLETED' ? (
-                                        <button className="w-full bg-slate-200 text-slate-700 py-3 rounded-xl font-bold text-sm hover:bg-slate-300 transition-colors">
-                                            View Details
-                                        </button>
-                                    ) : (
-                                        <button className="w-full bg-slate-200 text-slate-700 py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-slate-300 transition-colors">
-                                            <Edit3 size={18} /> Edit Bid
-                                        </button>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </div>
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="animate-spin mx-auto mb-3" size={40} />
+          <p className="text-slate-500">Loading your tasks...</p>
         </div>
+      </div>
     );
+  }
+
+  return (
+    <div className="min-h-screen bg-slate-50">
+      <div className="mx-auto max-w-6xl px-6 py-10">
+
+        {/* HEADER */}
+        <div className="mb-8">
+          <div className="inline-flex items-center gap-2 rounded-full bg-blue-100 px-4 py-1 text-sm font-medium text-blue-700">
+            <Briefcase size={15} />
+            Performer Workspace
+          </div>
+
+          <h1 className="mt-4 text-4xl font-black tracking-tight text-slate-900">
+            My Tasks
+          </h1>
+
+          <p className="mt-3 text-slate-500 text-lg">
+            Track all tasks you applied for and manage your work progress.
+          </p>
+        </div>
+
+        {/* EMPTY */}
+        {applications.length === 0 && (
+          <div className="rounded-3xl border border-dashed border-slate-300 bg-white p-14 text-center">
+            <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-slate-100">
+              <Briefcase size={34} className="text-slate-500" />
+            </div>
+
+            <h2 className="text-2xl font-bold text-slate-800">
+              No Applications Yet
+            </h2>
+
+            <p className="mt-3 text-slate-500">
+              You haven't applied to any tasks yet.
+            </p>
+
+            <Link
+              href="/dashboard"
+              className="
+                mt-6 inline-flex items-center gap-2
+                rounded-xl bg-blue-600 px-5 py-3
+                font-semibold text-white
+                transition hover:bg-blue-700
+              "
+            >
+              Browse Tasks
+              <ChevronRight size={18} />
+            </Link>
+          </div>
+        )}
+
+        {/* TASK LIST */}
+        <div className="space-y-5">
+
+          {applications.map((application) => {
+            const statusUI = getStatusUI(application.status);
+
+            return (
+              <Link
+                key={application.id}
+                href={`/mytask/${application.task.id}`}
+              >
+                <div
+                  className="
+                    group rounded-3xl border border-slate-200
+                    bg-white p-6 shadow-sm
+                    transition-all duration-300
+                    hover:-translate-y-1 hover:shadow-xl
+                    cursor-pointer
+                  "
+                >
+                  <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+
+                    {/* LEFT */}
+                    <div className="flex-1">
+
+                      {/* REQUESTER */}
+                      <div className="flex items-center gap-3">
+                        <div className="h-12 w-12 overflow-hidden rounded-full bg-slate-200">
+                          <img
+                            src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${application.task.requester.fullName}`}
+                            alt=""
+                          />
+                        </div>
+
+                        <div>
+                          <p className="font-semibold text-slate-800">
+                            {application.task.requester.fullName}
+                          </p>
+
+                          <p className="text-xs text-slate-400">
+                            Applied on{" "}
+                            {new Date(
+                              application.applied_at
+                            ).toLocaleDateString()}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* TITLE */}
+                      <h2
+                        className="
+                          mt-5 text-2xl font-bold text-slate-900
+                          transition group-hover:text-blue-600
+                        "
+                      >
+                        {application.task.title}
+                      </h2>
+
+                      {/* DESCRIPTION */}
+                      <p className="mt-3 line-clamp-2 text-slate-600">
+                        {application.task.description}
+                      </p>
+
+                      {/* META */}
+                      <div className="mt-5 flex flex-wrap gap-3">
+
+                        <div
+                          className="
+                            flex items-center gap-2 rounded-full
+                            bg-slate-100 px-3 py-1.5
+                            text-sm text-slate-600
+                          "
+                        >
+                          <MapPin size={14} />
+                          <span className="max-w-[250px] truncate">
+                            {application.task.location_text ||
+                              "No location"}
+                          </span>
+                        </div>
+
+                        <div
+                          className="
+                            flex items-center gap-2 rounded-full
+                            bg-slate-100 px-3 py-1.5
+                            text-sm text-slate-600
+                          "
+                        >
+                          <Clock size={14} />
+                          {new Date(
+                            application.task.deadline
+                          ).toLocaleDateString()}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* RIGHT */}
+                    <div className="min-w-[220px]">
+
+                      {/* PRICE */}
+                      <div className="text-right">
+                        <p className="text-xs uppercase tracking-wide text-slate-400">
+                          Offered Price
+                        </p>
+
+                        <p className="mt-1 text-4xl font-black text-orange-600">
+                          ${application.offered_price}
+                        </p>
+                      </div>
+
+                      {/* STATUS */}
+                      <div className="mt-6 flex justify-end">
+                        <div
+                          className={`
+                            inline-flex items-center gap-2
+                            rounded-full px-4 py-2
+                            text-sm font-semibold
+                            ${statusUI.className}
+                          `}
+                        >
+                          {statusUI.icon}
+                          {statusUI.label}
+                        </div>
+                      </div>
+
+                      {/* CTA */}
+                      <div className="mt-6 flex justify-end">
+                        <div
+                          className="
+                            inline-flex items-center gap-2
+                            text-sm font-semibold text-blue-600
+                            transition group-hover:translate-x-1
+                          "
+                        >
+                          View Details
+                          <ChevronRight size={16} />
+                        </div>
+                      </div>
+
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
 }

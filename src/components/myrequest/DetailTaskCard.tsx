@@ -5,6 +5,8 @@ import dynamic from "next/dynamic";
 import { getTaskBadges } from "../../utils/taskBadge";
 import { getFakeInterest } from "@/utils/random";
 import { Task } from "@/types/task";
+import { useState } from "react";
+import ApplyTaskModal from "../applications/ApplyTaskModal";
 type Props = {
   task: Task;
   onOpen: (task: Task) => void;
@@ -26,7 +28,7 @@ export default function DetailTaskCard({ task, onOpen }: Props) {
 
 		const badges = getTaskBadges(task);
 		const interest = getFakeInterest(task.id)
-
+		const [showApply, setShowApply] = useState(false);
     return (
     <div
       className="
@@ -132,9 +134,21 @@ export default function DetailTaskCard({ task, onOpen }: Props) {
 							hover:shadow-lg hover:scale-[1.02]
 							transition-all duration-200
 						"
+						onClick={() => setShowApply(true)}
 					>
-						Accept Task
+						Apply the Task
 					</button>
+
+					{
+						showApply && (
+							<ApplyTaskModal
+								taskId={task.id}
+								taskTitle={task.title}
+								defaultPrice={task.price}
+								onClose={() => setShowApply(false)}
+							/>
+						)
+					}
 
           <button 
 						onClick={() => onOpen(task)}
@@ -145,6 +159,7 @@ export default function DetailTaskCard({ task, onOpen }: Props) {
 
         </div>
       </div>
+			
     </div>
   );
 }
