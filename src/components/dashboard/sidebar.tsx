@@ -68,7 +68,7 @@ export default function Sidebar({ role }: Props) {
             <Link
               key={item.name}
               href={item.href}
-              className={`group relative flex items-center gap-3 rounded-xl px-4 py-3 transition-all duration-200 ${
+              className={`group relative flex items-center gap-3 rounded-xl px-10 py-3 transition-all duration-200 ${
                 isActive
                   ? "bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-md hover:shadow-lg"
                   : "text-slate-600 hover:text-slate-900 hover:bg-white hover:shadow-sm"

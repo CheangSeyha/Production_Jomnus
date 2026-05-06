@@ -10,9 +10,12 @@ import ApplyTaskModal from "../applications/ApplyTaskModal";
 type Props = {
   task: Task;
   onOpen: (task: Task) => void;
+	onApply: (task: Task) => void;
 };
 
-export default function DetailTaskCard({ task, onOpen }: Props) {
+
+
+export default function DetailTaskCard({ task, onOpen, onApply }: Props) {
 
 		const formatDate = (date?: string) => {
 			if (!date) return "No date";
@@ -28,14 +31,14 @@ export default function DetailTaskCard({ task, onOpen }: Props) {
 
 		const badges = getTaskBadges(task);
 		const interest = getFakeInterest(task.id)
-		const [showApply, setShowApply] = useState(false);
+
     return (
     <div
-      className="
-        bg-white rounded-3xl border border-slate-200
-        shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-300
-        overflow-hidden group
-      "
+			className="
+				bg-white rounded-3xl border border-slate-200
+				shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-300
+				overflow-hidden group
+			"
     >
 			<div className="relative">
 				{/* MAP */}
@@ -134,21 +137,10 @@ export default function DetailTaskCard({ task, onOpen }: Props) {
 							hover:shadow-lg hover:scale-[1.02]
 							transition-all duration-200
 						"
-						onClick={() => setShowApply(true)}
+						onClick={() => onApply(task)}
 					>
 						Apply the Task
 					</button>
-
-					{
-						showApply && (
-							<ApplyTaskModal
-								taskId={task.id}
-								taskTitle={task.title}
-								defaultPrice={task.price}
-								onClose={() => setShowApply(false)}
-							/>
-						)
-					}
 
           <button 
 						onClick={() => onOpen(task)}

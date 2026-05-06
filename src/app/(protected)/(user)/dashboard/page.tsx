@@ -6,6 +6,7 @@ import { SlidersHorizontal } from "lucide-react";
 import DetailTaskCard from "@/components/myrequest/DetailTaskCard";
 import TaskDetailModal from "@/components/myrequest/TaskDetailModal";
 import { Task } from "@/types/task";
+import ApplyTaskModal from "@/components/applications/ApplyTaskModal";
 type Category = {
   id: number;
   name: string;
@@ -45,6 +46,8 @@ export default function DashboardPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
 
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+
+  const [selectedApplyTask, setSelectedApplyTask] = useState<Task | null>(null);  
 
   useEffect(() => {
     const token = searchParams.get("token");
@@ -200,7 +203,7 @@ export default function DashboardPage() {
           {/* Task card*/}
           <div className="space-y-6">
             {tasks.map((task) => (
-              <DetailTaskCard key={task.id} task={task} onOpen={setSelectedTask}/>
+              <DetailTaskCard key={task.id} task={task} onOpen={setSelectedTask} onApply={setSelectedApplyTask}/>
             ))}
           </div>
           {selectedTask && (
@@ -211,6 +214,18 @@ export default function DashboardPage() {
           )}
         </div>
       </div>
+
+      {
+        selectedApplyTask && (
+          <ApplyTaskModal
+            taskId={selectedApplyTask.id}
+            taskTitle={selectedApplyTask.title}
+            defaultPrice={selectedApplyTask.price}
+            onClose={() => setSelectedApplyTask(null)}
+          />
+        )
+      }
+
     </div>
   );
 }
