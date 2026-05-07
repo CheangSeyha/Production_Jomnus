@@ -7,54 +7,90 @@ import StatsManagement from "@/components/setting/StatsManagement";
 import Specializations from "@/components/setting/Specializations";
 import WorkHistory from "@/components/setting/WorkHistory";
 import ProfileHeader from "@/components/setting/ProfileHeader";
+import { useUserStore } from "@/store/userStore";
 
 export default function SettingPage() {
     const router = useRouter();
     const searchParams = useSearchParams();
+    const { setUser, updateUser } = useUserStore();
 
   const [formData, setFormData] = useState<any>({
     id: null,
     fullName: "",
     phone: "",
-    locationText: "",
-    travelRadius: 0,
+    city: "",
+    currentRole: "",
     bio: "",
     profileImage: null,
   });
 
   const [rawData, setRawData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
   const tokenFromUrl = searchParams.get("token");
 
+  // useEffect(() => {
+  //   const fetchUserData = async () => {
+  //     try {
+  //       const token = tokenFromUrl || localStorage.getItem("access_token");
+  //       const response = await axios.get("http://localhost:3001/api/users/me", {
+  //         headers: { Authorization: `Bearer ${token}` },
+  //       });
+
+  //       const user = response.data;
+  //       setRawData(user);
+
+  //       setFormData({
+  //         id: user.id,
+  //         fullName: user.fullName || "",
+  //         phone: user.phone || "",
+  //         locationText: user.locationText || (user.city && user.country ? `${user.city}, ${user.country}` : user.city || user.country || ""),
+  //         travelRadius: user.travelRadius || 0,
+  //         bio: user.bio || "",
+  //         profileImage: user.profileImage || user.picture || "",
+  //       });
+  //     } catch (error) {
+  //       console.error("Error fetching user:", error);
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
+  //   fetchUserData();
+  // }, []);
+
   useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        const token = tokenFromUrl || localStorage.getItem("access_token");
-        const response = await axios.get("http://localhost:3001/api/users/me", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+  const fetchUserData = async () => {
+    try {
+      const token = tokenFromUrl || localStorage.getItem("access_token");
+      const response = await axios.get("http://localhost:3001/api/users/me", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-        const user = response.data;
-        setRawData(user);
+      const user = response.data;
+      
+      // SYNC THE STORE: This makes the Header show the data on page load
+      setUser(user); 
 
-        setFormData({
-          id: user.id,
-          fullName: user.fullName || "",
-          phone: user.phone || "",
-          locationText: user.locationText || (user.city && user.country ? `${user.city}, ${user.country}` : user.city || user.country || ""),
-          travelRadius: user.travelRadius || 0,
-          bio: user.bio || "",
-          profileImage: user.profileImage || user.picture || "",
-        });
-      } catch (error) {
-        console.error("Error fetching user:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchUserData();
-  }, []);
-
+      setRawData(user);
+      setFormData({
+        id: user.id,
+        fullName: user.fullName || "",
+        phone: user.phone || "",
+        city: user.locationText || (user.city && user.country ? `${user.city}, ${user.country}` : user.city || user.country || ""),
+        currentRole: user.currentRole || "",
+        bio: user.bio || "",
+        profileImage: user.profileImage || user.picture || "",
+      });
+    } catch (error) {
+      console.error("Error fetching user:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  fetchUserData();
+}, [setUser]); // Add setUser to dependencies
 
   const handleInputChange = (
     e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -63,53 +99,6 @@ export default function SettingPage() {
     setFormData((prev: any) => ({ ...prev, [name]: value }));
   };
 
-//   const handleSave = async () => {
-//   setIsSaving(true);
-//   setSaveSuccess(false);
-//   try {
-//     const token = localStorage.getItem("access_token");
-
-//     const formDataPayload = new FormData();
-
-//     // 1. Append text fields
-//     formDataPayload.append("fullName", formData.fullName || "");
-//     formDataPayload.append("phone", formData.phone || "");
-//     formDataPayload.append("locationText", formData.locationText || "");
-//     formDataPayload.append("travelRadius", (formData.travelRadius || 0).toString());
-//     formDataPayload.append("bio", formData.bio || "");
-
-//     // 2. Append the physical image file
-//     // IMPORTANT: Ensure "file" matches your @FileInterceptor('file') in NestJS
-//     if (formData.imageFile) {
-//       formDataPayload.append("file", formData.imageFile);
-//     }
-
-//     // 3. Send the request
-//     await axios.patch("http://localhost:3001/api/users/me", formDataPayload, {
-//       headers: { 
-//         Authorization: `Bearer ${token}`,
-//               "Content-Type": "application/json",
-//         // REMOVED "Content-Type": "multipart/form-data" 
-//         // Let the browser set the boundary automatically
-//       },
-      
-//     });
-    
-    
-//     setSaveSuccess(true);
-//     // Optional: Refresh local data or rawData here to reflect saved changes
-//     setTimeout(() => setSaveSuccess(false), 3000);
-//   } catch (error: any) {
-//     console.error("Save failed:", error.response?.data || error.message);
-    
-//     // Check if it's a validation error from NestJS
-//     const errorMessage = error.response?.data?.message || "Failed to save changes.";
-//     alert(Array.isArray(errorMessage) ? errorMessage.join(", ") : errorMessage);
-//   } finally {
-//     setIsSaving(false);
-//   }
-// };
-
 // const handleSave = async () => {
 //   setIsSaving(true);
 //   setSaveSuccess(false);
@@ -117,22 +106,35 @@ export default function SettingPage() {
 //   try {
 //     const token = localStorage.getItem("access_token");
 
+//     const payload: any = {
+//       fullName: formData.fullName || undefined,
+//       phone: formData.phone || undefined,
+//       bio: formData.bio || undefined,
+//       city: formData.city || undefined,
+//       country: formData.country || undefined,
+
+//       // IMPORTANT: only send valid URL
+//       profileImage:
+//         typeof formData.profileImage === "string" &&
+//         formData.profileImage.startsWith("http")
+//           ? formData.profileImage
+//           : undefined,
+//     };
+
 //     await axios.patch(
 //       "http://localhost:3001/api/users/me",
 //       {
 //         fullName: formData.fullName || "",
 //         phone: formData.phone || "",
-//         locationText: formData.locationText || "",
-//         travelRadius: Number(formData.travelRadius || 0),
 //         bio: formData.bio || "",
-//         profileImage:"",
-//   //       profileImage:
-//   // typeof formData.profileImage === "string"
-//   //   ? formData.profileImage
-//   //   : "",
+//         city: formData.city || "",
+//         country: formData.country || "",
+//         profileImage: formData.profileImage || "",
 //       },
 //       {
-//         headers: {  Authorization: `Bearer ${token}` },
+//         headers: {
+//           Authorization: `Bearer ${token}`,
+//         },
 //       }
 //     );
 
@@ -140,64 +142,58 @@ export default function SettingPage() {
 //     setTimeout(() => setSaveSuccess(false), 3000);
 
 //   } catch (error: any) {
-//   console.log("FULL ERROR OBJECT:", error);
-//   console.log("STATUS:", error?.response?.status);
-//   console.log("DATA:", error?.response?.data);
-//   console.log("MESSAGE:", error?.message);
-// } finally {
+//     console.log("ERROR:", error?.response?.data);
+//     alert(error?.response?.data?.message || "Failed to save changes.");
+//   } finally {
 //     setIsSaving(false);
 //   }
 // };
 
 const handleSave = async () => {
-  setIsSaving(true);
-  setSaveSuccess(false);
+    setIsSaving(true);
+    setSaveSuccess(false);
 
-  try {
-    const token = localStorage.getItem("access_token");
+    try {
+      const token = localStorage.getItem("access_token");
 
-    const payload: any = {
-      fullName: formData.fullName || undefined,
-      phone: formData.phone || undefined,
-      bio: formData.bio || undefined,
-      city: formData.city || undefined,
-      country: formData.country || undefined,
-
-      // IMPORTANT: only send valid URL
-      profileImage:
-        typeof formData.profileImage === "string" &&
-        formData.profileImage.startsWith("http")
-          ? formData.profileImage
-          : undefined,
-    };
-
-    await axios.patch(
-      "http://localhost:3001/api/users/me",
-      {
+      // This is the data you are sending to the backend
+      const updatePayload = {
         fullName: formData.fullName || "",
         phone: formData.phone || "",
         bio: formData.bio || "",
         city: formData.city || "",
         country: formData.country || "",
         profileImage: formData.profileImage || "",
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
+      };
 
-    setSaveSuccess(true);
-    setTimeout(() => setSaveSuccess(false), 3000);
+      const response = await axios.patch(
+        "http://localhost:3001/api/users/me",
+        updatePayload,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
-  } catch (error: any) {
-    console.log("ERROR:", error?.response?.data);
-    alert(error?.response?.data?.message || "Failed to save changes.");
-  } finally {
-    setIsSaving(false);
-  }
-};
+      // --- THE MISSING PIECE ---
+      // Update the Zustand store so the Header changes instantly!
+      // If your backend returns the updated user, use response.data
+      // Otherwise, use your local updatePayload
+      updateUser(response.data || updatePayload); 
+      // --------------------------
+
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
+
+    } catch (error: any) {
+      console.log("ERROR:", error?.response?.data);
+      alert(error?.response?.data?.message || "Failed to save changes.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
 
 const uploadProfileImage = async (file: File) => {
   const formData = new FormData();
@@ -212,6 +208,28 @@ const uploadProfileImage = async (file: File) => {
     ...prev,
     profileImage: res.data.url, // store URL only
   }));
+};
+
+// Inside SettingPage function
+const [projects, setProjects] = useState([
+  {
+    id: 1,
+    title: "Luxury Penthouse Furniture Setup",
+    description: "Full white-glove assembly for a 4-bedroom penthouse in the Marina District.",
+    tag: "Relocation Logistics",
+    image: "/images/jomnus.png"
+  }
+]);
+
+const addNewProject = () => {
+  const newProj = {
+    id: Date.now(), // Unique ID
+    title: "New Project Title",
+    description: "Enter your project description here.",
+    tag: "General",
+    image: ""
+  };
+  setProjects([newProj, ...projects]);
 };
 
 
@@ -286,24 +304,40 @@ const uploadProfileImage = async (file: File) => {
         </section>
 
         {/* Portfolio Section */}
+
+          {/* Work History Section - Only visible/more prominent for Performers */}
         <section className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100">
           <div className="flex justify-between items-center mb-6">
             <div>
-              <h3 className="font-bold text-xl text-slate-800">
-                Work History & Portfolio
-              </h3>
-              <p className="text-xs text-slate-400 mt-1">
-                Showcase your best completed tasks.
-              </p>
+              <h3 className="font-bold text-xl text-slate-800">Work History & Portfolio</h3>
+              <p className="text-xs text-slate-400 mt-1">Showcase your best completed tasks.</p>
             </div>
-            <button className="text-blue-600 bg-blue-50 hover:bg-blue-100 px-5 py-2.5 rounded-xl text-sm font-bold transition-colors">
+            {/* 3. ATTACH THE ADD FUNCTION HERE */}
+            <button onClick={addNewProject} className="text-blue-600 bg-blue-50 hover:bg-blue-100 px-5 py-2.5 rounded-xl text-sm font-bold transition-colors">
               + Add New Case Study
             </button>
           </div>
-          <WorkHistory data={rawData?.projects} />
+          {/* 4. PASS DATA AND SETTER TO COMPONENT */}
+          <WorkHistory data={projects} setData={setProjects} />
         </section>
 
-        <Specializations data={rawData?.specializations} />
+
+        {/* Only Performers need to showcase specific skills/specializations */}
+        {rawData?.currentRole === "PERFORMER" && (
+          <section className="animate-in fade-in duration-500">
+            <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100">
+              <div className="flex justify-between items-center mb-6">
+                <div>
+                  <h3 className="font-bold text-xl text-slate-800">Expertise & Skills</h3>
+                  <p className="text-xs text-slate-400 mt-1">
+                    These tags help you match with the right tasks.
+                  </p>
+                </div>
+              </div>
+              <Specializations data={rawData?.specializations} />
+            </div>
+          </section>
+        )}
       </div>
     </div>
   );
