@@ -7,8 +7,8 @@ interface ProfileHeaderProps {
   data: {
     fullName: string;
     phone: string;
-    locationText: string;
-    travelRadius: number;
+    city: string;
+    currentRole: string;
     profileImage: string | null;
     bio: string;
   };
@@ -150,8 +150,8 @@ export default function ProfileHeader({
             <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
             <input
               type="text"
-              name="locationText"
-              value={data.locationText || ""}
+              name="city"
+              value={data.city || ""}
               onChange={onInputChange}
               placeholder="e.g., Phnom Penh, Cambodia"
               className="w-full p-4 pl-12 bg-slate-50 border border-slate-100 rounded-2xl outline-none"
@@ -159,15 +159,15 @@ export default function ProfileHeader({
           </div>
         </div>
 
-        {/* Travel Radius */}
+        {/* Current Role */}
         <div className="space-y-2">
           <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-            Travel Radius (km)
+            Current Role
           </label>
           <input
-            type="number"
-            name="travelRadius"
-            value={data.travelRadius}
+            type="string"
+            name="currentRole"
+            value={data.currentRole}
             onChange={onInputChange}
             placeholder="e.g., 25"
             className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none"
