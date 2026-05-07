@@ -57,8 +57,13 @@ export default function Sidebar({ role }: Props) {
   };
 
   return (
-    <aside className="flex flex-col px-2 py-10 ">
-
+    <aside
+      className={`flex flex-col px-2 py-10 ${
+        role === "admin"
+          ? "sticky top-0 h-[calc(100vh-64px)] overflow-y-auto"
+          : ""
+      }`}
+    >
       {/* NAV */}
       <nav className="flex-1 space-y-4 overflow-y-auto">
         {items.map((item) => {
@@ -80,12 +85,16 @@ export default function Sidebar({ role }: Props) {
               <item.icon
                 size={24}
                 className={`flex-shrink-0 transition-all ${
-                  isActive ? "text-white drop-shadow-sm" : "text-slate-400 group-hover:text-blue-500"
+                  isActive
+                    ? "text-white drop-shadow-sm"
+                    : "text-slate-400 group-hover:text-blue-500"
                 }`}
               />
-              <span className={`text-[16px] font-semibold tracking-wide transition-all ${
-                isActive ? "text-white" : "text-slate-700"
-              }`}>
+              <span
+                className={`text-[16px] font-semibold tracking-wide transition-all ${
+                  isActive ? "text-white" : "text-slate-700"
+                }`}
+              >
                 {item.name}
               </span>
             </Link>
@@ -93,21 +102,20 @@ export default function Sidebar({ role }: Props) {
         })}
       </nav>
 
-    
       {/* LOGOUT */}
       <div className="pt-5 mt-4 border-t border-slate-200">
-      <button
+        <button
           onClick={handleLogout}
           className="
           group flex w-full items-center gap-3 px-4 py-3
           text-red-500 transition-all duration-200
           hover:text-red-600
           "
-      >
+        >
           {/* ICON */}
           <LogOut
-          size={24}
-          className="
+            size={24}
+            className="
               transition-all duration-200
               group-hover:translate-x-0.5
               group-hover:scale-110
@@ -118,7 +126,7 @@ export default function Sidebar({ role }: Props) {
           <span className="text-[16px] font-semibold tracking-wide">
             Sign Out
           </span>
-      </button>
+        </button>
       </div>
     </aside>
   );

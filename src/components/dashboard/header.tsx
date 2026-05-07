@@ -4,11 +4,10 @@ import Image from "next/image";
 import Link from "next/link"; // Import Link for navigation
 import { Search, Bell, ChevronDown, Settings, LogOut } from "lucide-react";
 
-import { useUserStore } from "@/store/userStore";
+import { useUserStore, getAvatar } from "@/store/userStore";
 
 import { useState, useRef, useEffect } from "react";
 import { useNotificationStore } from "@/store/userNotificationStore";
-
 
 type Props = {
   role?: "user" | "admin";
@@ -57,14 +56,13 @@ export default function Header({ role = "user" }: Props) {
           width={200}
           height={80}
           className="object-contain"
-          style={{ height: 'auto' }}
+          style={{ height: "auto" }}
           priority
         />
       </div>
 
       {/* RIGHT */}
       <div className="flex items-center gap-4">
-
         {/* SEARCH */}
         <div className="relative hidden md:block">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
@@ -141,10 +139,9 @@ export default function Header({ role = "user" }: Props) {
           {/* DROPDOWN MENU */}
           {open && (
             <div className="absolute right-0 mt-3 w-64 rounded-xl bg-white/95 backdrop-blur-xl border border-slate-200 shadow-xl p-2 animate-in fade-in zoom-in-95 z-50">
-              
               {/* HEADER: Matches the "Profile" look from Settings */}
-              <Link 
-                href="/setting" 
+              <Link
+                href="/setting"
                 onClick={() => setOpen(false)}
                 className="flex items-center gap-3 px-3 py-3 border-b border-slate-100 hover:bg-slate-50 transition rounded-t-lg group"
               >
@@ -182,9 +179,7 @@ export default function Header({ role = "user" }: Props) {
                 </Link>
 
                 {/* LOGOUT */}
-                <button
-                  className="flex items-center gap-3 w-full px-3 py-2.5 mt-1 rounded-lg text-red-500 hover:bg-red-50 transition"
-                >
+                <button className="flex items-center gap-3 w-full px-3 py-2.5 mt-1 rounded-lg text-red-500 hover:bg-red-50 transition">
                   <LogOut size={18} />
                   <span className="text-sm font-semibold">Sign Out</span>
                 </button>

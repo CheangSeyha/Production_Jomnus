@@ -35,8 +35,8 @@ export default function LoginForm() {
   };
 
   return (
-    <div className="flex h-screen bg-white p-4 sm:p-6 md:p-8 lg:p-12">
-      <div className="hidden lg:flex w-1/2  flex-col justify-center items-center relative overflow-hidden">
+    <div className="min-h-screen flex flex-col lg:flex-row bg-white">
+      <div className="hidden lg:flex lg:w-1/2 flex-col justify-center items-center relative overflow-hidden">
         <div className="absolute top-10 left-20 z-50 text-center">
           <h1 className="text-4xl lg:text-5xl xl:text-6xl font-bold text-white leading-tight">
             Join Us
@@ -47,7 +47,7 @@ export default function LoginForm() {
         <img src="/Image/content1.svg" alt="" className="relative z-10" />
       </div>
 
-      <div className="w-full lg:w-1/2 flex flex-col justify-center items-center p-4 sm:p-6 md:p-8 lg:p-12">
+      <div className="w-full lg:w-1/2 flex flex-col justify-center items-center px-4 sm:px-6 md:px-8 lg:px-12 py-8 sm:py-12 md:py-16 lg:py-0 overflow-y-auto max-h-screen lg:max-h-none">
         <div className="w-full max-w-md">
           <div className="mb-6 sm:mb-8">
             <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
@@ -139,7 +139,7 @@ export default function LoginForm() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-[#0058BC] text-white font-semibold py-2.5 sm:py-3.5 px-4 text-sm sm:text-base rounded-full transition duration-200 mt-4"
+              className="w-full bg-[#0058BC] hover:bg-[#004799] disabled:opacity-70 text-white font-semibold py-3 sm:py-3.5 px-4 text-sm sm:text-base rounded-full transition duration-200 mt-6 sm:mt-8"
             >
               {isLoading ? "Signing In..." : "Sign In"}
             </button>
