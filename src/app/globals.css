@@ -1,11 +1,9 @@
 @import "tailwindcss";
-@import "leaflet/dist/leaflet.css";
 
 :root {
-  --background: #ffffff;   /* white background */
-  --foreground: #171717;   /* dark text */
-  --font-sans: 'Inter'; /* <-- use Inter as main font */
-
+  --background: #ffffff; /* white background */
+  --foreground: #171717; /* dark text */
+  --font-sans: "Inter"; /* <-- use Inter as main font */
 }
 
 @theme inline {
@@ -20,5 +18,5 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, 'Inter', sans-serif;
+  font-family: Arial, Helvetica, "Inter", sans-serif;
 }

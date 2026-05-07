@@ -51,14 +51,15 @@ export default function RegisterForm() {
         router.push("/dashboard");
       }
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Registration failed";
+      const message =
+        error instanceof Error ? error.message : "Registration failed";
       setFormError(message);
     }
   };
 
   return (
-    <div className="flex h-screen bg-white p-4 sm:p-6 md:p-8 lg:p-12">
-      <div className="hidden lg:flex w-1/2  flex-col justify-center items-center relative overflow-hidden">
+    <div className="min-h-screen flex flex-col lg:flex-row bg-white">
+      <div className="hidden lg:flex lg:w-1/2 flex-col justify-center items-center relative overflow-hidden">
         <div className="absolute top-10 left-20 z-50 text-center">
           <h1 className="text-4xl lg:text-5xl xl:text-6xl font-bold text-white leading-tight">
             Join Us
@@ -69,7 +70,7 @@ export default function RegisterForm() {
         <img src="/Image/content1.svg" alt="" className="relative z-10" />
       </div>
 
-      <div className="w-full lg:w-1/2 flex flex-col justify-center items-center p-4 sm:p-6 md:p-8 lg:p-12">
+      <div className="w-full lg:w-1/2 flex flex-col justify-center items-center px-4 sm:px-6 md:px-8 lg:px-12 py-8 sm:py-12 md:py-16 lg:py-0 overflow-y-auto max-h-screen lg:max-h-none">
         <div className="w-full max-w-md space-y-3 sm:space-y-4">
           {/* Header */}
           <div className="mb-6 text-start">
@@ -151,12 +152,13 @@ export default function RegisterForm() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className="absolute right-3 sm:right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1"
+                  aria-label="Toggle password visibility"
                 >
                   {showPassword ? (
-                    <MdVisibility className="w-5 h-5" />
+                    <MdVisibility className="w-4 h-4 sm:w-5 sm:h-5" />
                   ) : (
-                    <MdVisibilityOff className="w-5 h-5" />
+                    <MdVisibilityOff className="w-4 h-4 sm:w-5 sm:h-5" />
                   )}
                 </button>
               </div>
@@ -185,12 +187,13 @@ export default function RegisterForm() {
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className="absolute right-3 sm:right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1"
+                  aria-label="Toggle password visibility"
                 >
                   {showConfirmPassword ? (
-                    <MdVisibility className="w-5 h-5" />
+                    <MdVisibility className="w-4 h-4 sm:w-5 sm:h-5" />
                   ) : (
-                    <MdVisibilityOff className="w-5 h-5" />
+                    <MdVisibilityOff className="w-4 h-4 sm:w-5 sm:h-5" />
                   )}
                 </button>
               </div>
@@ -221,7 +224,7 @@ export default function RegisterForm() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-[#0058BC] text-white font-semibold py-2.5 sm:py-3.5 px-4 text-sm sm:text-base rounded-full transition duration-200 mt-4"
+              className="w-full bg-[#0058BC] hover:bg-[#004799] disabled:opacity-70 text-white font-semibold py-3 sm:py-3.5 px-4 text-sm sm:text-base rounded-full transition duration-200 mt-6 sm:mt-8"
             >
               {isLoading ? "Signing up..." : "Sign up"}
             </button>
