@@ -138,11 +138,11 @@ export default function DashboardPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-white p-8">
-      <div className="max-w-5xl mx-auto space-y-8">
+    <div className="min-h-screen bg-white p-4 md:p-8">
+      <div className="max-w-7xl mx-auto space-y-8">
         {/* Filter Bar */}
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-end gap-4">
-          <div className="flex-1 space-y-2">
+        <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-slate-100 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+          <div className="flex-1 space-y-2 sm:col-span-2 lg:col-span-1">
             <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">
               Search Keywords
             </label>
@@ -159,7 +159,7 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="w-64 space-y-2">
+          <div className="w-full space-y-2">
             <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">
               Category
             </label>
@@ -184,7 +184,7 @@ export default function DashboardPage() {
             </select>
           </div>
 
-          <div className="w-64 space-y-2">
+          <div className="w-full space-y-2">
             <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">
               Price Range
             </label>
@@ -193,7 +193,7 @@ export default function DashboardPage() {
             </select>
           </div>
 
-          <button className="bg-[#0069d9] text-white px-8 py-3 rounded-xl font-bold hover:bg-blue-700 transition-colors h-12">
+          <button className="bg-[#0069d9] text-white px-8 py-3 rounded-xl font-bold hover:bg-blue-700 transition-colors h-12 w-full sm:col-span-2 lg:col-span-1">
             Apply Filters
           </button>
         </div>
