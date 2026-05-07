@@ -94,3 +94,9 @@ export const useUserStore = create<UserStore>((set) => ({
       user: state.user ? { ...state.user, ...data } : null,
     })),
 }));
+
+// Add a getter or a helper function
+export const getAvatar = (user: any) => {
+  return user?.profileImage || 
+    `https://api.dicebear.com/7.x/initials/svg?seed=${user?.fullName || "User"}`;
+};
