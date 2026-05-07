@@ -1,9 +1,9 @@
 // src/app/(protected)/(admin)/layout.tsx
 
 import type { ReactNode } from "react";
-import AdminSidebar from "@/components/dashboard/adminSidebar";
-import AdminHeader from "@/components/dashboard/adminNavbar";
 import Footer from "@/components/dashboard/footer";
+import Sidebar from "@/components/dashboard/sidebar";
+import Navbar from "@/components/dashboard/header";
 
 type AdminLayoutProps = {
   children: ReactNode;

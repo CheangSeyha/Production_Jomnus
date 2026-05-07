@@ -16,55 +16,48 @@ export default function StepIndicator({
   ];
 
   return (
-    <div className="mb-8">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Create New Task</h1>
-      <p className="text-gray-600 mb-6">
-        Create a new request and let people handle it for you
+    <div className="mb-7">
+      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-700">
+        Step {currentStep} of {totalSteps}
+      </p>
+      <h1 className="mt-2 text-2xl font-bold text-slate-950">Create New Task</h1>
+      <p className="mt-2 text-sm leading-6 text-slate-500">
+        Create a clear request so workers can understand the job quickly.
       </p>
 
-      {/* Progress Bar */}
-      <div className="flex items-center gap-2 mb-6">
-        {steps.map((step, index) => (
-          <div key={step.number} className="flex items-center">
-            {/* Step Circle */}
+      <div className="mt-6 grid grid-cols-3 gap-3">
+        {steps.map((step) => (
+          <div key={step.number} className="min-w-0">
             <div
-              className={`w-8 h-8 rounded-full flex items-center justify-center font-semibold text-sm transition-colors ${
+              className={`h-1.5 rounded-full transition-colors ${
                 step.number <= currentStep
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-300 text-gray-600"
+                  ? "bg-sky-600"
+                  : "bg-slate-200"
               }`}
-            >
-              {step.number}
-            </div>
-
-            {/* Step Label */}
-            <span
-              className={`ml-2 text-sm font-medium ${
+            />
+            <div className="mt-3 flex items-center gap-2">
+              <span
+                className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${
+                  step.number <= currentStep
+                    ? "bg-sky-600 text-white"
+                    : "bg-slate-100 text-slate-500"
+                }`}
+              >
+                {step.number}
+              </span>
+              <span
+                className={`truncate text-sm font-medium ${
                 step.number === currentStep
-                  ? "text-blue-600"
-                  : "text-gray-600"
+                  ? "text-slate-950"
+                  : "text-slate-500"
               }`}
-            >
-              {step.label}
-            </span>
-
-            {/* Divider */}
-            {index < steps.length - 1 && (
-              <div className="flex-1 mx-4 h-1 bg-gray-300 rounded">
-                <div
-                  className={`h-full bg-blue-600 rounded transition-all ${
-                    step.number < currentStep ? "w-full" : "w-0"
-                  }`}
-                />
-              </div>
-            )}
+              >
+                {step.label}
+              </span>
+            </div>
           </div>
         ))}
       </div>
-
-      <p className="text-xs text-gray-500">
-        STEP {currentStep} OF {totalSteps}
-      </p>
     </div>
   );
 }

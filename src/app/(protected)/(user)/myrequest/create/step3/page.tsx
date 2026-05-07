@@ -2,10 +2,9 @@
 
 import { useRouter } from "next/navigation";
 import axios from "axios";
-import CreateTaskLayout from "@/components/myrequest/CreateTaskLayout";
+import { ArrowLeft, Send } from "lucide-react";
 import StepIndicator from "@/components/myrequest/StepIndicator";
 import TaskOverview from "@/components/myrequest/TaskOverview";
-import DraftTasks from "@/components/myrequest/DraftTasks";
 import { useTaskStore } from "@/store/taskStore";
 
 export default function Step3Page() {
@@ -34,6 +33,8 @@ export default function Step3Page() {
           locationText: form.locationText,
           requiredWorkers: form.requiredWorkers ?? 1,
           categoryIds: [form.categoryId],
+          latitude: form.latitude, 
+          longitude: form.longitude,  
 
           // Step 2 fields
           auto_accept_top_rated: form.autoAccept,
@@ -55,28 +56,31 @@ export default function Step3Page() {
   };
 
   return (
-    <CreateTaskLayout draftTasks={<DraftTasks />}>
-      <StepIndicator currentStep={3} totalSteps={3} />
+    <div className="min-h-screen overflow-y-auto bg-slate-50">
+      <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:py-10">
+        <StepIndicator currentStep={3} />
+        <div className="space-y-5">
+          <TaskOverview task={form} />
 
-      <div className="space-y-8">
-        <TaskOverview task={form} />
+          <div className="flex gap-3 pt-2">
+            <button
+              onClick={() => router.back()}
+              className="inline-flex h-11 items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+            >
+              <ArrowLeft size={16} />
+              Back
+            </button>
 
-        <div className="flex gap-3 pt-6 border-t">
-          <button
-            onClick={() => router.back()}
-            className="px-6 py-3 border rounded-lg"
-          >
-            Back
-          </button>
-
-          <button
-            onClick={handleSubmit}
-            className="ml-auto px-8 py-3 bg-blue-600 text-white rounded-lg"
-          >
-            Post Task
-          </button>
+            <button
+              onClick={handleSubmit}
+              className="ml-auto inline-flex h-11 items-center gap-2 rounded-lg bg-sky-600 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-700"
+            >
+              <Send size={16} />
+              Post Task
+            </button>
+          </div>
         </div>
       </div>
-    </CreateTaskLayout>
+    </div>
   );
 }

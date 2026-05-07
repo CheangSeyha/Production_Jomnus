@@ -33,7 +33,8 @@ export default function Navbar() {
               alt="Logo"
               width={140}
               height={48}
-              className="h-auto w-30 rounded-md sm:w-35"
+              className="rounded-md"
+              style={{ height: 'auto' }}
             />
           </Link>
 

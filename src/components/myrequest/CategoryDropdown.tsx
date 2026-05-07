@@ -43,8 +43,8 @@ export default function CategoryDropdown({ value, onChange }: Props) {
         } else {
             onChange(Number(val)); 
         }
-        }}
-        className="w-full px-4 py-3 border border-gray-200 rounded-lg"
+      }}
+      className="h-12 w-full rounded-lg border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
     >
       <option value="">Select Category</option>
       {categories.map((category) => (

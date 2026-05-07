@@ -1,8 +1,8 @@
 // src/app/(protected)/(admin)/admin/layout.tsx
 
 import type { ReactNode } from "react";
-import Sidebar from "@/components/dashboard/userSidebar";
-import Navbar from "@/components/dashboard/userNavbar";
+import Sidebar from "@/components/dashboard/sidebar";
+import Navbar from "@/components/dashboard/header";
 import Footer from "@/components/dashboard/footer";
 
 type DashboardLayoutProps = {
@@ -11,13 +11,13 @@ type DashboardLayoutProps = {
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
-    <div className="flex min-h-screen w-full flex-col bg-white">
-      <Navbar />
-      <div className="mx-auto flex w-full max-w-screen-2xl flex-1 min-h-0 flex-col md:flex-row">
-        <Sidebar />
-        <main className="min-w-0 min-h-0 flex-1 overflow-hidden">{children}</main>
+      <div className="min-h-screen w-full bg-white">
+        <Navbar />
+        <div className="mx-auto flex w-full pl-10 pr- flex-col md:flex-row">
+          <Sidebar role={"user"} />
+          <main className="min-w-0 flex-1 p-4 sm:p-6 md:p-8 overflow-y-auto h-[calc(100vh-64px)]">{children}</main>
+        </div>
+        <Footer/>
       </div>
-      <Footer />
-    </div>
   );
 }

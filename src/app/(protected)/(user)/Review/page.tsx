@@ -24,7 +24,7 @@ function ReviewPage() {
 
         const loadReviews = async () => {
             try {
-                const res = await fetch("http://localhost:3001/api/reviews", {
+                const res = await fetch("http://localhost:3001/api/reviews/me", {
                     headers: {
                         "Content-Type": "application/json",
                         Authorization: `Bearer ${token}`,

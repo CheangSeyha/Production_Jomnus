@@ -2,9 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import React from "react";
-import { MapPin, Clock, Info, SlidersHorizontal } from "lucide-react";
-
+import { SlidersHorizontal } from "lucide-react";
+import DetailTaskCard from "@/components/myrequest/DetailTaskCard";
+import TaskDetailModal from "@/components/myrequest/TaskDetailModal";
+import { Task } from "@/types/task";
+import ApplyTaskModal from "@/components/applications/ApplyTaskModal";
 type Category = {
   id: number;
   name: string;
@@ -20,24 +22,13 @@ type TaskApi = {
     created_at: string;
     deadline: string;
     requester_id?: number;
+    latitude?: number;
+    longitude?: number;
     requester?: {
         id: number;
         fullName: string;
         profileImage?: string | null;
     } | null;
-};
-
-type Task = {
-  id: number;
-  title: string;
-  description: string;
-  locationText?: string;
-  price: number;
-  createdAt: string;
-  deadline: string;
-  priority: "Urgent" | "Normal" | "Low";
-  requesterName: string;
-  requestCount: number;
 };
 
 const API_BASE_URL = (
@@ -54,12 +45,15 @@ export default function DashboardPage() {
 
   const [tasks, setTasks] = useState<Task[]>([]);
 
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+
+  const [selectedApplyTask, setSelectedApplyTask] = useState<Task | null>(null);  
+
   useEffect(() => {
     const token = searchParams.get("token");
 
     if (token) {
       localStorage.setItem("access_token", token);
-      // Clean URL after saving token.
       router.replace("/dashboard");
       return;
     }
@@ -85,8 +79,24 @@ export default function DashboardPage() {
           throw new Error(`Failed to fetch tasks (${res.status})`);
         }
 
-        const data: Task[] = await res.json();
-        setTasks(data);
+        const data: TaskApi[] = await res.json();
+
+        const mapped: Task[] = data.map((task) => ({
+          id: task.id,
+          title: task.title,
+          description: task.description || "",
+          locationText: task.location_text || "",
+          price: task.price,
+          createdAt: task.created_at,
+          deadline: task.deadline,
+          requesterName: task.requester?.fullName || "Unknown",
+          priority: "Normal",
+          requestCount: 0,
+          latitude: task.latitude,
+          longitude: task.longitude,
+        }));
+
+        setTasks(mapped);
       } catch (error) {
         console.error("Error loading tasks:", error);
       }
@@ -188,109 +198,34 @@ export default function DashboardPage() {
           </button>
         </div>
 
-        {/*/!* Active Tags *!/*/}
-        {/*<div className="flex items-center gap-2">*/}
-        {/*    */}
-        {/*    <span className="bg-white px-4 py-1.5 rounded-full border border-slate-200 text-sm font-medium text-slate-700 flex items-center gap-2">*/}
-        {/*        Urgent */}
-        {/*        <button className="text-slate-400 hover:text-slate-600">×</button>*/}
-        {/*    </span>*/}
-        {/*    */}
-        {/*    <span className="bg-white px-4 py-1.5 rounded-full border border-slate-200 text-sm font-medium text-slate-700 flex items-center gap-2">*/}
-        {/*    Within 5 miles */}
-        {/*        <button className="text-slate-400 hover:text-slate-600">×</button>*/}
-        {/*    </span>*/}
-        {/*    */}
-        {/*    <button className="text-blue-600 text-sm font-bold ml-2">Clear All</button>*/}
-        {/*    */}
-        {/*</div>*/}
-
         {/* Task Cards Container */}
         <div className="space-y-6">
           {/* Task card*/}
           <div className="space-y-6">
             {tasks.map((task) => (
-              <div
-                key={task.id}
-                className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden"
-              >
-                <div className="p-6">
-                  <div className="flex justify-between items-start mb-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-full bg-slate-200 overflow-hidden">
-                        <img
-                          src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${task.requesterName}`}
-                          alt="User"
-                        />
-                      </div>
-
-                      <div>
-                        <h3 className="font-bold text-slate-900">
-                          {task.requesterName}
-                        </h3>
-
-                        <p className="text-xs text-slate-500">
-                          {new Date(task.createdAt).toLocaleDateString()} •{" "}
-                          <span className="text-orange-500 font-bold uppercase"></span>
-                        </p>
-                      </div>
-                    </div>
-
-                    <span className="text-2xl font-black text-[#0069d9]">
-                      ${task.price}
-                    </span>
-                  </div>
-
-                  <h2 className="text-xl font-extrabold text-slate-900 mb-2">
-                    {task.title}
-                  </h2>
-
-                  <p className="text-slate-600 text-[15px] mb-6">
-                    {task.description}
-                  </p>
-
-                  <div className="flex gap-3 mb-6">
-                    <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 rounded-lg text-slate-500 text-xs font-semibold">
-                      <MapPin size={14} />
-                      {task.locationText || "No location"}
-                    </div>
-
-                    <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 rounded-lg text-slate-500 text-xs font-semibold">
-                      <Clock size={14} />
-                      {new Date(task.deadline).toLocaleDateString()}
-                    </div>
-                  </div>
-
-                  <div className="flex gap-2">
-                    <button className="flex-1 bg-[#007bff] text-white py-3.5 rounded-xl font-bold hover:bg-blue-600">
-                      Accept Task
-                    </button>
-                    <button className="px-5 border-2 border-slate-100 rounded-xl text-blue-600 hover:bg-slate-50">
-                      <Info size={20} />
-                    </button>
-                  </div>
-                </div>
-
-                {/*/!* Footer *!/*/}
-                {/*<div className="px-6 py-3 bg-white border-t flex justify-between items-center">*/}
-
-                {/*    <span className="text-[10px] font-bold text-slate-500 uppercase">+{task.requestCount} People Put Request</span>*/}
-                {/*    <MessageSquare size={18} className="text-blue-500 cursor-pointer" />*/}
-
-                {/*</div>*/}
-              </div>
+              <DetailTaskCard key={task.id} task={task} onOpen={setSelectedTask} onApply={setSelectedApplyTask}/>
             ))}
           </div>
+          {selectedTask && (
+            <TaskDetailModal
+              task={selectedTask}
+              onClose={() => setSelectedTask(null)}
+            />
+          )}
         </div>
-
-        {/*/!* Load More *!/*/}
-        {/*<div className="flex justify-center pt-8">*/}
-
-        {/*    <button className="px-10 py-4 rounded-full border-2 border-slate-400 text-blue-800 font-bold hover:bg-blue-500 hover:text-white hover:border-blue-500 transition-all">*/}
-        {/*        Load More Feedback*/}
-        {/*    </button>*/}
-        {/*</div>*/}
       </div>
+
+      {
+        selectedApplyTask && (
+          <ApplyTaskModal
+            taskId={selectedApplyTask.id}
+            taskTitle={selectedApplyTask.title}
+            defaultPrice={selectedApplyTask.price}
+            onClose={() => setSelectedApplyTask(null)}
+          />
+        )
+      }
+
     </div>
   );
 }

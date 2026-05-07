@@ -1,7 +1,7 @@
 "use client";
 
 import FormSection from "./FormSection";
-import { Settings } from "lucide-react";
+import { EyeOff, MessageCircle, Settings, ShieldCheck, SlidersHorizontal, Star } from "lucide-react";
 
 type Props = {
   form: any;
@@ -9,18 +9,33 @@ type Props = {
 };
 
 export default function WorkerPreferencesForm({ form, onChange }: Props) {
+  const selectClass =
+    "h-12 w-full rounded-lg border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-100";
+  const toggleClass =
+    "relative inline-flex cursor-pointer items-center";
+  const toggleTrackClass =
+    "h-6 w-11 rounded-full bg-slate-300 transition after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all after:content-[''] peer-checked:bg-sky-600 peer-checked:after:translate-x-full peer-focus:ring-4 peer-focus:ring-sky-100";
+
   return (
-    <div className="space-y-6">
-      {/* Auto-Accept Setting */}
-      <FormSection title="Worker Acceptance" icon={<Settings size={20} />}>
+    <div className="space-y-5">
+      <FormSection
+        title="Worker Acceptance"
+        description="Control how strict the worker selection should be."
+        icon={<Settings size={18} />}
+      >
         <div className="space-y-3">
-          <div className="border border-blue-300 bg-blue-50 rounded-lg p-4 cursor-pointer hover:bg-blue-100 transition-colors"
+          <button
+            type="button"
+            className="w-full rounded-lg border border-sky-200 bg-sky-50 p-4 text-left transition hover:bg-sky-100"
             onClick={() => onChange("autoAccept", !form.autoAccept)}
           >
-            <div className="flex items-center justify-between">
+            <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="font-medium text-gray-900">Auto-Accept Top Rated</p>
-                <p className="text-sm text-gray-600 mt-1">
+                <p className="flex items-center gap-2 font-semibold text-slate-950">
+                  <ShieldCheck size={17} className="text-sky-700" />
+                  Auto-Accept Top Rated
+                </p>
+                <p className="mt-1 text-sm leading-6 text-slate-600">
                   Instantly hire the first available worker with a 4.5+ rating
                 </p>
               </div>
@@ -28,17 +43,21 @@ export default function WorkerPreferencesForm({ form, onChange }: Props) {
                 type="checkbox"
                 checked={form.autoAccept || false}
                 onChange={(e) => onChange("autoAccept", e.target.checked)}
-                className="w-6 h-6 cursor-pointer"
+                className="mt-1 h-5 w-5 cursor-pointer accent-sky-600"
+                onClick={(e) => e.stopPropagation()}
               />
             </div>
-          </div>
+          </button>
 
-          <div className="border border-gray-200 rounded-lg p-4">
-            <p className="font-medium text-gray-900 mb-2">Minimum Rating</p>
+          <div className="rounded-lg border border-slate-200 bg-white p-4">
+            <p className="mb-2 flex items-center gap-2 font-semibold text-slate-950">
+              <Star size={17} className="text-amber-500" />
+              Minimum Rating
+            </p>
             <select
               value={form.minRating || "4.5"}
               onChange={(e) => onChange("minRating", e.target.value)}
-              className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className={selectClass}
             >
               <option value="3">3.0+ stars</option>
               <option value="3.5">3.5+ stars</option>
@@ -50,16 +69,19 @@ export default function WorkerPreferencesForm({ form, onChange }: Props) {
         </div>
       </FormSection>
 
-      {/* Specialization */}
-      <FormSection title="Specialization">
+      <FormSection
+        title="Specialization"
+        description="Choose a specialty if the task needs a specific skill."
+        icon={<SlidersHorizontal size={18} />}
+      >
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            SPECIFIC SPECIALTY
+          <label className="mb-2 block text-sm font-medium text-slate-700">
+            Specific Specialty
           </label>
           <select
             value={form.specialty || ""}
             onChange={(e) => onChange("specialty", e.target.value)}
-            className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className={selectClass}
           >
             <option value="">Any specialty</option>
             <option value="writing">Creative Writing</option>
@@ -71,64 +93,70 @@ export default function WorkerPreferencesForm({ form, onChange }: Props) {
         </div>
       </FormSection>
 
-      {/* Bidding Rules */}
-      <FormSection title="Bidding Rules">
+      <FormSection
+        title="Bidding Rules"
+        description="Decide how much information workers can see before applying."
+        icon={<EyeOff size={18} />}
+      >
         <div className="space-y-4">
-          <div className="flex items-start justify-between p-4 border border-gray-200 rounded-lg">
+          <div className="flex items-start justify-between gap-4 rounded-lg border border-slate-200 bg-white p-4">
             <div className="flex-1">
-              <p className="font-medium text-gray-900">Hidden Bids</p>
-              <p className="text-sm text-gray-600 mt-1">
+              <p className="font-semibold text-slate-950">Hidden Bids</p>
+              <p className="mt-1 text-sm leading-6 text-slate-600">
                 Freelancers cannot see other users' offers or terms
               </p>
             </div>
-            <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
+            <label className={`${toggleClass} flex-shrink-0`}>
               <input
                 type="checkbox"
                 checked={form.hiddenBids || false}
                 onChange={(e) => onChange("hiddenBids", e.target.checked)}
                 className="sr-only peer"
               />
-              <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+              <div className={toggleTrackClass}></div>
             </label>
           </div>
 
-          <div className="flex items-start justify-between p-4 border border-gray-200 rounded-lg">
+          <div className="flex items-start justify-between gap-4 rounded-lg border border-slate-200 bg-white p-4">
             <div className="flex-1">
-              <p className="font-medium text-gray-900">Minimum Rating Required</p>
-              <p className="text-sm text-gray-600 mt-1">
+              <p className="font-semibold text-slate-950">Minimum Rating Required</p>
+              <p className="mt-1 text-sm leading-6 text-slate-600">
                 Only workers with at least 4.5 stars can apply
               </p>
             </div>
-            <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
+            <label className={`${toggleClass} flex-shrink-0`}>
               <input
                 type="checkbox"
                 checked={form.minRatingRequired || false}
                 onChange={(e) => onChange("minRatingRequired", e.target.checked)}
                 className="sr-only peer"
               />
-              <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+              <div className={toggleTrackClass}></div>
             </label>
           </div>
         </div>
       </FormSection>
 
-      {/* Communication */}
-      <FormSection title="Communication">
-        <div className="flex items-start justify-between p-4 border border-gray-200 rounded-lg">
+      <FormSection
+        title="Communication"
+        description="Let workers ask useful questions before they submit an offer."
+        icon={<MessageCircle size={18} />}
+      >
+        <div className="flex items-start justify-between gap-4 rounded-lg border border-slate-200 bg-white p-4">
           <div className="flex-1">
-            <p className="font-medium text-gray-900">Allow Pre-bid Messaging</p>
-            <p className="text-sm text-gray-600 mt-1">
+            <p className="font-semibold text-slate-950">Allow Pre-bid Messaging</p>
+            <p className="mt-1 text-sm leading-6 text-slate-600">
               Let workers ask clarifying questions before submitting a proposal
             </p>
           </div>
-          <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
+          <label className={`${toggleClass} flex-shrink-0`}>
             <input
               type="checkbox"
-              checked={form.allowMessaging || true}
+              checked={form.allowMessaging ?? true}
               onChange={(e) => onChange("allowMessaging", e.target.checked)}
               className="sr-only peer"
             />
-            <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+            <div className={toggleTrackClass}></div>
           </label>
         </div>
       </FormSection>
