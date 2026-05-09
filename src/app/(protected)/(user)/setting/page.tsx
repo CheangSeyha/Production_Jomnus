@@ -2,220 +2,158 @@
 
 import { useEffect, useState, ChangeEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import axios from "axios";
+
 import StatsManagement from "@/components/setting/StatsManagement";
 import Specializations from "@/components/setting/Specializations";
 import WorkHistory from "@/components/setting/WorkHistory";
 import ProfileHeader from "@/components/setting/ProfileHeader";
-import { useUserStore } from "@/store/userStore";
-import api from "@/lib/axios";
 
-// Define WorkItem interface to match WorkHistory component
-interface WorkItem {
-  id: number | string;
-  title: string;
-  description: string;
-  tag: string;
-  image?: string;
-}
+import { useAuthStore } from "@/store/authStore";
+import { em } from "motion/react-client";
 
 export default function SettingPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { setUser, updateUser } = useUserStore();
 
-  const [formData, setFormData] = useState<any>({
+  const {
+    user,
+    accessToken,
+  } = useAuthStore();
+  
+  const updateUser = useAuthStore((state) => state.updateUser) || ((userData) => useAuthStore.setState({ user: userData }));
+  const setUser = useAuthStore((state) => state.setUser);
+  
+  const [loading, setLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+
+  const [formData, setFormData] = useState({
     id: null,
     fullName: "",
     phone: "",
     city: "",
     currentRole: "",
     bio: "",
-    profileImage: null,
+    profileImage: "",
   });
-
-  const [rawData, setRawData] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
-  const [saveSuccess, setSaveSuccess] = useState(false);
 
   const tokenFromUrl = searchParams.get("token");
 
-  // useEffect(() => {
-  //   const fetchUserData = async () => {
-  //     try {
-  //       const token = tokenFromUrl || localStorage.getItem("access_token");
-  //       const response = await axios.get("http://localhost:3001/api/users/me", {
-  //         headers: { Authorization: `Bearer ${token}` },
-  //       });
-
-  //       const user = response.data;
-  //       setRawData(user);
-
-  //       setFormData({
-  //         id: user.id,
-  //         fullName: user.fullName || "",
-  //         phone: user.phone || "",
-  //         locationText: user.locationText || (user.city && user.country ? `${user.city}, ${user.country}` : user.city || user.country || ""),
-  //         travelRadius: user.travelRadius || 0,
-  //         bio: user.bio || "",
-  //         profileImage: user.profileImage || user.picture || "",
-  //       });
-  //     } catch (error) {
-  //       console.error("Error fetching user:", error);
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   };
-  //   fetchUserData();
-  // }, []);
-
+  // -------------------------
+  // INIT FORM FROM STORE USER
+  // -------------------------
   useEffect(() => {
-    const fetchUserData = async () => {
+    if (user) {
+      setFormData({
+        id: user.id || null,
+        fullName: user.fullName || "",
+        phone: user.phone || "",
+        city: user.city || "",
+        currentRole: user.currentRole || user.role || "",
+        bio: user.bio || "",
+        profileImage: user.profileImage || "",
+      });
+
+      setLoading(false);
+    }
+  }, [user]);
+
+  // -------------------------
+  // OPTIONAL: fallback fetch (only if user not loaded)
+  // -------------------------
+  useEffect(() => {
+    const fetchUser = async () => {
+      if (user) return;
+
       try {
-        if (tokenFromUrl) {
-          localStorage.setItem("access_token", tokenFromUrl);
+        const token =
+          tokenFromUrl || localStorage.getItem("access_token");
+
+        if (!token) {
+          router.push("/auth/signin");
+          return;
         }
 
-        const response = await api.get("/users/me");
+        const res = await axios.get(
+          "http://localhost:3001/api/users/me",
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
 
-        const user = response.data;
-
-        // SYNC THE STORE: This makes the Header show the data on page load
-        setUser(user);
-
-        setRawData(user);
-        setFormData({
-          id: user.id,
-          fullName: user.fullName || "",
-          phone: user.phone || "",
-          city:
-            user.locationText ||
-            (user.city && user.country
-              ? `${user.city}, ${user.country}`
-              : user.city || user.country || ""),
-          currentRole: user.currentRole || "",
-          bio: user.bio || "",
-          profileImage: user.profileImage || user.picture || "",
-        });
-      } catch (error) {
-        console.error("Error fetching user:", error);
-      } finally {
+        updateUser(res.data);
+      }catch (err: any) {
+        console.error("Failed to fetch user:", err?.response?.data || err.message || err);
+      }finally {
         setLoading(false);
       }
     };
-    fetchUserData();
-  }, [setUser]); // Add setUser to dependencies
 
+    fetchUser();
+  }, [user, tokenFromUrl, router, updateUser]);
+
+  // -------------------------
+  // INPUT CHANGE
+  // -------------------------
   const handleInputChange = (
-    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
-    setFormData((prev: any) => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // const handleSave = async () => {
-  //   setIsSaving(true);
-  //   setSaveSuccess(false);
+  // -------------------------
+  // SAVE PROFILE
+  // -------------------------
+ const handleSave = async () => {
+  setIsSaving(true);
 
-  //   try {
-  //     const token = localStorage.getItem("access_token");
+  try {
+    const token = localStorage.getItem("access_token");
 
-  //     const payload: any = {
-  //       fullName: formData.fullName || undefined,
-  //       phone: formData.phone || undefined,
-  //       bio: formData.bio || undefined,
-  //       city: formData.city || undefined,
-  //       country: formData.country || undefined,
+    // Include everything that might have changed
+    const payload = {
+      fullName: formData.fullName,
+      phone: formData.phone,
+      bio: formData.bio,
+      city: formData.city,
+      profileImage: formData.profileImage, // Ensure this is included
+    };
 
-  //       // IMPORTANT: only send valid URL
-  //       profileImage:
-  //         typeof formData.profileImage === "string" &&
-  //         formData.profileImage.startsWith("http")
-  //           ? formData.profileImage
-  //           : undefined,
-  //     };
+    const res = await axios.patch(
+      "http://localhost:3001/api/users/me",
+      payload,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
 
-  //     await axios.patch(
-  //       "http://localhost:3001/api/users/me",
-  //       {
-  //         fullName: formData.fullName || "",
-  //         phone: formData.phone || "",
-  //         bio: formData.bio || "",
-  //         city: formData.city || "",
-  //         country: formData.country || "",
-  //         profileImage: formData.profileImage || "",
-  //       },
-  //       {
-  //         headers: {
-  //           Authorization: `Bearer ${token}`,
-  //         },
-  //       }
-  //     );
+    // This is the critical line. 
+    // It must update the Zustand state AND LocalStorage.
+    updateUser(res.data);
 
-  //     setSaveSuccess(true);
-  //     setTimeout(() => setSaveSuccess(false), 3000);
+    setSaveSuccess(true);
+    setTimeout(() => setSaveSuccess(false), 3000);
+  } catch (err: any) {
+    console.error("Save Error:", err.response?.data || err.message);
+    alert("Failed to update profile");
+  } finally {
+    setIsSaving(false);
+  }
+};
 
-  //   } catch (error: any) {
-  //     console.log("ERROR:", error?.response?.data);
-  //     alert(error?.response?.data?.message || "Failed to save changes.");
-  //   } finally {
-  //     setIsSaving(false);
-  //   }
-  // };
-
-  const handleSave = async () => {
-    setIsSaving(true);
-    setSaveSuccess(false);
-
-    try {
-      // This is the data you are sending to the backend
-      const updatePayload = {
-        fullName: formData.fullName || "",
-        phone: formData.phone || "",
-        bio: formData.bio || "",
-        city: formData.city || "",
-        country: formData.country || "",
-        profileImage: formData.profileImage || "",
-      };
-
-      const response = await api.patch("/users/me", updatePayload);
-
-      // --- THE MISSING PIECE ---
-      // Update the Zustand store so the Header changes instantly!
-      // If your backend returns the updated user, use response.data
-      // Otherwise, use your local updatePayload
-      updateUser(response.data || updatePayload);
-      // --------------------------
-
-      setSaveSuccess(true);
-      setTimeout(() => setSaveSuccess(false), 3000);
-    } catch (error: any) {
-      console.log("ERROR:", error?.response?.data);
-      alert(error?.response?.data?.message || "Failed to save changes.");
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const uploadProfileImage = async (file: File) => {
-    const formData = new FormData();
-    formData.append("file", file);
-
-    const res = await api.post("/users/upload-avatar", formData);
-
-    setFormData((prev: any) => ({
-      ...prev,
-      profileImage: res.data.url, // store URL only
-    }));
-  };
-
-  // Inside SettingPage function
-  const [projects, setProjects] = useState<WorkItem[]>([
+  // -------------------------
+  // PROJECTS
+  // -------------------------
+  const [projects, setProjects] = useState([
     {
       id: 1,
       title: "Luxury Penthouse Furniture Setup",
       description:
-        "Full white-glove assembly for a 4-bedroom penthouse in the Marina District.",
+        "Full white-glove assembly for a 4-bedroom penthouse.",
       tag: "Relocation Logistics",
       image: "/images/jomnus.png",
     },
@@ -223,19 +161,23 @@ export default function SettingPage() {
 
   const addNewProject = () => {
     const newProj = {
-      id: Date.now(), // Unique ID
+      id: Date.now(),
       title: "New Project Title",
-      description: "Enter your project description here.",
+      description: "Enter description",
       tag: "General",
       image: "",
     };
+
     setProjects([newProj, ...projects]);
   };
 
-  if (loading) {
+  // -------------------------
+  // LOADING STATE
+  // -------------------------
+  if (loading || !user) {
     return (
       <div className="flex justify-center items-center h-screen bg-slate-50 text-slate-400 font-medium">
-        Authenticating...
+        Loading profile...
       </div>
     );
   }
@@ -243,108 +185,78 @@ export default function SettingPage() {
   return (
     <div className="min-h-screen bg-slate-50">
       <div className="max-w-7xl mx-auto p-4 md:p-8 space-y-12">
-        {/* Title & Save Bar */}
+
+        {/* HEADER */}
         <div className="flex justify-between items-center border-b pb-6 bg-white p-6 rounded-2xl shadow-sm">
           <div>
-            <h1 className="text-3xl font-black text-slate-800 tracking-tighter">
+            <h1 className="text-3xl font-black text-slate-800">
               Profile Settings
             </h1>
             <p className="text-sm text-slate-500 mt-1">
-              You are logged in successfully. Update your information below.
+              Update your information below
             </p>
           </div>
+
           <div className="flex gap-4 items-center">
             {saveSuccess && (
-              <span className="text-xs text-green-600 font-bold uppercase tracking-widest animate-pulse">
-                Changes saved!
+              <span className="text-green-600 text-xs font-bold">
+                Saved!
               </span>
             )}
+
             <button
               onClick={handleSave}
               disabled={isSaving}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-bold text-sm transition-all disabled:opacity-50 shadow-lg shadow-blue-200"
+              className="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold disabled:opacity-50"
             >
               {isSaving ? "Saving..." : "Save Changes"}
             </button>
           </div>
         </div>
 
-        {/* Profile Details */}
+        {/* PROFILE */}
         <ProfileHeader
           data={formData}
           onInputChange={handleInputChange}
-          email={rawData?.email}
+          email={user.email}
         />
 
-        {/* Stats Section */}
-        <section className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100">
-          <div className="flex justify-between items-center mb-6">
-            <div>
-              <h3 className="font-bold text-xl text-slate-800">
-                Performance Statistics
-              </h3>
-              <p className="text-xs text-slate-400 mt-1">
-                {rawData?.currentRole === "REQUESTER"
-                  ? "Viewing your activity as a task requester."
-                  : "Viewing your activity as a task performer."}
-              </p>
-            </div>
-            <div className="flex gap-2">
-              <span
-                className={`text-[10px] px-3 py-1 rounded-full font-black uppercase tracking-widest border ${
-                  rawData?.currentRole === "REQUESTER"
-                    ? "bg-orange-50 text-orange-600 border-orange-100"
-                    : "bg-blue-50 text-blue-600 border-blue-100"
-                }`}
-              >
-                {rawData?.currentRole} Mode
-              </span>
-            </div>
-          </div>
-          <StatsManagement data={rawData} />
+        {/* STATS */}
+        <section className="bg-white p-8 rounded-3xl shadow-sm">
+          <h3 className="text-xl font-bold">Performance Statistics</h3>
+
+          <StatsManagement data={user} />
         </section>
 
-        {/* Portfolio Section */}
+        {/* WORK HISTORY */}
+        <section className="bg-white p-8 rounded-3xl shadow-sm">
+          <div className="flex justify-between mb-6">
+            <h3 className="text-xl font-bold">
+              Work History & Portfolio
+            </h3>
 
-        {/* Work History Section - Only visible/more prominent for Performers */}
-        <section className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100">
-          <div className="flex justify-between items-center mb-6">
-            <div>
-              <h3 className="font-bold text-xl text-slate-800">
-                Work History & Portfolio
-              </h3>
-              <p className="text-xs text-slate-400 mt-1">
-                Showcase your best completed tasks.
-              </p>
-            </div>
-            {/* 3. ATTACH THE ADD FUNCTION HERE */}
             <button
               onClick={addNewProject}
-              className="text-blue-600 bg-blue-50 hover:bg-blue-100 px-5 py-2.5 rounded-xl text-sm font-bold transition-colors"
+              className="text-blue-600 font-bold"
             >
-              + Add New Case Study
+              + Add Case Study
             </button>
           </div>
-          {/* 4. PASS DATA AND SETTER TO COMPONENT */}
-          <WorkHistory data={projects} setData={setProjects} />
+
+          <WorkHistory
+            data={projects}
+            setData={setProjects}
+          />
         </section>
 
-        {/* Only Performers need to showcase specific skills/specializations */}
-        {rawData?.currentRole === "PERFORMER" && (
-          <section className="animate-in fade-in duration-500">
-            <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100">
-              <div className="flex justify-between items-center mb-6">
-                <div>
-                  <h3 className="font-bold text-xl text-slate-800">
-                    Expertise & Skills
-                  </h3>
-                  <p className="text-xs text-slate-400 mt-1">
-                    These tags help you match with the right tasks.
-                  </p>
-                </div>
-              </div>
-              <Specializations data={rawData?.specializations} />
-            </div>
+        {/* SKILLS */}
+        {(user?.currentRole || user?.role) === "PERFORMER" && (
+          <section className="bg-white p-8 rounded-3xl shadow-sm">
+            <h3 className="text-xl font-bold">
+              Expertise & Skills
+            </h3>
+
+            <Specializations data={user.specializations} />
           </section>
         )}
       </div>
