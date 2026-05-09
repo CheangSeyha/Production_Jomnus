@@ -1,7 +1,7 @@
-// src/app/(protected)/(admin)/layout.tsx
+"use client";
 
 import type { ReactNode } from "react";
-import Footer from "@/components/dashboard/footer";
+import { useState } from "react";
 import Sidebar from "@/components/dashboard/sidebar";
 import Navbar from "@/components/dashboard/header";
 
@@ -10,16 +10,22 @@ type AdminLayoutProps = {
 };
 
 export default function AdminLayout({ children }: AdminLayoutProps) {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
   return (
-    <div className="flex h-screen w-full flex-col bg-white">
-      <Navbar role="admin" />
+    <div className="flex h-screen w-full flex-col bg-slate-50/50">
+      <Navbar role="admin" onMenuClick={() => setIsSidebarOpen(true)} />
 
-      <div className="flex flex-1 min-h-0 overflow-hidden">
-        <div className="flex-shrink-0 border-r border-slate-100">
-          <Sidebar role="admin" />
-        </div>
+      <div className="flex flex-1 min-h-0 overflow-hidden relative">
+        <Sidebar 
+          role="admin" 
+          isOpen={isSidebarOpen} 
+          onClose={() => setIsSidebarOpen(false)} 
+        />
 
-        <main className="min-w-0 flex-1 overflow-y-auto p-6">{children}</main>
+        <main className="min-w-0 flex-1 overflow-y-auto overflow-x-hidden p-4">
+          {children}
+        </main>
       </div>
     </div>
   );

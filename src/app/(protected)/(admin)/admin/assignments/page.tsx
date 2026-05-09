@@ -2,7 +2,20 @@
 
 import { useEffect, useState } from "react";
 import { adminService } from "@/services/adminService";
-import { Layers, Clock, CheckCircle, AlertCircle } from "lucide-react";
+import {
+  Layers,
+  Clock,
+  CheckCircle2,
+  AlertCircle,
+  SlidersHorizontal,
+  ArrowUpDown,
+  Plus,
+  Eye,
+  ChevronLeft,
+  ChevronRight,
+  BadgeCheck,
+  XCircle,
+} from "lucide-react";
 
 interface Assignment {
   id: number;
@@ -11,6 +24,8 @@ interface Assignment {
   status?: string;
   startDate?: string;
   dueDate?: string;
+  task?: { title: string; category?: string };
+  performer?: { fullName: string; email: string; tier?: string };
 }
 
 interface PaginatedAssignments {
@@ -24,15 +39,13 @@ export default function AdminAssignmentsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
+  const LIMIT = 15;
 
   useEffect(() => {
     const fetchAssignments = async () => {
       try {
         setLoading(true);
-        const data = await adminService.getAssignments({
-          page,
-          limit: 15,
-        });
+        const data = await adminService.getAssignments({ page, limit: LIMIT });
         setAssignments(data);
         setError(null);
       } catch (err) {
@@ -42,7 +55,6 @@ export default function AdminAssignmentsPage() {
         setLoading(false);
       }
     };
-
     fetchAssignments();
   }, [page]);
 
@@ -50,168 +62,192 @@ export default function AdminAssignmentsPage() {
     total: assignments?.total || 0,
     inProgress: assignments?.data.filter((a) => a.status === "IN_PROGRESS").length || 0,
     completed: assignments?.data.filter((a) => a.status === "COMPLETED").length || 0,
-    pending: assignments?.data.filter((a) => a.status === "PENDING").length || 0,
+    verified: assignments?.data.filter((a) => a.status === "VERIFIED").length || 0,
   };
 
-  const getStatusIcon = (status?: string) => {
+  const totalPages = Math.max(1, Math.ceil((assignments?.total || 0) / LIMIT));
+
+  const getStatusStyle = (status?: string) => {
     switch (status) {
-      case "COMPLETED":
-        return <CheckCircle className="w-5 h-5 text-green-600" />;
-      case "IN_PROGRESS":
-        return <Clock className="w-5 h-5 text-blue-600" />;
-      case "PENDING":
-        return <AlertCircle className="w-5 h-5 text-yellow-600" />;
-      default:
-        return <Layers className="w-5 h-5 text-gray-600" />;
+      case "COMPLETED": return { dot: "bg-green-500",  pill: "bg-green-100 text-green-700" };
+      case "IN_PROGRESS": return { dot: "bg-blue-500", pill: "bg-blue-100 text-blue-700" };
+      case "ASSIGNED":    return { dot: "bg-slate-400", pill: "bg-slate-100 text-slate-600" };
+      case "VERIFIED":    return { dot: "bg-violet-500", pill: "bg-violet-100 text-violet-700" };
+      default:            return { dot: "bg-slate-300", pill: "bg-slate-100 text-slate-500" };
     }
   };
 
-  const getStatusColor = (status?: string) => {
-    switch (status) {
-      case "COMPLETED":
-        return "bg-green-100 text-green-800";
-      case "IN_PROGRESS":
-        return "bg-blue-100 text-blue-800";
-      case "PENDING":
-        return "bg-yellow-100 text-yellow-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
+  const getInitials = (name?: string, id?: number) => {
+    if (name) return name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
+    return `P${id ?? "?"}`;
   };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">
-          Assignments Management
-        </h1>
-        <p className="text-gray-600 mt-2">
-          Track all task assignments and their progress
-        </p>
-      </div>
+    <div className="min-h-screen space-y-8 max-w-[1400px] mx-auto">
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-600 text-sm">Total Assignments</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
-            </div>
-            <Layers className="w-8 h-8 text-gray-600" />
-          </div>
+      {/* ── Header ── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="space-y-1">
+          <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight">
+            Assignments Tracking
+          </h1>
+          <p className="text-slate-500 text-sm font-medium max-w-md leading-relaxed">
+            Monitor real-time status of work distributions, manage performer
+            progress, and verify completed milestones.
+          </p>
         </div>
-        <div className="bg-white rounded-lg border border-blue-200 p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-600 text-sm">In Progress</p>
-              <p className="text-2xl font-bold text-blue-600">{stats.inProgress}</p>
+
+        {/* Stats mini-cards */}
+        <div className="flex items-center gap-3 flex-shrink-0">
+          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm px-5 py-3.5 flex items-center gap-3">
+            <div className="p-2 bg-blue-50 rounded-xl">
+              <Clock className="w-5 h-5 text-blue-600" />
             </div>
-            <Clock className="w-8 h-8 text-blue-600" />
+            <div>
+              <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400">In Progress</p>
+              <p className="text-xl font-extrabold text-slate-900 leading-none mt-0.5">{stats.inProgress}</p>
+            </div>
           </div>
-        </div>
-        <div className="bg-white rounded-lg border border-green-200 p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-600 text-sm">Completed</p>
-              <p className="text-2xl font-bold text-green-600">{stats.completed}</p>
+          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm px-5 py-3.5 flex items-center gap-3">
+            <div className="p-2 bg-orange-50 rounded-xl">
+              <BadgeCheck className="w-5 h-5 text-orange-500" />
             </div>
-            <CheckCircle className="w-8 h-8 text-green-600" />
-          </div>
-        </div>
-        <div className="bg-white rounded-lg border border-yellow-200 p-4">
-          <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-600 text-sm">Pending</p>
-              <p className="text-2xl font-bold text-yellow-600">{stats.pending}</p>
+              <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400">Verified Today</p>
+              <p className="text-xl font-extrabold text-slate-900 leading-none mt-0.5">{stats.verified}</p>
             </div>
-            <AlertCircle className="w-8 h-8 text-yellow-600" />
           </div>
         </div>
       </div>
 
+      {/* ── Error ── */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
+        <div className="bg-red-50 border border-red-200 rounded-2xl p-4 text-red-700 text-sm font-medium flex items-center gap-3">
+          <AlertCircle className="w-5 h-5 flex-shrink-0" />
           {error}
         </div>
       )}
 
+      {/* ── Loading ── */}
       {loading && (
-        <div className="flex items-center justify-center h-96">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="flex items-center justify-center h-72">
+          <div className="animate-spin rounded-full h-14 w-14 border-4 border-blue-100 border-t-blue-600" />
         </div>
       )}
 
+      {/* ── Table ── */}
       {!loading && (
-        <>
-          <div className="overflow-x-auto bg-white rounded-lg shadow-sm border border-gray-200">
-            <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700">
-                    ID
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700">
-                    Task ID
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700">
-                    Performer
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700">
-                    Start Date
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700">
-                    Due Date
-                  </th>
+        <div className="bg-white rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden">
+          {/* Toolbar */}
+          <div className="flex items-center justify-between px-8 py-5 border-b border-slate-100">
+            <div className="flex items-center gap-2">
+              <button className="px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-100 text-xs font-extrabold text-slate-600 flex items-center gap-2 hover:bg-slate-100 transition-colors">
+                <SlidersHorizontal className="w-3.5 h-3.5" />
+                Filter
+              </button>
+              <button className="px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-100 text-xs font-extrabold text-slate-600 flex items-center gap-2 hover:bg-slate-100 transition-colors">
+                <ArrowUpDown className="w-3.5 h-3.5" />
+                Sort
+              </button>
+            </div>
+            <button className="px-5 py-2.5 rounded-xl bg-blue-600 text-white text-xs font-extrabold flex items-center gap-2 hover:bg-blue-700 transition-colors shadow-sm">
+              <Plus className="w-4 h-4" />
+              New Assignment
+            </button>
+          </div>
+
+          {/* Table */}
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-slate-50/50 border-b border-slate-100">
+                  {["Task Name & ID", "Performer", "Status", "Verified", "Actions"].map((h) => (
+                    <th
+                      key={h}
+                      className="px-8 py-4 text-[11px] font-extrabold text-slate-400 uppercase tracking-[0.15em]"
+                    >
+                      {h}
+                    </th>
+                  ))}
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-slate-50">
                 {assignments && assignments.data.length > 0 ? (
-                  assignments.data.map((assignment) => (
-                    <tr
-                      key={assignment.id}
-                      className="border-b border-gray-200 hover:bg-gray-50"
-                    >
-                      <td className="px-6 py-4 text-sm font-medium text-gray-900">
-                        #{assignment.id}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-600">
-                        {assignment.taskId || "—"}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-600">
-                        {assignment.performerId || "—"}
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center space-x-2">
-                          {getStatusIcon(assignment.status)}
-                          <span
-                            className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(
-                              assignment.status
-                            )}`}
-                          >
-                            {assignment.status || "UNKNOWN"}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-600">
-                        {assignment.startDate
-                          ? new Date(assignment.startDate).toLocaleDateString()
-                          : "—"}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-600">
-                        {assignment.dueDate
-                          ? new Date(assignment.dueDate).toLocaleDateString()
-                          : "—"}
-                      </td>
-                    </tr>
-                  ))
+                  assignments.data.map((a) => {
+                    const style = getStatusStyle(a.status);
+                    const isVerified = a.status === "COMPLETED" || a.status === "VERIFIED";
+                    return (
+                      <tr key={a.id} className="hover:bg-slate-50/30 transition-colors group">
+                        {/* Task Name & ID */}
+                        <td className="px-8 py-6">
+                          <p className="text-sm font-extrabold text-slate-900 leading-snug max-w-[200px]">
+                            {a.task?.title || `Task #${a.taskId ?? a.id}`}
+                          </p>
+                          <p className="text-xs text-slate-400 font-medium mt-0.5">
+                            #TSK-{String(a.taskId ?? a.id).padStart(5, "0")}
+                          </p>
+                        </td>
+
+                        {/* Performer */}
+                        <td className="px-8 py-6">
+                          <div className="flex items-center gap-3">
+                            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-slate-200 to-slate-400 flex items-center justify-center text-xs font-extrabold text-white flex-shrink-0 border border-slate-100 shadow-sm">
+                              {getInitials(a.performer?.fullName, a.performerId)}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-sm font-extrabold text-slate-900 truncate">
+                                {a.performer?.fullName || `Performer #${a.performerId ?? a.id}`}
+                              </p>
+                              {a.performer?.tier && (
+                                <span className="inline-block mt-0.5 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-blue-50 text-blue-600 uppercase tracking-wider">
+                                  {a.performer.tier}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+
+                        {/* Status */}
+                        <td className="px-8 py-6">
+                          <div className="flex items-center gap-2">
+                            <span className={`w-2 h-2 rounded-full flex-shrink-0 ${style.dot}`} />
+                            <span className={`px-3 py-1.5 rounded-full text-[11px] font-extrabold uppercase tracking-wider ${style.pill}`}>
+                              {a.status?.replace("_", " ") || "UNKNOWN"}
+                            </span>
+                          </div>
+                        </td>
+
+                        {/* Verified */}
+                        <td className="px-8 py-6">
+                          {isVerified ? (
+                            <div className="flex items-center gap-2 text-orange-500">
+                              <BadgeCheck className="w-5 h-5" />
+                              <span className="text-sm font-extrabold">Yes</span>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2 text-slate-400">
+                              <XCircle className="w-5 h-5" />
+                              <span className="text-sm font-bold text-slate-400">
+                                Pending completion
+                              </span>
+                            </div>
+                          )}
+                        </td>
+
+                        {/* Actions */}
+                        <td className="px-8 py-6">
+                          <button className="p-2 rounded-xl text-blue-500 hover:bg-blue-50 transition-colors" title="View">
+                            <Eye className="w-4 h-4" />
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })
                 ) : (
                   <tr>
-                    <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
-                      No assignments to display
+                    <td colSpan={5} className="px-8 py-16 text-center">
+                      <Layers className="w-12 h-12 text-slate-200 mx-auto mb-3" />
+                      <p className="text-slate-400 font-semibold text-sm">No assignments to display</p>
                     </td>
                   </tr>
                 )}
@@ -219,30 +255,49 @@ export default function AdminAssignmentsPage() {
             </table>
           </div>
 
-          {assignments && assignments.total > 0 && (
-            <div className="flex items-center justify-between">
-              <p className="text-sm text-gray-600">
-                Page {page} of {Math.ceil((assignments.total || 0) / 15)}
-              </p>
-              <div className="flex space-x-2">
+          {/* Pagination Footer */}
+          <div className="flex items-center justify-between px-8 py-5 border-t border-slate-100 bg-slate-50/40">
+            <p className="text-sm text-slate-500 font-semibold">
+              Showing 1-{assignments?.data.length ?? 0} of {assignments?.total ?? 0} results
+            </p>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setPage(Math.max(1, page - 1))}
+                disabled={page === 1}
+                className="w-9 h-9 rounded-xl border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-white disabled:opacity-40 transition-all"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              {[1, 2, 3].map((p) => (
                 <button
-                  onClick={() => setPage(Math.max(1, page - 1))}
-                  disabled={page === 1}
-                  className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                  key={p}
+                  onClick={() => setPage(p)}
+                  className={`w-9 h-9 rounded-xl text-sm font-extrabold transition-all ${
+                    page === p ? "bg-blue-600 text-white shadow-md" : "border border-slate-200 text-slate-600 hover:bg-white"
+                  }`}
                 >
-                  Previous
+                  {p}
                 </button>
+              ))}
+              {totalPages > 3 && <span className="text-slate-400 font-bold px-1">…</span>}
+              {totalPages > 3 && (
                 <button
-                  onClick={() => setPage(page + 1)}
-                  disabled={page >= Math.ceil((assignments.total || 0) / 15)}
-                  className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                  onClick={() => setPage(totalPages)}
+                  className="w-9 h-9 rounded-xl text-sm font-extrabold border border-slate-200 text-slate-600 hover:bg-white transition-all"
                 >
-                  Next
+                  {totalPages}
                 </button>
-              </div>
+              )}
+              <button
+                onClick={() => setPage(Math.min(totalPages, page + 1))}
+                disabled={page >= totalPages}
+                className="w-9 h-9 rounded-xl border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-white disabled:opacity-40 transition-all"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
             </div>
-          )}
-        </>
+          </div>
+        </div>
       )}
     </div>
   );

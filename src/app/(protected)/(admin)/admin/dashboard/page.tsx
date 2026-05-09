@@ -18,9 +18,17 @@ import {
   Users,
   FileText,
   CheckCircle,
+  CheckCircle2,
   TrendingUp,
   Filter,
   Calendar,
+  ChevronRight,
+  ArrowUpRight,
+  MoreVertical,
+  Layers,
+  FilePlus2,
+  ShieldCheck,
+  Trophy,
 } from "lucide-react";
 
 interface DashboardStats {
@@ -186,40 +194,75 @@ export default function AdminDashboardPage() {
   const getActivityIcon = (type: string) => {
     switch (type) {
       case "Assignment":
-        return "📌";
+        return (
+          <div className="p-2.5 rounded-xl bg-orange-50 text-orange-500">
+            <Layers size={18} />
+          </div>
+        );
       case "New Task":
-        return "📝";
+        return (
+          <div className="p-2.5 rounded-xl bg-violet-50 text-violet-500">
+            <FilePlus2 size={18} />
+          </div>
+        );
       case "Verification":
-        return "✓";
+        return (
+          <div className="p-2.5 rounded-xl bg-blue-50 text-blue-500">
+            <ShieldCheck size={18} />
+          </div>
+        );
       case "Completed":
-        return "🎉";
+        return (
+          <div className="p-2.5 rounded-xl bg-slate-100 text-slate-500">
+            <Trophy size={18} />
+          </div>
+        );
       default:
-        return "📋";
+        return (
+          <div className="p-2.5 rounded-xl bg-slate-50 text-slate-400">
+            <FileText size={18} />
+          </div>
+        );
+    }
+  };
+
+  const getStatusBadgeStyle = (status: string) => {
+    switch (status) {
+      case "IN_PROGRESS":
+        return "bg-blue-100 text-blue-700";
+      case "PENDING":
+        return "bg-amber-100 text-amber-700";
+      case "URGENT":
+        return "bg-rose-100 text-rose-700";
+      case "ARCHIVED":
+        return "bg-slate-100 text-slate-700";
+      default:
+        return "bg-slate-100 text-slate-700";
     }
   };
 
   return (
-    <div className="min-h-screen  bg-gradient-to-br from-slate-50 to-slate-100 p-6 space-y-8">
+    <div className="min-h-screen p-4 space-y-8 max-w-[1600px] mx-auto">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-4xl font-bold text-gray-900">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-8">
+        <div className="space-y-1">
+          <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">
             Dashboard Overview
           </h1>
-          <p className="text-gray-600 mt-2">
+          <p className="max-w-xl text-slate-500 text-sm font-medium leading-relaxed">
             Real-time system performance and user engagement metrics for
             TaskExchange.
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex bg-white p-1 rounded-xl shadow-sm border border-slate-200 w-fit">
           {(["Daily", "Weekly", "Monthly"] as const).map((frame) => (
             <button
               key={frame}
               onClick={() => setTimeFrame(frame)}
-              className={`px-4 py-2 rounded-lg font-medium transition-all ${
+              className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-all ${
                 timeFrame === frame
-                  ? "bg-blue-600 text-white shadow-lg"
-                  : "bg-white text-gray-700 hover:bg-gray-50"
+                  ? "bg-blue-600 text-white shadow-md"
+                  : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
               }`}
             >
               {frame}
@@ -243,36 +286,39 @@ export default function AdminDashboardPage() {
       {!loading && !error && (
         <>
           {/* Metrics Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {metrics.map((metric, index) => {
               const Icon = metric.icon;
               return (
                 <div
                   key={index}
-                  className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-all duration-300 hover:-translate-y-1"
+                  className="bg-white rounded-[2rem] p-6 border border-slate-100 shadow-sm hover:shadow-md transition-all relative overflow-hidden group"
                 >
-                  <div className="flex items-start justify-between mb-4">
-                    <div className={`${metric.color} p-3 rounded-lg`}>
-                      <Icon className={`${metric.textColor} w-6 h-6`} />
+                  <div className="flex items-start justify-between relative z-10">
+                    <div className="p-3 rounded-2xl bg-blue-50 text-blue-600 border border-blue-100/50">
+                      <Icon className="w-6 h-6" />
                     </div>
+                  </div>
+
+                  <div className="mt-8 space-y-1 relative z-10">
+                    <p className="text-slate-500 text-sm font-semibold tracking-tight">
+                      {metric.label}
+                    </p>
+                    <p className="text-4xl font-extrabold text-slate-900 tracking-tighter">
+                      {metric.value.toLocaleString()}
+                    </p>
+                  </div>
+
+                  {/* Circle Overlay Decoration */}
+                  <div className="absolute -top-6 -right-6 w-36 h-36 bg-blue-100/50 rounded-full flex items-center justify-center pt-6 pr-6 transition-transform group-hover:scale-110">
                     <span
-                      className={`text-sm font-bold ${
-                        metric.trend === "up"
-                          ? "text-green-600"
-                          : metric.trend === "down"
-                            ? "text-red-600"
-                            : "text-gray-600"
+                      className={`text-[13px] font-bold tracking-tight ${
+                        metric.trend === "up" ? "text-blue-600" : "text-slate-600"
                       }`}
                     >
                       {metric.change}
                     </span>
                   </div>
-                  <p className="text-gray-600 text-sm font-medium">
-                    {metric.label}
-                  </p>
-                  <p className="text-3xl font-bold text-gray-900 mt-2">
-                    {metric.value.toLocaleString()}
-                  </p>
                 </div>
               );
             })}
@@ -281,112 +327,118 @@ export default function AdminDashboardPage() {
           {/* Charts Section */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Tasks Velocity Chart */}
-            <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-lg font-semibold text-gray-900">
+            <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200/60 shadow-sm p-6 sm:p-8">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+                <h2 className="text-lg font-bold text-slate-900">
                   Tasks Velocity
                 </h2>
-                <div className="flex gap-3">
+                <div className="flex items-center gap-6">
                   <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-                    <span className="text-sm text-gray-600">Tasks Created</span>
+                    <div className="w-2.5 h-2.5 rounded-full bg-blue-600"></div>
+                    <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                      Tasks Created
+                    </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-gray-400"></div>
-                    <span className="text-sm text-gray-600">Average Goal</span>
+                    <div className="w-2.5 h-2.5 rounded-full bg-slate-300"></div>
+                    <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                      Average Goal
+                    </span>
                   </div>
                 </div>
               </div>
-              <ResponsiveContainer width="100%" height={300}>
-                <AreaChart data={tasksVelocityData}>
-                  <defs>
-                    <linearGradient
-                      id="colorCreated"
-                      x1="0"
-                      y1="0"
-                      x2="0"
-                      y2="1"
-                    >
-                      <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#3B82F6" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis dataKey="day" stroke="#9CA3AF" />
-                  <YAxis stroke="#9CA3AF" />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "#fff",
-                      border: "1px solid #e5e7eb",
-                      borderRadius: "8px",
-                    }}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="created"
-                    stroke="#3B82F6"
-                    strokeWidth={2}
-                    fillOpacity={1}
-                    fill="url(#colorCreated)"
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
+              <div className="h-[390px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={tasksVelocityData}>
+                    <defs>
+                      <linearGradient id="colorCreated" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#2563eb" stopOpacity={0.1} />
+                        <stop offset="95%" stopColor="#2563eb" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid vertical={false} stroke="#f1f5f9" strokeDasharray="0" />
+                    <XAxis
+                      dataKey="day"
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fill: "#94a3b8", fontSize: 10, fontWeight: 600 }}
+                      dy={10}
+                    />
+                    <YAxis
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fill: "#94a3b8", fontSize: 10, fontWeight: 600 }}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: "#fff",
+                        border: "1px solid #e2e8f0",
+                        borderRadius: "12px",
+                        boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)",
+                        fontSize: "12px",
+                        fontWeight: 600,
+                      }}
+                    />
+                    <Area
+                      type="step"
+                      dataKey="created"
+                      stroke="#2563eb"
+                      strokeWidth={3}
+                      fillOpacity={1}
+                      fill="url(#colorCreated)"
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
             </div>
 
             {/* User Growth Chart */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-6">
-                User Growth
-              </h2>
-              <p className="text-sm text-gray-600 mb-4">
-                Comparison of new registrations vs churn rates this week:
+            <div className="bg-[#0052CC] rounded-[2rem] shadow-xl p-8 sm:p-10 text-white flex flex-col">
+              <h2 className="text-xl font-bold tracking-tight">User Growth</h2>
+              <p className="text-blue-100 text-sm mt-2 mb-10 opacity-70">
+                Comparison of new registrations vs churn rates this week.
               </p>
-              <ResponsiveContainer width="100%" height={250}>
-                <BarChart
-                  data={userGrowthData}
-                  layout="vertical"
-                  margin={{ top: 5, right: 30, left: 100 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis type="number" stroke="#9CA3AF" />
-                  <YAxis dataKey="name" type="category" stroke="#9CA3AF" />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "#fff",
-                      border: "1px solid #e5e7eb",
-                      borderRadius: "8px",
-                    }}
-                  />
-                  <Bar dataKey="value" fill="#3B82F6" radius={[0, 8, 8, 0]}>
-                    {userGrowthData.map((entry, index) => (
-                      <Cell
-                        key={`cell-${index}`}
-                        fill={
-                          index === 0
-                            ? COLORS.designer
-                            : index === 1
-                              ? COLORS.developer
-                              : COLORS.writer
-                        }
+
+              <div className="space-y-8 flex-1">
+                {userGrowthData.map((item) => (
+                  <div key={item.name} className="space-y-3">
+                    <div className="flex justify-between text-[11px] font-bold uppercase tracking-[0.1em] opacity-90">
+                      <span>{item.name}</span>
+                      <span>{item.value}%</span>
+                    </div>
+                    <div className="h-2.5 bg-blue-800/40 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-white rounded-full shadow-[0_0_8px_rgba(255,255,255,0.4)]"
+                        style={{ width: `${item.value}%` }}
                       />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-10 p-5 bg-white/10 rounded-2xl border border-white/10 backdrop-blur-sm">
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-blue-200">
+                  Key Insight
+                </p>
+                <p className="text-sm mt-3 font-medium leading-relaxed italic opacity-90">
+                  "Developer registrations are at an all-time high, increasing by
+                  14% since Monday."
+                </p>
+              </div>
             </div>
           </div>
 
           {/* Bottom Section */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* New Registrations */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-lg font-semibold text-gray-900">
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-bold text-slate-900">
                   New Registrations
                 </h2>
                 <a
                   href="#"
-                  className="text-blue-600 text-sm font-medium hover:text-blue-700"
+                  className="text-blue-600 text-xs font-bold uppercase tracking-wider hover:text-blue-700"
                 >
                   View All
                 </a>
@@ -395,72 +447,108 @@ export default function AdminDashboardPage() {
                 {newRegistrations.map((user, index) => (
                   <div
                     key={index}
-                    className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+                    className="flex items-center gap-4 p-4 bg-white rounded-2xl border border-slate-200/60 shadow-sm hover:shadow-md transition-all cursor-pointer group"
                   >
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-xs font-bold">
-                      {user.avatar}
+                    <div className="relative">
+                      <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-slate-100">
+                        <img
+                          src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user.name}`}
+                          alt={user.name}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900">
+                      <p className="text-sm font-bold text-slate-900 truncate">
                         {user.name}
                       </p>
-                      <p className="text-xs text-gray-600">{user.role}</p>
+                      <p className="text-[11px] text-slate-500 font-medium uppercase tracking-wider">
+                        {user.role} • {user.time}
+                      </p>
                     </div>
-                    <p className="text-xs text-gray-500 whitespace-nowrap">
-                      {user.time}
-                    </p>
+                    <ChevronRight size={18} className="text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity" />
                   </div>
                 ))}
               </div>
             </div>
 
             {/* Ongoing Activity */}
-            <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-6">
-                Ongoing Activity Feed
-              </h2>
-              <div className="space-y-3">
-                {ongoingActivity.map((activity, index) => (
-                  <div
-                    key={index}
-                    className={`flex items-start gap-4 p-4 rounded-lg border transition-colors ${getStatusColor(
-                      activity.status,
-                    )}`}
-                  >
-                    <span className="text-2xl flex-shrink-0">
-                      {getActivityIcon(activity.type)}
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <p className="font-medium text-gray-900 text-sm">
-                            {activity.title}
-                          </p>
-                          <p className="text-xs text-gray-600 mt-1">
-                            {activity.user}
-                          </p>
-                        </div>
-                        {activity.value && (
-                          <span className="text-sm font-semibold text-gray-900 flex-shrink-0">
-                            {activity.value}
-                          </span>
-                        )}
-                      </div>
-                      <div className="mt-2 inline-block">
-                        <span className="text-xs font-medium px-2 py-1 rounded bg-white bg-opacity-50">
-                          {activity.status}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+            <div className="lg:col-span-2 space-y-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-bold text-slate-900">
+                  Ongoing Activity Feed
+                </h2>
+                <a
+                  href="#"
+                  className="text-blue-600 text-xs font-bold uppercase tracking-wider hover:text-blue-700"
+                >
+                  Download Report
+                </a>
               </div>
-              <a
-                href="#"
-                className="text-blue-600 text-sm font-medium hover:text-blue-700 mt-4 block"
-              >
-                Download Report →
-              </a>
+              <div className="bg-white rounded-2xl border border-slate-200/60 shadow-sm overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="bg-slate-50/80 border-b border-slate-200/60">
+                        <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                          Context
+                        </th>
+                        <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                          Action / Task
+                        </th>
+                        <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                          Status
+                        </th>
+                        <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                          Value
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {ongoingActivity.map((activity, index) => (
+                        <tr
+                          key={index}
+                          className="hover:bg-slate-50/40 transition-colors group border-b border-slate-50 last:border-0"
+                        >
+                          <td className="px-6 py-6">
+                            <div className="flex items-center gap-4">
+                              {getActivityIcon(activity.type)}
+                              <span className="text-sm font-bold text-slate-700">
+                                {activity.type}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-6">
+                            <div className="max-w-xs">
+                              <p className="text-sm font-extrabold text-slate-900 line-clamp-1 tracking-tight">
+                                {activity.title}
+                              </p>
+                              <p className="text-xs text-slate-500 mt-1 font-medium">
+                                {activity.user}
+                              </p>
+                            </div>
+                          </td>
+                          <td className="px-6 py-6">
+                            <span
+                              className={`px-3 py-1.5 rounded-full text-[10px] font-extrabold uppercase tracking-widest ${getStatusBadgeStyle(
+                                activity.status,
+                              )}`}
+                            >
+                              {activity.status.replace("_", " ")}
+                            </span>
+                          </td>
+                          <td className="px-6 py-6">
+                            <span className="text-base font-extrabold text-slate-900 tabular-nums">
+                              {activity.value || "--"}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             </div>
           </div>
         </>

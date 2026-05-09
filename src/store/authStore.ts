@@ -46,24 +46,33 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const storedToken = localStorage.getItem("access_token");
       const storedUser = localStorage.getItem("user_data");
 
-      if (storedToken && storedUser) {
-        try {
-          const user = JSON.parse(storedUser);
-          set({
-            user,
-            accessToken: storedToken,
-            isInitialized: true,
-          });
-        } catch (error) {
-          console.error("Failed to restore session:", error);
-          localStorage.removeItem("access_token");
-          localStorage.removeItem("user_data");
-          localStorage.removeItem("user_role");
-          set({ isInitialized: true });
+      if (storedToken) {
+        // First, quickly restore from localStorage to show something immediately
+        if (storedUser) {
+          try {
+            const user = JSON.parse(storedUser);
+            set({ user, accessToken: storedToken });
+          } catch (e) {}
         }
-      } else {
-        set({ isInitialized: true });
+
+        // Then, fetch fresh data from backend to ensure latest sync (image, name, etc.)
+        try {
+          const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api"}/auth/profile`, {
+            headers: { Authorization: `Bearer ${storedToken}` }
+          });
+          
+          if (response.ok) {
+            const freshUser = await response.json();
+            localStorage.setItem("user_data", JSON.stringify(freshUser));
+            set({ user: freshUser, accessToken: storedToken, isInitialized: true });
+            return;
+          }
+        } catch (error) {
+          console.warn("Failed to refresh session from backend, staying with local data.");
+        }
       }
+      
+      set({ isInitialized: true });
     }
   },
 

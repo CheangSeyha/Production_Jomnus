@@ -75,8 +75,8 @@ export default function Sidebar({ role, isOpen = false, onClose }: Props) {
         className={`
           fixed md:static
           top-0 left-0 bottom-0
-          w-64 md:w-72
-          bg-white border-r border-slate-200/80
+          w-64 md:w-80
+          bg-white border-r border-slate-200/60
           z-40
           flex flex-col
           transform transition-all duration-300 ease-out
@@ -96,7 +96,7 @@ export default function Sidebar({ role, isOpen = false, onClose }: Props) {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto px-2 py-4 md:py-6 space-y-1">
+        <nav className="flex-1 overflow-y-auto px-4 py-6 space-y-1">
           {items.map((item) => {
             const isActive = pathname.startsWith(item.href);
 
@@ -106,29 +106,26 @@ export default function Sidebar({ role, isOpen = false, onClose }: Props) {
                 href={item.href}
                 onClick={onClose}
                 className={`
-                  group relative flex items-center gap-3 
-                  rounded-lg px-3 py-2.5 transition-all duration-200
+                  group flex items-center gap-4 
+                  rounded-xl px-4 py-3.5 transition-all duration-200
                   ${
                     isActive
-                      ? "bg-blue-500 text-white shadow-md hover:shadow-lg"
-                      : "text-slate-700 hover:text-slate-900 hover:bg-slate-100"
+                      ? "bg-blue-50/80 text-blue-600"
+                      : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
                   }
                 `}
               >
-                {isActive && (
-                  <div className="absolute -left-2 top-1/2 -translate-y-1/2 w-1.5 h-6 bg-blue-400 rounded-r-full" />
-                )}
                 <item.icon
-                  size={20}
+                  size={22}
                   className={`flex-shrink-0 transition-all ${
                     isActive
-                      ? "text-white"
-                      : "text-slate-400 group-hover:text-blue-500"
+                      ? "text-blue-600"
+                      : "text-slate-400 group-hover:text-slate-600"
                   }`}
                 />
                 <span
-                  className={`text-sm font-medium transition-all ${
-                    isActive ? "text-white" : "text-slate-700"
+                  className={`text-base font-medium transition-all ${
+                    isActive ? "text-blue-600" : "text-slate-600"
                   }`}
                 >
                   {item.name}
@@ -139,20 +136,20 @@ export default function Sidebar({ role, isOpen = false, onClose }: Props) {
         </nav>
 
         {/* Logout Button */}
-        <div className="p-4 border-t border-slate-200/80">
+        <div className="p-6 mt-auto">
           <button
             onClick={handleLogout}
             className="
-            group flex w-full items-center gap-3 px-3 py-2.5
-            text-red-600 hover:bg-red-50/50 rounded-lg
-            transition-all duration-200 font-medium text-sm
+            group flex items-center gap-4 px-4 py-4
+            text-red-500 hover:bg-red-50 rounded-2xl
+            transition-all duration-200 font-bold text-base w-full
             "
           >
             <LogOut
-              size={20}
-              className="flex-shrink-0 group-hover:translate-x-0.5 transition-transform"
+              size={22}
+              className="flex-shrink-0"
             />
-            <span>Sign Out</span>
+            <span>Log Out</span>
           </button>
         </div>
       </aside>
