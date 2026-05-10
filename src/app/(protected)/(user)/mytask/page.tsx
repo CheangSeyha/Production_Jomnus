@@ -6,7 +6,8 @@ import React, { useState } from 'react';
 import {
     Clock,
     Upload,
-    Edit3
+    Edit3,
+    Play
 } from 'lucide-react';
 
 
@@ -14,7 +15,7 @@ export default function MyTaskPage() {
     const router = useRouter();
     const searchParams = useSearchParams();
 
-    const [activeTab, setActiveTab] = useState("IN_PROGRESS");
+    const [activeTab, setActiveTab] = useState("ASSIGNED");
 
     type MyTaskApi = {
         assignmentId: number;
@@ -148,6 +149,36 @@ export default function MyTaskPage() {
         setDetailsTask(null);
     };
 
+    const startWork = async (assignmentId: number) => {
+        const token = localStorage.getItem("access_token");
+        if (!token) return;
+
+        try {
+            const res = await fetch(`${API_BASE_URL}/assignments/${assignmentId}/start`, {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            if (!res.ok) {
+                throw new Error(`Failed to start work (${res.status})`);
+            }
+
+            setTasks((current) =>
+                current.map((task) =>
+                    task.assignmentId === assignmentId
+                        ? { ...task, status: "IN_PROGRESS" }
+                        : task,
+                ),
+            );
+            setActiveTab("IN_PROGRESS");
+        } catch (error) {
+            console.error("Error starting work:", error);
+        }
+    };
+
     const submitProof = async (assignmentId: number) => {
         const token = localStorage.getItem("access_token");
         if (!token) {
@@ -194,6 +225,14 @@ export default function MyTaskPage() {
             setProofOpenId(null);
             setProofText("");
             setProofFile(null);
+            setTasks((current) =>
+                current.map((task) =>
+                    task.assignmentId === assignmentId
+                        ? { ...task, status: "COMPLETED" }
+                        : task,
+                ),
+            );
+            setActiveTab("COMPLETED");
         } catch (error) {
             console.error("Error submitting proof:", error);
             setProofError("Unable to submit proof. Please try again.");
@@ -202,16 +241,19 @@ export default function MyTaskPage() {
         }
     };
 
-    const tabs = ['In Progress', 'Bidding', 'Completed', 'Drafts'];
-
     const normalizeStatus = (status: string) =>
         status.trim().toUpperCase().replace(/\s+/g, "_");
 
     const tabConfig = [
         {
+            key: "ASSIGNED",
+            label: "Accepted",
+            statuses: ["ASSIGNED"],
+        },
+        {
             key: "IN_PROGRESS",
             label: "In Progress",
-            statuses: ["IN_PROGRESS", "ASSIGNED"],
+            statuses: ["IN_PROGRESS"],
         },
         {
             key: "BIDDING",
@@ -320,7 +362,22 @@ export default function MyTaskPage() {
 
                                     {/* Action Buttons */}
                                     <div className="mt-auto flex flex-col gap-2">
-                                        {normalizedStatus === 'IN_PROGRESS' || normalizedStatus === 'ASSIGNED' ? (
+                                        {normalizedStatus === 'ASSIGNED' ? (
+                                            <>
+                                                <button
+                                                    onClick={() => startWork(task.assignmentId)}
+                                                    className="w-full bg-blue-600 text-white py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-blue-700 transition-colors"
+                                                >
+                                                    <Play size={18} /> I am currently doing my work
+                                                </button>
+                                                <button
+                                                    onClick={() => openDetails(task)}
+                                                    className="w-full bg-slate-200 text-slate-700 py-3 rounded-xl font-bold text-sm hover:bg-slate-300 transition-colors"
+                                                >
+                                                    View Details
+                                                </button>
+                                            </>
+                                        ) : normalizedStatus === 'IN_PROGRESS' ? (
                                             <>
                                                 <button
                                                     onClick={() => openProofForm(task.assignmentId)}

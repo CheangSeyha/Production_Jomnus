@@ -5,8 +5,6 @@ import dynamic from "next/dynamic";
 import { getTaskBadges } from "../../utils/taskBadge";
 import { getFakeInterest } from "@/utils/random";
 import { Task } from "@/types/task";
-import { useState } from "react";
-import ApplyTaskModal from "../applications/ApplyTaskModal";
 type Props = {
   task: Task;
   onOpen: (task: Task) => void;

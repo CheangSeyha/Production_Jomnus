@@ -3,15 +3,18 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
-import { ClipboardList, Plus, Search } from "lucide-react";
+import { ChevronLeft, ChevronRight, ClipboardList, Plus, Search } from "lucide-react";
 import { useTaskListStore } from "@/store/taskListStore";
 import TaskCard from "@/components/myrequest/TaskCard";
+
+const REQUESTS_PER_PAGE = 6;
 
 export default function MyRequestPage() {
   const router = useRouter();
   const { tasks, setTasks } = useTaskListStore();
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("ALL");
+  const [currentPage, setCurrentPage] = useState(1);
 
   const filteredTasks = useMemo(() => {
     let result = tasks;
@@ -41,8 +44,17 @@ export default function MyRequestPage() {
       });
     }
 
-    return result;
+    return [...result].sort(
+      (a, b) =>
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+    );
   }, [query, tasks, filter]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredTasks.length / REQUESTS_PER_PAGE));
+  const paginatedTasks = filteredTasks.slice(
+    (currentPage - 1) * REQUESTS_PER_PAGE,
+    currentPage * REQUESTS_PER_PAGE,
+  );
 
 
   useEffect(() => {
@@ -61,6 +73,16 @@ export default function MyRequestPage() {
     fetchTasks();
   }, []);
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [query, filter]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
+
 
 
   return (
@@ -75,7 +97,7 @@ export default function MyRequestPage() {
               My Requests
             </h1>
             <p className="mt-1 text-sm text-slate-500">
-              Manage your posted tasks, deadlines, and worker activity.
+              Manage your posted tasks, deadlines, and worker activity. Latest requests appear first.
             </p>
           </div>
 
@@ -118,6 +140,7 @@ export default function MyRequestPage() {
             {[
               { label: "All Tasks", value: "ALL" },
               { label: "Posted", value: "POSTED" },
+              { label: "Accepted", value: "ACCEPTED" },
               { label: "In Progress", value: "IN_PROGRESS" },
               { label: "Completed", value: "COMPLETED" },
               { label: "Cancelled", value: "CANCELLED" },
@@ -179,11 +202,39 @@ export default function MyRequestPage() {
             </p>
           </div>
         ) : (
-          <div className="grid gap-4">
-            {filteredTasks.map((task) => (
-              <TaskCard key={task.id} {...task} />
-            ))}
-          </div>
+          <>
+            <div className="grid gap-4">
+              {paginatedTasks.map((task) => (
+                <TaskCard key={task.id} {...task} />
+              ))}
+            </div>
+
+            {filteredTasks.length > REQUESTS_PER_PAGE && (
+              <div className="mt-5 flex flex-col gap-3 rounded-lg border border-slate-200 bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-sm text-slate-500">
+                  Page {currentPage} of {totalPages}
+                </p>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+                    disabled={currentPage === 1}
+                    className="inline-flex h-10 items-center gap-2 rounded-lg border border-slate-200 px-3 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    <ChevronLeft size={16} />
+                    Previous
+                  </button>
+                  <button
+                    onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+                    disabled={currentPage === totalPages}
+                    className="inline-flex h-10 items-center gap-2 rounded-lg border border-slate-200 px-3 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    Next
+                    <ChevronRight size={16} />
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

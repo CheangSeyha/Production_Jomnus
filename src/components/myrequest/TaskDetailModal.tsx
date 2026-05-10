@@ -58,9 +58,6 @@ export default function TaskDetailModal({ task, onClose }: any) {
           <p className="text-slate-600">{task.description}</p>
         </div>
 
-        <button className="mt-6 w-full py-3 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold">
-          Apply the Task
-        </button>
       </div>
     </div>
   );
