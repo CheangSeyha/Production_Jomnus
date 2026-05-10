@@ -11,14 +11,6 @@ type TaskForm = {
   longitude?: number;
   requiredWorkers?: number;
   categoryId?: number;
-
-  // Step 2
-  autoAccept?: boolean;
-  minRating?: string;
-  specialty?: string;
-  hiddenBids?: boolean;
-  minRatingRequired?: boolean;
-  allowMessaging?: boolean;
 };
 
 type TaskStore = {
@@ -39,13 +31,6 @@ export const useTaskStore = create<TaskStore>((set) => ({
     latitude: undefined,
     longitude: undefined,
     categoryId: undefined,
-
-    autoAccept: false,
-    minRating: "4.5",
-    specialty: "",
-    hiddenBids: false,
-    minRatingRequired: false,
-    allowMessaging: true,
   },
 
   setField: (field, value) =>
@@ -66,13 +51,6 @@ export const useTaskStore = create<TaskStore>((set) => ({
         longitude: undefined,
         requiredWorkers: 1,
         categoryId: undefined,
-
-        autoAccept: false,
-        minRating: "4.5",
-        specialty: "",
-        hiddenBids: false,
-        minRatingRequired: false,
-        allowMessaging: true,
       },
     }),
 }));

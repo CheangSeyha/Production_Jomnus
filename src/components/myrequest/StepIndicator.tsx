@@ -7,12 +7,11 @@ type StepIndicatorProps = {
 
 export default function StepIndicator({
   currentStep,
-  totalSteps = 3,
+  totalSteps = 2,
 }: StepIndicatorProps) {
   const steps = [
     { number: 1, label: "Task Details" },
-    { number: 2, label: "Preferences" },
-    { number: 3, label: "Review" },
+    { number: 2, label: "Review" },
   ];
 
   return (
@@ -25,7 +24,7 @@ export default function StepIndicator({
         Create a clear request so workers can understand the job quickly.
       </p>
 
-      <div className="mt-6 grid grid-cols-3 gap-3">
+      <div className="mt-6 grid grid-cols-2 gap-3">
         {steps.map((step) => (
           <div key={step.number} className="min-w-0">
             <div

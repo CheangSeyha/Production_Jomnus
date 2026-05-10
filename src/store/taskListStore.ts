@@ -6,7 +6,7 @@ export type Task = {
   description?: string;
   price: number;
   deadline: string;
-  status: "DRAFT" | "POSTED" | "IN_PROGRESS" | "COMPLETED";
+  status: "DRAFT" | "POSTED" | "ACCEPTED" | "IN_PROGRESS" | "COMPLETED";
   location_text?: string;
   created_at: string;
 };

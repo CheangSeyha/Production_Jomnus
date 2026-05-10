@@ -1,6 +1,7 @@
 "use client";
 
 import { CalendarClock, ChevronRight, MapPin } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 type Props = {
   id: number;
@@ -13,6 +14,7 @@ type Props = {
 };
 
 export default function TaskCard({
+  id,
   title,
   description,
   price,
@@ -20,6 +22,8 @@ export default function TaskCard({
   status,
   location_text,
 }: Props) {
+  const router = useRouter();
+
   const formatDeadline = (date: string) => {
     const d = new Date(date);
     return d.toLocaleDateString();
@@ -29,6 +33,8 @@ export default function TaskCard({
     switch (status) {
       case "POSTED":
         return "bg-emerald-50 text-emerald-700 ring-emerald-200";
+      case "ACCEPTED":
+        return "bg-blue-50 text-blue-700 ring-blue-200";
       case "DRAFT":
         return "bg-slate-100 text-slate-700 ring-slate-200";
       case "IN_PROGRESS":
@@ -42,7 +48,15 @@ export default function TaskCard({
 
   return (
     <div
+      onClick={() => router.push(`/myrequest/${id}/applications`)}
       className="group relative overflow-hidden rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:border-sky-200 hover:shadow-md"
+      role="button"
+      tabIndex={0}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          router.push(`/myrequest/${id}/applications`);
+        }
+      }}
     >
       <div className="absolute inset-y-0 left-0 w-1 bg-sky-600" />
 

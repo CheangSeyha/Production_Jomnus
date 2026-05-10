@@ -1,6 +1,6 @@
 "use client";
 
-import axios from "axios";
+import api from "@/lib/axios";
 import { useEffect, useState } from "react";
 
 type Category = {
@@ -20,7 +20,7 @@ export default function CategoryDropdown({ value, onChange }: Props) {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await axios.get("/api/categories");
+        const response = await api.get("/categories");
         setCategories(response.data);
       } catch (error) {
         console.error("Failed to fetch categories:", error);

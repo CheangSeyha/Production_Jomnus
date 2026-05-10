@@ -1,7 +1,7 @@
 "use client";
 
 import FormSection from "./FormSection";
-import { AlertCircle, CalendarClock, DollarSign, FileText, MapPin, Tag } from "lucide-react";
+import { CalendarClock, DollarSign, FileText, MapPin, Tag, Users } from "lucide-react";
 
 type TaskOverviewProps = {
   task: {
@@ -12,10 +12,7 @@ type TaskOverviewProps = {
     startDate?: string;
     locationText?: string;
     categoryId?: number;
-
-    autoAccept?: boolean;
-    minRating?: string;
-    hiddenBids?: boolean;
+    requiredWorkers?: number;
   };
 };
 
@@ -89,7 +86,7 @@ export default function TaskOverview({ task }: TaskOverviewProps) {
         description="Confirm the timing and payment details."
         icon={<CalendarClock size={18} />}
       >
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-4">
           <div className="rounded-lg bg-slate-50 p-4">
             <label className="mb-2 block text-xs font-semibold uppercase text-slate-500">
               Start Time
@@ -115,47 +112,18 @@ export default function TaskOverview({ task }: TaskOverviewProps) {
               ${Number(task.price || 0).toFixed(2)}
             </p>
           </div>
-        </div>
-      </FormSection>
-
-      <FormSection
-        title="Selection Rules"
-        description="These rules will guide how workers apply."
-        icon={<AlertCircle size={18} />}
-      >
-        <div className="space-y-3">
-          {task.autoAccept && (
-            <div className="flex items-start gap-3 rounded-lg border border-emerald-200 bg-emerald-50 p-4">
-              <AlertCircle size={18} className="mt-0.5 flex-shrink-0 text-emerald-700" />
-              <div>
-                <p className="text-sm font-semibold text-emerald-950">Auto-Accept Enabled</p>
-                <p className="mt-1 text-sm leading-6 text-emerald-800">
-                  Will automatically accept bids from workers with {task.minRating}+ rating
-                </p>
-              </div>
-            </div>
-          )}
-
-          {task.hiddenBids && (
-            <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4">
-              <AlertCircle size={18} className="mt-0.5 flex-shrink-0 text-amber-700" />
-              <div>
-                <p className="text-sm font-semibold text-amber-950">Hidden Bids</p>
-                <p className="mt-1 text-sm leading-6 text-amber-800">
-                  Workers won't see other bids or offers
-                </p>
-              </div>
-            </div>
-          )}
-
-          <div className="rounded-lg border border-sky-200 bg-sky-50 p-4">
-            <p className="text-sm font-semibold text-sky-950">Bidding Model</p>
-            <p className="mt-1 text-sm leading-6 text-sky-800">
-              Open bidding - Workers can submit proposals at any time
+          <div className="rounded-lg bg-slate-50 p-4">
+            <label className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase text-slate-500">
+              <Users size={14} />
+              Workers
+            </label>
+            <p className="text-xl font-bold text-slate-950">
+              {task.requiredWorkers ?? 1}
             </p>
           </div>
         </div>
       </FormSection>
+
     </div>
   );
 }
