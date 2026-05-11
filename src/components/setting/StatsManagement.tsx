@@ -34,32 +34,74 @@ export default function StatsManagement({ data }: StatsProps) {
 
   const isRequester = role === "REQUESTER";
 
+  // const handleSwitchRole = async (newRole: "REQUESTER" | "PERFORMER") => {
+  //   if (newRole === role) return;
+
+  //   try {
+  //     setLoading(true);
+  //     const token = localStorage.getItem("access_token");
+
+  //     const res = await axios.patch(
+  //       "http://localhost:3001/api/users/switch-role",
+  //       { role: newRole },
+  //       { headers: { Authorization: `Bearer ${token}` } }
+  //     );
+
+  //     // Backend should return the updated user object or the stats
+  //     setRole(newRole);
+      
+  //     if (res.data?.requesterStats) setRequesterStats(res.data.requesterStats);
+  //     if (res.data?.performerStats) setPerformerStats(res.data.performerStats);
+      
+  //   } catch (error) {
+  //     console.error("Switch role failed:", error);
+  //     alert("Could not switch role. Please try again.");
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
+
   const handleSwitchRole = async (newRole: "REQUESTER" | "PERFORMER") => {
-    if (newRole === role) return;
+  if (newRole === role) return;
 
-    try {
-      setLoading(true);
-      const token = localStorage.getItem("access_token");
+  try {
+    setLoading(true);
+    const token = localStorage.getItem("access_token");
 
-      const res = await axios.patch(
-        "http://localhost:3001/api/users/role",
-        { role: newRole },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+    const res = await axios.patch(
+      "http://localhost:3001/api/users/me/switch-role", // Ensure URL matches your backend route
+      { role: newRole },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
 
-      // Backend should return the updated user object or the stats
-      setRole(newRole);
-      
-      if (res.data?.requesterStats) setRequesterStats(res.data.requesterStats);
-      if (res.data?.performerStats) setPerformerStats(res.data.performerStats);
-      
-    } catch (error) {
-      console.error("Switch role failed:", error);
-      alert("Could not switch role. Please try again.");
-    } finally {
-      setLoading(false);
+    // 1. Destructure the data coming from the backend
+    const { user, access_token, requesterStats, performerStats } = res.data;
+
+    // 2. IMPORTANT: Save the new token (it contains the new role claim)
+    if (access_token) {
+      localStorage.setItem("access_token", access_token);
     }
-  };
+
+    // 3. Update the UI state
+    setRole(newRole);
+    
+    // 4. Update stats based on what the backend returned
+    if (requesterStats) setRequesterStats(requesterStats);
+    if (performerStats) setPerformerStats(performerStats);
+    
+    // Optional: If you have a global user context/store, update it here:
+    // updateUser(user); 
+
+  } catch (error: any) {
+    console.error("Switch role failed:", error);
+    // Display the specific error from the backend (e.g., "Identity verification required")
+    alert(error.response?.data?.message || "Could not switch role.");
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   const statsToDisplay = isRequester
     ? [
