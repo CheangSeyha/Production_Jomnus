@@ -238,7 +238,7 @@ export default function RegisterForm() {
               <div className="flex-1 h-px bg-gray-300"></div>
             </div>
 
-            <GoogleOAuthButton />
+            <GoogleOAuthButton name="Sign up with Google" />
           </form>
 
           <div className="mt-6 text-center">

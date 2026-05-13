@@ -153,7 +153,7 @@ export default function LoginForm() {
               <div className="flex-1 h-px bg-gray-300"></div>
             </div>
 
-            <GoogleOAuthButton />
+            <GoogleOAuthButton name="Sign in with Google" />
           </form>
 
           <div className="mt-6 sm:mt-8 text-center">

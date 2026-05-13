@@ -45,7 +45,8 @@ export default function VerifyPage() {
               Email Verified!
             </h1>
             <p className="text-slate-600 text-sm sm:text-base mb-8">
-              Your email has been successfully verified. You can now access all features.
+              Your email has been successfully verified. You can now access all
+              features.
             </p>
 
             {/* Action Button */}
@@ -98,7 +99,8 @@ export default function VerifyPage() {
               Verify Your Email
             </h1>
             <p className="text-slate-600 text-sm sm:text-base">
-              We've sent a verification code to <span className="font-semibold text-slate-900">{email}</span>
+              We've sent a verification code to{" "}
+              <span className="font-semibold text-slate-900">{email}</span>
             </p>
           </div>
 
@@ -106,7 +108,10 @@ export default function VerifyPage() {
           <form onSubmit={handleVerify} className="space-y-6">
             {/* Verification Code Input */}
             <div>
-              <label htmlFor="code" className="block text-sm font-semibold text-slate-900 mb-2">
+              <label
+                htmlFor="code"
+                className="block text-sm font-semibold text-slate-900 mb-2"
+              >
                 Verification Code
               </label>
               <input
@@ -114,9 +119,13 @@ export default function VerifyPage() {
                 type="text"
                 placeholder="Enter 6-digit code"
                 value={verificationCode}
-                onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                onChange={(e) =>
+                  setVerificationCode(
+                    e.target.value.replace(/\D/g, "").slice(0, 6),
+                  )
+                }
                 className="w-full px-4 py-3 border border-slate-300 rounded-lg text-center text-lg font-semibold tracking-widest focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
-                maxLength="6"
+                maxLength={6}
               />
               <p className="text-xs text-slate-500 mt-2">
                 Please enter the 6-digit code sent to your email
@@ -156,9 +165,7 @@ export default function VerifyPage() {
 
           {/* Change Email */}
           <div className="text-center">
-            <p className="text-slate-600 text-sm mb-3">
-              Wrong email address?
-            </p>
+            <p className="text-slate-600 text-sm mb-3">Wrong email address?</p>
             <Link
               href="/auth/signin"
               className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium text-sm transition-colors"
@@ -170,10 +177,12 @@ export default function VerifyPage() {
 
         {/* Footer */}
         <p className="text-center text-slate-500 text-xs sm:text-sm mt-6">
-          Having trouble? <a href="#" className="text-blue-600 hover:text-blue-700 font-medium">Contact support</a>
+          Having trouble?{" "}
+          <a href="#" className="text-blue-600 hover:text-blue-700 font-medium">
+            Contact support
+          </a>
         </p>
       </div>
     </div>
   );
 }
-

@@ -1,18 +1,22 @@
 "use client";
 import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
 import { useState } from "react";
-import L from "leaflet"
 
-delete (L.Icon.Default.prototype as any)._getIconUrl;
+// Dynamically import leaflet only on the client side
+let L: any = null;
 
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl:
-    "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
-  iconUrl:
-    "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-  shadowUrl:
-    "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
-});
+if (typeof window !== "undefined") {
+  L = require("leaflet");
+
+  delete (L.Icon.Default.prototype as any)._getIconUrl;
+
+  L.Icon.Default.mergeOptions({
+    iconRetinaUrl:
+      "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+    iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+    shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+  });
+}
 
 type Props = {
   onSelect: (lat: number, lng: number) => void;
@@ -30,8 +34,6 @@ function MapClickHandler({ setSelected, selected }: any) {
 
   return selected ? <Marker position={selected} /> : null;
 }
-
-
 
 export default function LocationPicker({ onSelect }: Props) {
   const [selected, setSelected] = useState<any>(null);
@@ -51,19 +53,14 @@ export default function LocationPicker({ onSelect }: Props) {
       {/* ACTION BUTTON */}
       <div className="flex justify-between">
         <span className="text-sm text-gray-500">
-          {selected
-            ? "Location selected"
-            : "Click on map to select location"}
+          {selected ? "Location selected" : "Click on map to select location"}
         </span>
 
         <button
           disabled={!selected}
           onClick={() => {
             onSelect(selected.lat, selected.lng);
-          }
-
-            
-          }
+          }}
           className={`px-4 py-2 rounded-lg text-white ${
             selected
               ? "bg-blue-600 hover:bg-blue-700"

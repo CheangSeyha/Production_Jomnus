@@ -1,10 +1,15 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import CategoryDropdown from "./CategoryDropdown";
 import FormSection from "./FormSection";
 import { FileText, LocateFixed, MapPin, Tag } from "lucide-react";
-import LocationPicker from "../map/LocationPicker";
+
+// Dynamically import LocationPicker only on client side
+const LocationPicker = dynamic(() => import("../map/LocationPicker"), {
+  ssr: false,
+});
 
 type Props = {
   form: any;
@@ -22,15 +27,14 @@ export default function TaskDetailsForm({ form, onChange }: Props) {
 
     // convert lat/lng → readable address
     const res = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`
+      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`,
     );
     const data = await res.json();
 
     onChange("locationText", data.display_name);
-    
+
     setShowMap(false);
   };
-
 
   return (
     <div className="space-y-5">
