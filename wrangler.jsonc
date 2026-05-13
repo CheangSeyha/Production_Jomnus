@@ -1,0 +1,31 @@
+{
+  "name": "jomnus-frontend",
+  "type": "javascript",
+  "main": ".wrangler/tmp/index.js",
+  "account_id": "YOUR_ACCOUNT_ID",
+  "workers_dev": true,
+  "route": null,
+  "zone_id": null,
+  "compatibility_date": "2024-12-18",
+  "compatibility_flags": ["nodejs_compat"],
+  "build": {
+    "command": "npm run build",
+    "cwd": "./",
+    "watch_paths": ["src/**/*.ts", "src/**/*.tsx"],
+  },
+  "env": {
+    "production": {
+      "name": "jomnus-frontend-prod",
+      "routes": [
+        {
+          "pattern": "yourdomain.com",
+          "zone_id": "YOUR_ZONE_ID",
+        },
+      ],
+    },
+    "staging": {
+      "name": "jomnus-frontend-staging",
+      "workers_dev": true,
+    },
+  },
+}
