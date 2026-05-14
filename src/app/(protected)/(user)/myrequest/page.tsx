@@ -2,10 +2,10 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import axios from "axios";
 import { ChevronLeft, ChevronRight, ClipboardList, Plus, Search } from "lucide-react";
 import { useTaskListStore } from "@/store/taskListStore";
 import TaskCard from "@/components/myrequest/TaskCard";
+import api from "@/lib/axios";
 
 const REQUESTS_PER_PAGE = 6;
 
@@ -60,11 +60,8 @@ export default function MyRequestPage() {
   useEffect(() => {
     const fetchTasks = async () => {
       try {
-        const res = await axios.get(
-          "http://localhost:3001/api/tasks/me",
-          { withCredentials: true }
-        );
-        setTasks(res.data);
+        const { data } = await api.get("/tasks/me");
+        setTasks(data);
       } catch (err) {
         console.error("Failed to fetch tasks", err);
       }

@@ -109,9 +109,9 @@ export default function MainBody() {
           >
 
 
-            <div className="relative w-full max-w-[320px] sm:max-w-[420px] lg:max-w-[480px] aspect-square">
+            <div className="relative w-full max-w-[320px] sm:max-w-105 lg:max-w-120 aspect-square">
 
-              <div className="bg-blue-50 rounded-[36px] sm:rounded-[48px] lg:rounded-[60px] w-full h-full grid place-items-center relative overflow-hidden z-0"></div>
+              <div className="bg-blue-200 rounded-[10px] sm:rounded-[48px] lg:rounded-[60px] w-full h-full grid place-items-center relative overflow-hidden z-0"></div>
 
               <motion.div
                   className="absolute inset-0 flex items-center justify-center z-10"
@@ -124,8 +124,8 @@ export default function MainBody() {
                   <Image
                       src="/images/jomnus.png"
                       alt="jomnus"
-                      width={800}
-                      height={50}
+                      width={900}
+                      height={70}
                       className="rounded-md w-[90%] h-auto"
                   />
 

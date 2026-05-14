@@ -1,34 +1,32 @@
-// src/app/(protected)/(user)/layout.tsx
-
 "use client";
 
-import { useState } from "react";
 import type { ReactNode } from "react";
+import { useState } from "react";
 import Sidebar from "@/components/dashboard/sidebar";
 import Navbar from "@/components/dashboard/header";
-import Footer from "@/components/dashboard/footer";
 
-type DashboardLayoutProps = {
-  children: ReactNode;
+type UserLayoutProps = {
+    children: ReactNode;
 };
 
-export default function DashboardLayout({ children }: DashboardLayoutProps) {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+export default function UserLayout({ children }: UserLayoutProps) {
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  return (
-    <div className="min-h-screen w-full bg-white flex flex-col">
-      <Navbar onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
-      <div className="flex flex-1 overflow-hidden">
-        <Sidebar
-          role={"user"}
-          isOpen={sidebarOpen}
-          onClose={() => setSidebarOpen(false)}
-        />
-        <main className="flex-1 overflow-y-auto ">
-          {children}
-        </main>
-      </div>
-      <Footer />
-    </div>
-  );
+    return (
+        <div className="h-screen w-full flex flex-col bg-slate-50/50">
+            <Navbar role="user" onMenuClick={() => setIsSidebarOpen(true)} />
+
+            <div className="flex flex-1 min-h-0">
+                <Sidebar
+                    role="user"
+                    isOpen={isSidebarOpen}
+                    onClose={() => setIsSidebarOpen(false)}
+                />
+
+                <main className="flex-1 min-w-0 overflow-y-auto px-6 py-4">
+                    {children}
+                </main>
+            </div>
+        </div>
+    );
 }

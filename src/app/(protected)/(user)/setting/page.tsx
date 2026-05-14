@@ -2,12 +2,12 @@
 
 import { useEffect, useState, ChangeEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import axios from "axios";
 import StatsManagement from "@/components/setting/StatsManagement";
 import Specializations from "@/components/setting/Specializations";
 import WorkHistory from "@/components/setting/WorkHistory";
 import ProfileHeader from "@/components/setting/ProfileHeader";
 import { useUserStore } from "@/store/userStore";
+import api from "@/lib/axios";
 
 // Define WorkItem interface to match WorkHistory component
 interface WorkItem {
@@ -72,10 +72,11 @@ export default function SettingPage() {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const token = tokenFromUrl || localStorage.getItem("access_token");
-        const response = await axios.get("http://localhost:3001/api/users/me", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        if (tokenFromUrl) {
+          localStorage.setItem("access_token", tokenFromUrl);
+        }
+
+        const response = await api.get("/users/me");
 
         const user = response.data;
 
@@ -167,8 +168,6 @@ export default function SettingPage() {
     setSaveSuccess(false);
 
     try {
-      const token = localStorage.getItem("access_token");
-
       // This is the data you are sending to the backend
       const updatePayload = {
         fullName: formData.fullName || "",
@@ -179,15 +178,7 @@ export default function SettingPage() {
         profileImage: formData.profileImage || "",
       };
 
-      const response = await axios.patch(
-        "http://localhost:3001/api/users/me",
-        updatePayload,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        },
-      );
+      const response = await api.patch("/users/me", updatePayload);
 
       // --- THE MISSING PIECE ---
       // Update the Zustand store so the Header changes instantly!
@@ -210,10 +201,7 @@ export default function SettingPage() {
     const formData = new FormData();
     formData.append("file", file);
 
-    const res = await axios.post(
-      "http://localhost:3001/api/users/upload-avatar",
-      formData,
-    );
+    const res = await api.post("/users/upload-avatar", formData);
 
     setFormData((prev: any) => ({
       ...prev,
