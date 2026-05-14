@@ -29,6 +29,7 @@ type TaskApi = {
         fullName: string;
         profileImage?: string | null;
     } | null;
+    hasApplied?: boolean;
 };
 
 const API_BASE_URL = (
@@ -52,6 +53,14 @@ export default function DashboardPage() {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
   const [selectedApplyTask, setSelectedApplyTask] = useState<Task | null>(null);  
+
+  const markTaskApplied = (taskId: number) => {
+    setTasks((currentTasks) =>
+      currentTasks.map((task) =>
+        task.id === taskId ? { ...task, hasApplied: true } : task,
+      ),
+    );
+  };
 
   const filteredTasks = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLowerCase();
@@ -122,6 +131,7 @@ export default function DashboardPage() {
           createdAt: task.created_at,
           deadline: task.deadline,
           requesterName: task.requester?.fullName || "Unknown",
+          hasApplied: task.hasApplied ?? false,
           priority: "Normal",
           requestCount: 0,
           latitude: task.latitude,
@@ -310,6 +320,7 @@ export default function DashboardPage() {
             taskId={selectedApplyTask.id}
             taskTitle={selectedApplyTask.title}
             defaultPrice={selectedApplyTask.price}
+            onApplied={() => markTaskApplied(selectedApplyTask.id)}
             onClose={() => setSelectedApplyTask(null)}
           />
         )

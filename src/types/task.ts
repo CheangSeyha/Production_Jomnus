@@ -9,6 +9,7 @@ export type Task = {
   createdAt: string;
   deadline: string;
   requesterName: string;
+  hasApplied?: boolean;
 
   // optional extras
   priority?: "Urgent" | "Normal" | "Low";
