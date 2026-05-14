@@ -9,6 +9,8 @@ import {
     Edit3,
     Play
 } from 'lucide-react';
+import api from "@/lib/axios";
+
 
 
 export default function MyTaskPage() {
@@ -53,10 +55,6 @@ export default function MyTaskPage() {
         } | null;
     };
 
-    const API_BASE_URL = (
-        process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api"
-    ).replace(/\/$/, "");
-
     const [tasks, setTasks] = useState<TaskCard[]>([]);
     const [isLoadingTasks, setIsLoadingTasks] = useState(false);
     const [proofOpenId, setProofOpenId] = useState<number | null>(null);
@@ -86,19 +84,8 @@ export default function MyTaskPage() {
         const loadTasks = async () => {
             try {
                 setIsLoadingTasks(true);
-                const res = await fetch(`${API_BASE_URL}/assignments/my`, {
-                    method: "GET",
-                    headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${existingToken}`,
-                    },
-                });
+                const { data } = await api.get<MyTaskApi[]>("/assignments/my");
 
-                if (!res.ok) {
-                    throw new Error(`Failed to fetch tasks (${res.status})`);
-                }
-
-                const data: MyTaskApi[] = await res.json();
                 const normalized: TaskCard[] = data
                     .filter((item) => item.task)
                     .map((item) => ({
@@ -150,21 +137,8 @@ export default function MyTaskPage() {
     };
 
     const startWork = async (assignmentId: number) => {
-        const token = localStorage.getItem("access_token");
-        if (!token) return;
-
         try {
-            const res = await fetch(`${API_BASE_URL}/assignments/${assignmentId}/start`, {
-                method: "PATCH",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
-                },
-            });
-
-            if (!res.ok) {
-                throw new Error(`Failed to start work (${res.status})`);
-            }
+            await api.patch(`/assignments/${assignmentId}/start`);
 
             setTasks((current) =>
                 current.map((task) =>
@@ -180,8 +154,7 @@ export default function MyTaskPage() {
     };
 
     const submitProof = async (assignmentId: number) => {
-        const token = localStorage.getItem("access_token");
-        if (!token) {
+        if (typeof window !== "undefined" && !localStorage.getItem("access_token")) {
             setProofError("You must be logged in to submit proof.");
             return;
         }
@@ -210,17 +183,8 @@ export default function MyTaskPage() {
                 formData.append("file", proofFile);
             }
 
-            const res = await fetch(`${API_BASE_URL}/proofs/upload`, {
-                method: "POST",
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-                body: formData,
-            });
+            await api.post("/proofs/upload", formData);
 
-            if (!res.ok) {
-                throw new Error(`Failed to submit proof (${res.status})`);
-            }
 
             setProofOpenId(null);
             setProofText("");
@@ -245,26 +209,31 @@ export default function MyTaskPage() {
         status.trim().toUpperCase().replace(/\s+/g, "_");
 
     const tabConfig = [
-        {
-            key: "ASSIGNED",
-            label: "Accepted",
-            statuses: ["ASSIGNED"],
-        },
-        {
-            key: "IN_PROGRESS",
-            label: "In Progress",
-            statuses: ["IN_PROGRESS"],
-        },
+
         {
             key: "BIDDING",
             label: "Bidding",
             statuses: ["BIDDING", "PENDING"],
         },
+
+        {
+            key: "ASSIGNED",
+            label: "Accepted",
+            statuses: ["ASSIGNED"],
+        },
+
+        {
+            key: "IN_PROGRESS",
+            label: "In Progress",
+            statuses: ["IN_PROGRESS"],
+        },
+
         {
             key: "COMPLETED",
             label: "Completed",
             statuses: ["COMPLETED", "VERIFIED"],
         },
+
     ];
 
     const filteredTasks = tasks.filter((task) => {
@@ -394,12 +363,6 @@ export default function MyTaskPage() {
                                             </>
                                         ) : normalizedStatus === 'COMPLETED' || normalizedStatus === 'VERIFIED' ? (
                                             <>
-                                                <button
-                                                    onClick={() => openProofForm(task.assignmentId)}
-                                                    className="w-full bg-blue-600 text-white py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-blue-700 transition-colors"
-                                                >
-                                                    <Upload size={18} /> Upload Proof
-                                                </button>
                                                 <button
                                                     onClick={() => openDetails(task)}
                                                     className="w-full bg-slate-200 text-slate-700 py-3 rounded-xl font-bold text-sm hover:bg-slate-300 transition-colors"
