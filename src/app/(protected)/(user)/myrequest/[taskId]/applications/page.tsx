@@ -14,9 +14,8 @@ import {
   Wallet,
 } from "lucide-react";
 import api from "@/lib/axios";
-import TaskProgress from "@/components/myrequest/TaskProgress";
 import ApplicationOfferCard from "@/components/myrequest/ApplicationOfferCard";
-
+import AssignmentProgressCard from "@/components/myrequest/AssignmentProgressCard";
 type Application = {
   id: number;
   status: string;
@@ -37,9 +36,16 @@ type Proof = {
   created_at: string;
 };
 
+type AssignmentStatus =
+  | "ASSIGNED"
+  | "IN_PROGRESS"
+  | "COMPLETED"
+  | "VERIFIED"
+  | "CANCELLED";
+
 type Assignment = {
   id: number;
-  status: string;
+  status: AssignmentStatus;
   accepted_price: number;
   performer?: {
     fullName: string;
@@ -243,9 +249,6 @@ export default function TaskApplicationsPage() {
           </div>
         </section>
 
-        <section>
-          <TaskProgress status={task.status} />
-        </section>
 
         <section className="grid gap-3 md:grid-cols-4">
           <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
@@ -355,82 +358,93 @@ export default function TaskApplicationsPage() {
               </div>
             ) : (
               assignments.map((assignment) => (
-                <div
-                  key={assignment.id}
-                  className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-bold text-slate-950">
-                        {assignment.performer?.fullName || "Assigned worker"}
-                      </p>
-                      <p className="mt-1 text-sm font-semibold text-slate-500">
-                        ${Number(assignment.accepted_price || 0).toFixed(2)}
-                      </p>
+                <div key={assignment.id} className="space-y-3">
+
+                  <AssignmentProgressCard
+                    performerName={
+                      assignment.performer?.fullName || "Assigned worker"
+                    }
+                    performerImage={assignment.performer?.profileImage}
+                    status={assignment.status}
+                  />
+
+                  <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-bold text-slate-950">
+                          Accepted Price
+                        </p>
+
+                        <p className="mt-1 text-lg font-black text-slate-950">
+                          ${Number(assignment.accepted_price || 0).toFixed(2)}
+                        </p>
+                      </div>
+
+                      <span
+                        className={`rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wide ring-1 ${
+                          assignmentStyles[assignment.status] ||
+                          "bg-slate-100 text-slate-500 ring-slate-200"
+                        }`}
+                      >
+                        {assignment.status.replace("_", " ")}
+                      </span>
                     </div>
 
-                    <span
-                      className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide ring-1 ${
-                        assignmentStyles[assignment.status] ||
-                        "bg-slate-100 text-slate-500 ring-slate-200"
-                      }`}
-                    >
-                      {assignment.status.replace("_", " ")}
-                    </span>
-                  </div>
+                    {/* PROOFS */}
+                    <div className="mt-4 space-y-3">
+                      {assignment.proofs?.length ? (
+                        assignment.proofs.map((proof) => (
+                          <div
+                            key={proof.id}
+                            className="rounded-lg border border-slate-200 bg-slate-50 p-3"
+                          >
+                            <p className="text-xs font-bold uppercase tracking-wide text-slate-500">
+                              Proof #{proof.id}
+                            </p>
 
-                  <div className="mt-4 space-y-3">
-                    {assignment.proofs?.length ? (
-                      assignment.proofs.map((proof) => (
-                        <div
-                          key={proof.id}
-                          className="rounded-lg border border-slate-200 bg-slate-50 p-3"
-                        >
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="min-w-0">
-                              <p className="text-xs font-bold uppercase tracking-wide text-slate-500">
-                                Proof #{proof.id} - {proof.status}
+                            {proof.text_content && (
+                              <p className="mt-2 text-sm text-slate-700">
+                                {proof.text_content}
                               </p>
-                              {proof.text_content && (
-                                <p className="mt-2 text-sm leading-6 text-slate-700">
-                                  {proof.text_content}
-                                </p>
-                              )}
-                              {proof.file_url && (
-                                <a
-                                  href={`http://localhost:3001${proof.file_url}`}
-                                  target="_blank"
-                                  className="mt-2 inline-block text-sm font-bold text-blue-600 hover:text-blue-800"
-                                >
-                                  View uploaded file
-                                </a>
-                              )}
-                            </div>
-                          </div>
+                            )}
 
-                          {proof.status === "PENDING" && (
-                            <div className="mt-3 flex gap-2">
-                              <button
-                                onClick={() => rejectProof(proof.id)}
-                                className="h-9 flex-1 rounded-lg bg-red-50 text-xs font-bold text-red-600 transition hover:bg-red-100"
+                            {proof.file_url && (
+                              <a
+                                href={`http://localhost:3001${proof.file_url}`}
+                                target="_blank"
+                                className="mt-2 inline-block text-sm font-bold text-blue-600"
                               >
-                                Reject
-                              </button>
-                              <button
-                                onClick={() => approveProof(proof.id, assignment)}
-                                className="h-9 flex-1 rounded-lg bg-blue-600 text-xs font-bold text-white transition hover:bg-blue-700"
-                              >
-                                Accept Proof
-                              </button>
-                            </div>
-                          )}
+                                View uploaded file
+                              </a>
+                            )}
+
+                            {proof.status === "PENDING" && (
+                              <div className="mt-3 flex gap-2">
+                                <button
+                                  onClick={() => rejectProof(proof.id)}
+                                  className="h-9 flex-1 rounded-lg bg-red-50 text-xs font-bold text-red-600"
+                                >
+                                  Reject
+                                </button>
+
+                                <button
+                                  onClick={() =>
+                                    approveProof(proof.id, assignment)
+                                  }
+                                  className="h-9 flex-1 rounded-lg bg-blue-600 text-xs font-bold text-white"
+                                >
+                                  Accept Proof
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        ))
+                      ) : (
+                        <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">
+                          No proof submitted yet.
                         </div>
-                      ))
-                    ) : (
-                      <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">
-                        No proof submitted yet.
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
                 </div>
               ))

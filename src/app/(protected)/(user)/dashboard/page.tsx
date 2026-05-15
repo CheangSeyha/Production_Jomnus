@@ -30,6 +30,7 @@ type TaskApi = {
         profileImage?: string | null;
     } | null;
     hasApplied?: boolean;
+    status: "OPEN" | "COMPLETED" | "CANCELLED";
 };
 
 const API_BASE_URL = (
@@ -130,10 +131,15 @@ export default function DashboardPage() {
           price: task.price,
           createdAt: task.created_at,
           deadline: task.deadline,
+
+          status: task.status,
+
           requesterName: task.requester?.fullName || "Unknown",
           hasApplied: task.hasApplied ?? false,
+
           priority: "Normal",
           requestCount: 0,
+
           latitude: task.latitude,
           longitude: task.longitude,
         }));
