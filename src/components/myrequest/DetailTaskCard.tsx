@@ -40,10 +40,12 @@ export default function DetailTaskCard({ task, onOpen, onApply }: Props) {
     >
 			<div className="relative">
 				{/* MAP */}
-				<TaskMapPreview
-					lat={task.latitude}
-					lng={task.longitude}
-				/>				
+				{task.latitude && task.longitude && (
+					<TaskMapPreview
+						lat={task.latitude}
+						lng={task.longitude}
+					/>
+				)}
 		
 				<div className="text-red-500 absolute bottom-3 left-3 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-medium shadow z-[1000]">
 					📍 View location
@@ -127,6 +129,7 @@ export default function DetailTaskCard({ task, onOpen, onApply }: Props) {
         {/* ACTION */}
         <div className="flex gap-3 pt-2">
 					<button
+						disabled={task.hasApplied}
 						className="
 							cursor-pointer
 							flex-1 py-3 rounded-xl
@@ -134,10 +137,11 @@ export default function DetailTaskCard({ task, onOpen, onApply }: Props) {
 							text-white font-semibold
 							hover:shadow-lg hover:scale-[1.02]
 							transition-all duration-200
+							disabled:cursor-not-allowed disabled:from-slate-400 disabled:to-slate-500 disabled:hover:scale-100 disabled:hover:shadow-none
 						"
 						onClick={() => onApply(task)}
 					>
-						Apply the Task
+						{task.hasApplied ? "Applied the task" : "Apply the task"}
 					</button>
 
           <button 

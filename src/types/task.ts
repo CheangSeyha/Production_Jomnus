@@ -8,9 +8,12 @@ export type Task = {
   price: number;
   createdAt: string;
   deadline: string;
-  requesterName: string;
 
-  // optional extras
+  status: "OPEN" | "COMPLETED" | "CANCELLED";
+
+  requesterName: string;
+  hasApplied?: boolean;
+
   priority?: "Urgent" | "Normal" | "Low";
   requestCount?: number;
 };

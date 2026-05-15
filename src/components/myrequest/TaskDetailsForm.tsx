@@ -1,15 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import dynamic from "next/dynamic";
 import CategoryDropdown from "./CategoryDropdown";
 import FormSection from "./FormSection";
 import { FileText, LocateFixed, MapPin, Tag } from "lucide-react";
+import dynamic from "next/dynamic";
 
-// Dynamically import LocationPicker only on client side
-const LocationPicker = dynamic(() => import("../map/LocationPicker"), {
-  ssr: false,
-});
+
+const TaskLocationPicker = dynamic(
+  () => import("../map/TaskLocationPicker"),
+  {
+    ssr: false,
+  },
+);
 
 type Props = {
   form: any;
@@ -20,21 +23,6 @@ export default function TaskDetailsForm({ form, onChange }: Props) {
   const fieldClass =
     "w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-sky-500 focus:ring-4 focus:ring-sky-100";
   const [showMap, setShowMap] = useState(false);
-
-  const handleSelectLocation = async (lat: number, lng: number) => {
-    onChange("latitude", lat);
-    onChange("longitude", lng);
-
-    // convert lat/lng → readable address
-    const res = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`,
-    );
-    const data = await res.json();
-
-    onChange("locationText", data.display_name);
-
-    setShowMap(false);
-  };
 
   return (
     <div className="space-y-5">
@@ -47,7 +35,7 @@ export default function TaskDetailsForm({ form, onChange }: Props) {
           type="text"
           className={fieldClass}
           placeholder="Example: Edit a research report"
-          value={form.title}
+          value={form.title || ""}
           onChange={(e) => onChange("title", e.target.value)}
         />
       </FormSection>
@@ -79,13 +67,13 @@ export default function TaskDetailsForm({ form, onChange }: Props) {
                 className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
               />
 
-              <input
-                type="text"
-                className={`${fieldClass} pl-10`}
-                placeholder="Example: Phnom Penh, BKK1"
-                value={form.locationText}
-                onChange={(e) => onChange("locationText", e.target.value)}
-              />
+            <input
+              type="text"
+              className={`${fieldClass} pl-10`}
+              placeholder="Example: Phnom Penh, BKK1"
+              value={form.locationText || ""}
+              onChange={(e) => onChange("locationText", e.target.value)}
+            />
             </div>
 
             <button
@@ -93,6 +81,21 @@ export default function TaskDetailsForm({ form, onChange }: Props) {
               className="mt-3 inline-flex items-center gap-2 text-sm font-medium text-sky-700 transition hover:text-sky-900"
               onClick={() => setShowMap(true)}
             >
+              {form.latitude && (
+                <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
+
+                  <p className="text-xs font-bold uppercase tracking-wide text-slate-400">
+                    Selected Coordinates
+                  </p>
+
+                  <p className="mt-1 text-sm font-semibold text-slate-700">
+                    {form.latitude.toFixed(5)},
+                    {" "}
+                    {form.longitude.toFixed(5)}
+                  </p>
+
+                </div>
+              )}
               <LocateFixed size={15} />
               Pick from map
             </button>
@@ -104,7 +107,32 @@ export default function TaskDetailsForm({ form, onChange }: Props) {
                     Select Location
                   </h3>
 
-                  <LocationPicker onSelect={handleSelectLocation} />
+                  <TaskLocationPicker
+                    latitude={form.latitude}
+                    longitude={form.longitude}
+                    onChange={async (lat, lng) => {
+                      onChange("latitude", lat);
+                      onChange("longitude", lng);
+
+                      try {
+                        const res = await fetch(
+                          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`,
+                        );
+
+                        const data = await res.json();
+
+                        onChange(
+                          "locationText",
+                          data.display_name || "",
+                        );
+                      } catch (err) {
+                        console.error(err);
+                      }
+                    }}
+                    onConfirm={() => {
+                      setShowMap(false);
+                    }}
+                  />
 
                   <button
                     onClick={() => setShowMap(false)}
@@ -128,7 +156,7 @@ export default function TaskDetailsForm({ form, onChange }: Props) {
           className={`${fieldClass} min-h-36 resize-y leading-6`}
           placeholder="Describe the work clearly: what you need, where it happens, and any expectations."
           rows={5}
-          value={form.description}
+          value={form.description || ""}
           onChange={(e) => onChange("description", e.target.value)}
         />
       </FormSection>
