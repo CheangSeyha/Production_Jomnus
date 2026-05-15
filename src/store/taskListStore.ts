@@ -7,8 +7,8 @@ export type Task = {
   price: number;
   deadline: string;
   status: "OPEN" | "COMPLETED" | "CANCELLED";
-  location_text?: string;
-  created_at: string;
+  locationText?: string;
+  createdAt: string;
 };
 
 type TaskStore = {

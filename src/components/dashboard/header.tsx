@@ -56,7 +56,7 @@ export default function Header({ role = "user", onMenuClick }: Props) {
     avatarUrl.includes("googleusercontent.com") || avatarUrl.includes("google");
 
   return (
-    <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-slate-200/60">
+    <header className="sticky top-0 z-1000 bg-white/80 backdrop-blur-md border-b border-slate-200/60">
       <div className="flex h-16 sm:h-20 items-center justify-between px-4 sm:px-6 md:px-8">
         <div className="flex items-center gap-3 min-w-0 flex-shrink-0">
           <button

@@ -309,7 +309,22 @@ export default function MyTaskPage() {
                         const normalizedStatus = normalizeStatus(task.status);
 
                         return (
-                            <div key={task.assignmentId} className="bg-white rounded-3xl overflow-hidden shadow-sm border border-slate-100 flex flex-col">
+                            <div
+                                key={task.assignmentId}
+                                onClick={() =>
+                                    router.push(`/mytask/${task.assignmentId}`)
+                                }
+                                className="
+                                    cursor-pointer
+                                    bg-white rounded-3xl overflow-hidden
+                                    shadow-sm border border-slate-100
+                                    flex flex-col
+                                    transition-all duration-300
+                                    hover:-translate-y-1
+                                    hover:shadow-xl
+                                    hover:border-blue-200
+                                "
+                            >
 
                                 {/* Content Section */}
                                 <div className="p-5 flex-1 flex flex-col">
@@ -365,13 +380,19 @@ export default function MyTaskPage() {
                                         {normalizedStatus === 'ASSIGNED' ? (
                                             <>
                                                 <button
-                                                    onClick={() => startWork(task.assignmentId)}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        startWork(task.assignmentId);
+                                                    }}
                                                     className="w-full bg-blue-600 text-white py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-blue-700 transition-colors"
                                                 >
                                                     <Play size={18} /> I am currently doing my work
                                                 </button>
                                                 <button
-                                                    onClick={() => openDetails(task)}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        openDetails(task);
+                                                    }}
                                                     className="w-full bg-slate-200 text-slate-700 py-3 rounded-xl font-bold text-sm hover:bg-slate-300 transition-colors"
                                                 >
                                                     View Details
@@ -380,13 +401,19 @@ export default function MyTaskPage() {
                                         ) : normalizedStatus === 'IN_PROGRESS' ? (
                                             <>
                                                 <button
-                                                    onClick={() => openProofForm(task.assignmentId)}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        openProofForm(task.assignmentId)}
+                                                    }
                                                     className="w-full bg-blue-600 text-white py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-blue-700 transition-colors"
                                                 >
                                                     <Upload size={18} /> Upload Proof
                                                 </button>
                                                 <button
-                                                    onClick={() => openDetails(task)}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        openDetails(task);
+                                                    }}
                                                     className="w-full bg-slate-200 text-slate-700 py-3 rounded-xl font-bold text-sm hover:bg-slate-300 transition-colors"
                                                 >
                                                     View Details
@@ -395,13 +422,19 @@ export default function MyTaskPage() {
                                         ) : normalizedStatus === 'COMPLETED' || normalizedStatus === 'VERIFIED' ? (
                                             <>
                                                 <button
-                                                    onClick={() => openProofForm(task.assignmentId)}
+                                                    onClick={(e) =>{
+                                                        e.stopPropagation();
+                                                        openProofForm(task.assignmentId)}
+                                                    }
                                                     className="w-full bg-blue-600 text-white py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-blue-700 transition-colors"
                                                 >
                                                     <Upload size={18} /> Upload Proof
                                                 </button>
                                                 <button
-                                                    onClick={() => openDetails(task)}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        openDetails(task);
+                                                    }}
                                                     className="w-full bg-slate-200 text-slate-700 py-3 rounded-xl font-bold text-sm hover:bg-slate-300 transition-colors"
                                                 >
                                                     View Details
@@ -506,7 +539,13 @@ export default function MyTaskPage() {
                             </p>
                             <div className="flex items-center gap-3">
                                 <button
-                                    onClick={() => submitProof(proofOpenId)}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+
+                                        if (proofOpenId) {
+                                            submitProof(proofOpenId);
+                                        }
+                                    }}
                                     disabled={proofSubmittingId === proofOpenId}
                                     className="flex-1 bg-blue-600 text-white py-2.5 px-5 rounded-xl font-bold text-sm hover:bg-blue-700 transition-colors"
                                 >

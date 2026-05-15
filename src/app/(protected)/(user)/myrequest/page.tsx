@@ -28,7 +28,7 @@ export default function MyRequestPage() {
           task.title,
           task.description,
           task.status,
-          task.location_text,
+          task.locationText ?? (task as any).location_text,
         ]
           .filter(Boolean)
           .some((value) =>
@@ -44,9 +44,9 @@ export default function MyRequestPage() {
       });
     }
 
-    return [...result].sort(
-      (a, b) =>
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+    return [...result].sort((a, b) =>
+      new Date((b as any).createdAt ?? (b as any).created_at).getTime() -
+      new Date((a as any).createdAt ?? (a as any).created_at).getTime(),
     );
   }, [query, tasks, filter]);
 

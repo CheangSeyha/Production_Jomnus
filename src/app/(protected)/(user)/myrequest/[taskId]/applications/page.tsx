@@ -15,7 +15,10 @@ import {
 } from "lucide-react";
 import api from "@/lib/axios";
 import ApplicationOfferCard from "@/components/myrequest/ApplicationOfferCard";
-import AssignmentProgressCard from "@/components/myrequest/AssignmentProgressCard";
+import WorkerTimelineCard from "@/components/myrequest/WorkerTimeLineCard";
+import TaskMapPreview from "@/components/map/TaskMapPreview";
+import EditTaskModal from "@/components/myrequest/EditTaskModel";
+
 type Application = {
   id: number;
   status: string;
@@ -56,15 +59,31 @@ type Assignment = {
 
 type Task = {
   id: number;
-  title: string;
-  description: string;
-  status: "POSTED" | "ACCEPTED" | "IN_PROGRESS" | "COMPLETED";
-  required_workers: number;
-  location_text?: string;
-  price: number;
-  deadline: string;
-};
 
+  title: string;
+
+  description: string;
+
+  status:
+    | "POSTED"
+    | "ACCEPTED"
+    | "IN_PROGRESS"
+    | "COMPLETED";
+
+  requiredWorkers: number;
+
+  locationText?: string;
+
+  price: number;
+
+  deadline: string;
+
+  latitude?: number;
+
+  longitude?: number;
+
+  createdAt?: string;
+};
 const statusStyles: Record<string, string> = {
   POSTED: "bg-emerald-50 text-emerald-700 ring-emerald-200",
   ACCEPTED: "bg-blue-50 text-blue-700 ring-blue-200",
@@ -90,6 +109,19 @@ export default function TaskApplicationsPage() {
   const [reviewAssignment, setReviewAssignment] = useState<Assignment | null>(null);
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState("");
+  const [isEditOpen, setIsEditOpen] = useState(false);
+
+  const [editForm, setEditForm] = useState<any>({
+    title: "",
+    description: "",
+    price: 0,
+    deadline: "",
+    locationText: "",
+    latitude: undefined,
+    longitude: undefined,
+    requiredWorkers: 1,
+    categoryId: undefined,
+  });
 
   const acceptedCount = useMemo(
     () => applications.filter((app) => app.status === "ACCEPTED").length,
@@ -104,7 +136,7 @@ export default function TaskApplicationsPage() {
     [applications],
   );
   const canCloseApplications =
-    Boolean(task) && pendingCount > 0 && acceptedCount >= (task?.required_workers ?? 1);
+    Boolean(task) && pendingCount > 0 && acceptedCount >= (task?.requiredWorkers ?? 1);
 
   useEffect(() => {
     fetchData();
@@ -129,7 +161,57 @@ export default function TaskApplicationsPage() {
         }),
       );
 
-      setTask(taskRes.data);
+      const formattedTask = {
+        id: taskRes.data.id,
+
+        title: taskRes.data.title,
+
+        description: taskRes.data.description,
+
+        status: taskRes.data.status,
+
+        price: taskRes.data.price,
+
+        deadline: taskRes.data.deadline,
+
+        locationText:
+          taskRes.data.location_text,
+
+        requiredWorkers:
+          taskRes.data.required_workers,
+
+        latitude: taskRes.data.latitude,
+
+        longitude: taskRes.data.longitude,
+
+        createdAt:
+          taskRes.data.created_at,
+      };
+
+      setTask(formattedTask);
+
+      setEditForm({
+        title: formattedTask.title || "",
+
+        description:
+          formattedTask.description || "",
+
+        price: formattedTask.price || 0,
+
+        deadline: formattedTask.deadline
+          ? formattedTask.deadline.slice(0, 16)
+          : "",
+
+        locationText:
+          formattedTask.locationText || "",
+
+        latitude: formattedTask.latitude,
+
+        longitude: formattedTask.longitude,
+
+        requiredWorkers:
+          formattedTask.requiredWorkers || 1,
+      });
       setApplications(appRes.data);
       setAssignments(assignmentsWithProofs);
     } catch (err) {
@@ -205,6 +287,61 @@ export default function TaskApplicationsPage() {
     }
   };
 
+  const updateTask = async () => {
+    try {
+      await api.patch(`/tasks/${taskId}`, {
+        title: editForm.title,
+
+        description: editForm.description,
+
+        price: Number(editForm.price),
+
+        deadline:
+          new Date(editForm.deadline).toISOString(),
+
+        locationText:
+          editForm.locationText,
+
+        latitude:
+          editForm.latitude,
+
+        longitude:
+          editForm.longitude,
+
+        requiredWorkers:
+          Number(editForm.requiredWorkers),
+      });
+
+      setIsEditOpen(false);
+
+      fetchData();
+    } catch (err: any) {
+      alert(
+        err?.response?.data?.message ||
+        "Failed to update task",
+      );
+    }
+  };
+
+  const deleteTask = async () => {
+    const confirmed = confirm(
+      "Delete this task permanently?"
+    );
+
+    if (!confirmed) return;
+
+    try {
+      await api.delete(`/tasks/${taskId}`);
+
+      router.push("/myrequest");
+    } catch (err: any) {
+      alert(
+        err?.response?.data?.message ||
+        "Failed to delete task",
+      );
+    }
+  };
+
   if (!task) {
     return (
       <div className="min-h-screen bg-slate-50 p-10 text-center text-sm text-slate-500">
@@ -246,9 +383,100 @@ export default function TaskApplicationsPage() {
             <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
               {task.description || "No description provided."}
             </p>
+
+            <div className="mt-5 flex flex-wrap gap-3">
+              <button
+                onClick={() => {
+                  setEditForm({
+                    title: task.title,
+
+                    description: task.description,
+
+                    price: task.price,
+
+                    deadline: task.deadline
+                      ? task.deadline.slice(0, 16)
+                      : "",
+
+                    locationText:
+                      task.locationText || "",
+
+                    latitude: task.latitude,
+
+                    longitude: task.longitude,
+
+                    requiredWorkers:
+                      task.requiredWorkers || 1,
+                  });
+
+                  setIsEditOpen(true);
+                }}
+                className="
+                  rounded-xl border border-blue-200
+                  bg-blue-50 px-4 py-2
+                  text-sm font-bold text-blue-700
+                  transition hover:bg-blue-100
+                "
+              >
+                Edit Task
+              </button>
+
+              <button
+                onClick={deleteTask}
+                className="
+                  rounded-xl border border-red-200
+                  bg-red-50 px-4 py-2
+                  text-sm font-bold text-red-600
+                  transition hover:bg-red-100
+                "
+              >
+                Delete Task
+              </button>
+            </div>
           </div>
         </section>
+        
+        {/* MAP PREVIEW */}
+        {task.latitude && task.longitude && (
+          <section
+            className="
+              overflow-hidden rounded-3xl
+              border border-slate-200
+              bg-white
+              shadow-sm
+            "
+          >
+            {/* TOP */}
+            <div className="border-b border-slate-100 p-5">
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">
+                Task Location
+              </p>
 
+              <h2 className="mt-2 text-xl font-bold text-slate-950">
+                Meeting Point
+              </h2>
+
+              <p className="mt-2 text-sm leading-6 text-slate-500">
+                Workers can use this location to navigate to the task area.
+              </p>
+            </div>
+
+            {/* MAP */}
+            <div className="h-auto w-full">
+              <TaskMapPreview
+                lat={task.latitude}
+                lng={task.longitude}
+              />
+            </div>
+
+            {/* LOCATION */}
+            <div className="border-t border-slate-100 p-5">
+              <p className="text-sm font-semibold text-slate-700">
+                {task.locationText || "No location provided"}
+              </p>
+            </div>
+          </section>
+        )}
 
         <section className="grid gap-3 md:grid-cols-4">
           <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
@@ -275,7 +503,7 @@ export default function TaskApplicationsPage() {
               Location
             </p>
             <p className="mt-2 line-clamp-2 text-sm font-bold text-slate-950">
-              {task.location_text || "No location"}
+              {task.locationText || "No location"}
             </p>
           </div>
           <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
@@ -284,173 +512,125 @@ export default function TaskApplicationsPage() {
               Workers
             </p>
             <p className="mt-2 text-sm font-bold text-slate-950">
-              {acceptedCount}/{task.required_workers} accepted
+              {acceptedCount}/{task.requiredWorkers} accepted
             </p>
             <p className="mt-1 text-xs text-slate-500">
-              {Math.max(task.required_workers - acceptedCount, 0)} slot
-              {task.required_workers - acceptedCount === 1 ? "" : "s"} open
+              {Math.max(task.requiredWorkers - acceptedCount, 0)} slot
+              {task.requiredWorkers - acceptedCount === 1 ? "" : "s"} open
             </p>
           </div>
         </section>
 
-        <section className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_400px]">
-          <div className="space-y-3">
-            <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+        <section className="space-y-8"> 
+
+          {/* APPLICATIONS */}
+          <div className="space-y-4">
+
+            <div className="flex items-center justify-between">
               <div>
-                <h2 className="flex items-center gap-2 text-lg font-bold text-slate-950">
-                  <ClipboardList size={19} className="text-blue-600" />
-                  Current Offers
+                <h2 className="text-xl font-bold text-slate-950">
+                  Applicants
                 </h2>
+
                 <p className="mt-1 text-sm text-slate-500">
-                  {pendingCount} pending, {acceptedCount} accepted, {rejectedCount} rejected
+                  Review performer applications
                 </p>
               </div>
 
               {canCloseApplications && (
                 <button
                   onClick={rejectRemainingApplications}
-                  className="h-10 rounded-lg bg-slate-900 px-4 text-sm font-bold text-white transition hover:bg-slate-800"
+                  className="
+                    rounded-xl bg-slate-900
+                    px-5 py-3
+                    text-sm font-semibold text-white
+                    transition hover:bg-slate-800
+                  "
                 >
-                  Reject Remaining
+                  Close Applications
                 </button>
               )}
             </div>
 
             {applications.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-slate-300 bg-white p-8 text-center">
-                <p className="font-bold text-slate-900">No offers yet</p>
-                <p className="mt-1 text-sm text-slate-500">
-                  New performer applications will appear here.
+              <div className="rounded-3xl border border-dashed border-slate-300 bg-white p-10 text-center">
+                <p className="font-bold text-slate-900">
+                  No applications yet
+                </p>
+
+                <p className="mt-2 text-sm text-slate-500">
+                  Applications will appear here
                 </p>
               </div>
             ) : (
-              applications.map((app) => (
-                <ApplicationOfferCard
-                  key={app.id}
-                  performerName={app.performer.fullName}
-                  performerImage={app.performer.profileImage}
-                  offeredPrice={app.offered_price}
-                  status={app.status}
-                  onAccept={() => acceptApplication(app.id)}
-                  onReject={() => rejectApplication(app.id)}
-                />
-              ))
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                {applications.map((app) => (
+                  <ApplicationOfferCard
+                    key={app.id}
+                    performerName={app.performer.fullName}
+                    performerImage={app.performer.profileImage}
+                    offeredPrice={app.offered_price}
+                    status={app.status}
+                    onAccept={() => acceptApplication(app.id)}
+                    onReject={() => rejectApplication(app.id)}
+                  />
+                ))}
+              </div>
             )}
           </div>
 
-          <aside className="space-y-3">
-            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-              <h2 className="flex items-center gap-2 text-lg font-bold text-slate-950">
-                <ShieldCheck size={19} className="text-blue-600" />
-                Assigned Workers
+          {/* ACTIVE WORKERS */}
+          <div className="space-y-4">
+
+            <div>
+              <h2 className="text-xl font-bold text-slate-950">
+                Active Workers
               </h2>
+
               <p className="mt-1 text-sm text-slate-500">
-                Proof and verification status for accepted performers.
+                Track assigned performers and review submissions
               </p>
             </div>
 
             {assignments.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-slate-300 bg-white p-8 text-center">
-                <p className="font-bold text-slate-900">No workers assigned</p>
-                <p className="mt-1 text-sm text-slate-500">
-                  Accepted performers will appear here.
+              <div className="rounded-3xl border border-dashed border-slate-300 bg-white p-10 text-center">
+                <p className="font-bold text-slate-900">
+                  No workers assigned
+                </p>
+
+                <p className="mt-2 text-sm text-slate-500">
+                  Accepted workers will appear here
                 </p>
               </div>
             ) : (
-              assignments.map((assignment) => (
-                <div key={assignment.id} className="space-y-3">
-
-                  <AssignmentProgressCard
+              <div className="space-y-5">
+                {assignments.map((assignment) => (
+                  <WorkerTimelineCard
+                    key={assignment.id}
                     performerName={
-                      assignment.performer?.fullName || "Assigned worker"
+                      assignment.performer?.fullName || "Worker"
                     }
-                    performerImage={assignment.performer?.profileImage}
-                    status={assignment.status}
+                    performerImage={
+                      assignment.performer?.profileImage
+                    }
+                    assignmentStatus={assignment.status}
+                    acceptedPrice={assignment.accepted_price}
+                    proofs={assignment.proofs || []}
+                    onApproveProof={(proofId) =>
+                      approveProof(proofId, assignment)
+                    }
+                    onRejectProof={(proofId) =>
+                      rejectProof(proofId)
+                    }
                   />
-
-                  <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-bold text-slate-950">
-                          Accepted Price
-                        </p>
-
-                        <p className="mt-1 text-lg font-black text-slate-950">
-                          ${Number(assignment.accepted_price || 0).toFixed(2)}
-                        </p>
-                      </div>
-
-                      <span
-                        className={`rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wide ring-1 ${
-                          assignmentStyles[assignment.status] ||
-                          "bg-slate-100 text-slate-500 ring-slate-200"
-                        }`}
-                      >
-                        {assignment.status.replace("_", " ")}
-                      </span>
-                    </div>
-
-                    {/* PROOFS */}
-                    <div className="mt-4 space-y-3">
-                      {assignment.proofs?.length ? (
-                        assignment.proofs.map((proof) => (
-                          <div
-                            key={proof.id}
-                            className="rounded-lg border border-slate-200 bg-slate-50 p-3"
-                          >
-                            <p className="text-xs font-bold uppercase tracking-wide text-slate-500">
-                              Proof #{proof.id}
-                            </p>
-
-                            {proof.text_content && (
-                              <p className="mt-2 text-sm text-slate-700">
-                                {proof.text_content}
-                              </p>
-                            )}
-
-                            {proof.file_url && (
-                              <a
-                                href={`http://localhost:3001${proof.file_url}`}
-                                target="_blank"
-                                className="mt-2 inline-block text-sm font-bold text-blue-600"
-                              >
-                                View uploaded file
-                              </a>
-                            )}
-
-                            {proof.status === "PENDING" && (
-                              <div className="mt-3 flex gap-2">
-                                <button
-                                  onClick={() => rejectProof(proof.id)}
-                                  className="h-9 flex-1 rounded-lg bg-red-50 text-xs font-bold text-red-600"
-                                >
-                                  Reject
-                                </button>
-
-                                <button
-                                  onClick={() =>
-                                    approveProof(proof.id, assignment)
-                                  }
-                                  className="h-9 flex-1 rounded-lg bg-blue-600 text-xs font-bold text-white"
-                                >
-                                  Accept Proof
-                                </button>
-                              </div>
-                            )}
-                          </div>
-                        ))
-                      ) : (
-                        <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">
-                          No proof submitted yet.
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))
+                ))}
+              </div>
             )}
-          </aside>
+          </div>
+
         </section>
+
+        
       </div>
 
       {reviewAssignment && (
@@ -504,6 +684,27 @@ export default function TaskApplicationsPage() {
           </div>
         </div>
       )}
+
+      {isEditOpen && (
+        <EditTaskModal
+          form={editForm}
+          setForm={setEditForm}
+          onClose={() => setIsEditOpen(false)}
+          onSave={updateTask}
+          onDelete={deleteTask}
+          onFormChange={(name: string, value: any) => {
+            // Keep live preview in sync while editing
+            setTask((prev: any) => {
+              if (!prev) return prev;
+              return {
+                ...prev,
+                [name]: value,
+              };
+            });
+          }}
+        />
+      )}
+
     </div>
   );
 }
