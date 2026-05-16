@@ -305,7 +305,13 @@ export default function MyTaskPage() {
                                     <div className="flex items-start justify-between gap-3 mb-4">
                                         <div className="flex items-center gap-3">
                                             <div
-                                                onClick={() => handleProfileClick(task.requester?.id)}
+
+                                            onClick={(e) => {
+                                            e.stopPropagation();
+                                            if (task.requester?.id) {
+                                                router.push(`/profile/${task.requester.id}`);
+                                            }
+                                            }}
                                                 className="w-12 h-12 rounded-full bg-slate-100 overflow-hidden cursor-pointer hover:opacity-80 transition"
                                             >
                                                 <img
