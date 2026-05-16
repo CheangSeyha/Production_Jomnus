@@ -242,6 +242,11 @@ export default function MyTaskPage() {
         return active ? active.statuses.includes(normalized) : true;
     });
 
+    const handleProfileClick = (userId?: number) => {
+        if (!userId) return;
+        router.push(`/profile/${userId}`);
+    };
+
     return (
         <div className="min-h-screen bg-white p-8">
             <div className="max-w-7xl mx-auto">
@@ -299,13 +304,21 @@ export default function MyTaskPage() {
                                 <div className="p-5 flex-1 flex flex-col">
                                     <div className="flex items-start justify-between gap-3 mb-4">
                                         <div className="flex items-center gap-3">
-                                            <div className="w-12 h-12 rounded-full bg-slate-100 overflow-hidden">
+                                            <div
+                                                onClick={() => handleProfileClick(task.requester?.id)}
+                                                className="w-12 h-12 rounded-full bg-slate-100 overflow-hidden cursor-pointer hover:opacity-80 transition"
+                                            >
                                                 <img
                                                     src={
                                                         task.requester?.profileImage ||
-                                                        `https://api.dicebear.com/7.x/avataaars/svg?seed=${task.requester?.fullName ?? task.requester?.id ?? "unknown"}`
+                                                        `https://api.dicebear.com/7.x/avataaars/svg?seed=${
+                                                            task.requester?.fullName ??
+                                                            task.requester?.id ??
+                                                            "unknown"
+                                                        }`
                                                     }
                                                     alt={task.requester?.fullName ?? "Requester"}
+                                                    className="w-full h-full object-cover"
                                                 />
                                             </div>
                                             <div>

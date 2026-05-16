@@ -28,6 +28,7 @@ type Props = {
 
 export default function Header({ role = "user", onMenuClick }: Props) {
   const user = useAuthStore((s) => s.user);
+  // const user = useUserStore((s) => s.user);
   const unreadCount = useNotificationStore((s) => s.unreadCount);
 
   const [open, setOpen] = useState(false);
@@ -144,8 +145,8 @@ export default function Header({ role = "user", onMenuClick }: Props) {
                 )}
               </div>
               <div className="hidden sm:block text-left">
-                <p className="text-[13px] font-bold text-slate-800 leading-none truncate max-w-[100px]">
-                  {user?.fullName?.split(" ")[0] || "Account"}
+                <p className="text-[13px] font-bold text-slate-800 leading-none truncate max-w-[120px]">
+                  {user?.fullName || "Guest User"}
                 </p>
                 <p
                   className={`text-[10px] font-black uppercase tracking-wider mt-0.5 ${
@@ -197,12 +198,10 @@ export default function Header({ role = "user", onMenuClick }: Props) {
                       />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p
-                        className={`text-base font-black truncate ${
-                          is_admin ? "text-white" : "text-slate-900"
-                        }`}
-                      >
-                        {user?.fullName || "Welcome!"}
+                      <p className={`text-base font-black truncate ${
+                        is_admin ? "text-white" : "text-slate-900"
+                      }`}>
+                        {user?.fullName || "Guest User"}
                       </p>
                       <div className="flex items-center gap-1.5 mt-0.5">
                         <span

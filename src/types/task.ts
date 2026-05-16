@@ -8,12 +8,9 @@ export type Task = {
   price: number;
   createdAt: string;
   deadline: string;
-
-  status: "OPEN" | "COMPLETED" | "CANCELLED";
-
-  requesterName: string;
-  hasApplied?: boolean;
-
+  requesterName?: string;
+  requester_id: number; // 👈 Change this to underscore
+  // optional extras
   priority?: "Urgent" | "Normal" | "Low";
   requestCount?: number;
 };

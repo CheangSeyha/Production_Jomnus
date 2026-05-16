@@ -132,10 +132,11 @@ export default function DashboardPage() {
           createdAt: task.created_at,
           deadline: task.deadline,
 
-          status: task.status,
+          requester_id: task.requester?.id,
 
           requesterName: task.requester?.fullName || "Unknown",
-          hasApplied: task.hasApplied ?? false,
+
+          requester: task.requester,
 
           priority: "Normal",
           requestCount: 0,

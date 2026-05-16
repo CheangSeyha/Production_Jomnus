@@ -121,7 +121,7 @@ export default function ProfileHeader({
             name="fullName"
             value={data.fullName}
             onChange={onInputChange}
-            placeholder="e.g., Doeung Sreypy"
+            placeholder="e.g., Full Name"
             className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-blue-100 focus:border-blue-300 outline-none transition-all text-slate-800"
           />
         </div>
@@ -169,7 +169,7 @@ export default function ProfileHeader({
             name="currentRole"
             value={data.currentRole}
             onChange={onInputChange}
-            placeholder="e.g., 25"
+            placeholder="e.g., Requester, Performer"
             className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none"
           />
         </div>

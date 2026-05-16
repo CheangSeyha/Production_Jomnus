@@ -15,9 +15,15 @@ const INITIAL_CATEGORIES = [
   { name: "Gardening", active: false },
 ];
 
+<<<<<<< HEAD
 interface SpecializationsProps {
   data?: any;
 }
+=======
+type SpecializationsProps = {
+  data?: any[];
+};
+>>>>>>> b03e8ed (update on profile and setting)
 
 export default function Specializations({ data }: SpecializationsProps) {
   const [categories, setCategories] = useState(INITIAL_CATEGORIES);
