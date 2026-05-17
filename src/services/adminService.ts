@@ -56,19 +56,52 @@ export const adminService = {
     return response.data;
   },
 
-  async getTaskCompletions(taskId: number) {
-    const response = await api.get(`/admin/tasks/${taskId}/completions`);
-    return response.data;
-  },
-
-  // ============ VERIFICATIONS ============
+  // ============ IDENTITY VERIFICATIONS ============
   async getVerifications(params: PaginationParams = { page: 1, limit: 10 }) {
     const response = await api.get("/admin/verifications", { params });
     return response.data;
   },
 
-  async approveVerification(verificationId: number) {
-    const response = await api.patch(`/admin/verifications/${verificationId}/approve`);
+  async approveVerification(id: number, adminId?: number) {
+    // Passes transaction context payloads directly through the request body
+    const response = await api.patch(`/admin/verifications/${id}/approve`, { adminId });
     return response.data;
+  },
+
+  async rejectVerification(id: number, payload: { reason: string; adminId?: number }) {
+    const response = await api.patch(`/admin/verifications/${id}/reject`, payload);
+    return response.data;
+  },
+
+  async resetVerificationToPending(id: number, adminId?: number) {
+    const response = await api.patch(`/admin/verifications/${id}/reset`, { adminId });
+    return response.data;
+  },
+
+  // ============ CSV EXPORT METHOD ============
+  async exportVerificationsToCsv() {
+    try {
+      const response = await api.get("/admin/verifications/export", {
+        responseType: "text"
+      });
+
+      if (typeof response.data === "string" && response.data.startsWith("{")) {
+        const parsed = JSON.parse(response.data);
+        if (parsed.statusCode >= 400) throw new Error(parsed.message || "Failed to download export");
+      }
+
+      const blob = new Blob([response.data], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", `identity_verifications_${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = "hidden";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error("Export download processing encountered an issue:", error);
+      throw error;
+    }
   },
 };
