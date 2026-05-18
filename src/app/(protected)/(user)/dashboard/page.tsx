@@ -7,6 +7,8 @@ import DetailTaskCard from "@/components/myrequest/DetailTaskCard";
 import TaskDetailModal from "@/components/myrequest/TaskDetailModal";
 import { Task } from "@/types/task";
 import ApplyTaskModal from "@/components/applications/ApplyTaskModal";
+import api from "@/lib/axios";
+
 type Category = {
   id: number;
   name: string;
@@ -14,28 +16,49 @@ type Category = {
 };
 
 type TaskApi = {
-    id: number;
-    title: string;
-    description?: string | null;
-    location_text?: string | null;
-    price: number;
-    created_at: string;
-    deadline: string;
-    requester_id?: number;
-    latitude?: number;
-    longitude?: number;
-    requester?: {
-        id: number;
-        fullName: string;
-        profileImage?: string | null;
-    } | null;
-    hasApplied?: boolean;
-    status: "OPEN" | "COMPLETED" | "CANCELLED";
-};
+  id: number;
 
-const API_BASE_URL = (
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api"
-).replace(/\/$/, "");
+  title: string;
+
+  description?: string | null;
+
+  location_text?: string | null;
+
+  latitude?: number | null;
+
+  longitude?: number | null;
+
+  price: number;
+
+  created_at: string;
+
+  updated_at?: string;
+
+  start_date?: string | null;
+
+  deadline: string;
+
+  required_workers?: number;
+
+  status:
+    | "POSTED"
+    | "ACCEPTED"
+    | "IN_PROGRESS"
+    | "PARTIAL_COMPLETED"
+    | "COMPLETED"
+    | "VERIFIED"
+    | "CANCELLED";
+
+  requester?: {
+    id: number;
+
+    fullName: string;
+
+    profileImage?: string | null;
+  } | null;
+
+  hasApplied?: boolean;
+};
 
 const TASKS_PER_PAGE = 6;
 
@@ -109,40 +132,50 @@ export default function DashboardPage() {
       try {
         const token = localStorage.getItem("access_token");
 
-        const res = await fetch(`${API_BASE_URL}/tasks`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`, // IMPORTANT
-          },
-        });
+        const res = await api.get<TaskApi[]>("/tasks")
 
-        if (!res.ok) {
-          throw new Error(`Failed to fetch tasks (${res.status})`);
-        }
+        const data = res.data;
 
-        const data: TaskApi[] = await res.json();
 
         const mapped: Task[] = data.map((task) => ({
           id: task.id,
+
           title: task.title,
+
           description: task.description || "",
+
           locationText: task.location_text || "",
+
+          latitude: task.latitude ?? undefined,
+
+          longitude: task.longitude ?? undefined,
+
           price: task.price,
+
           createdAt: task.created_at,
+
+          updatedAt: task.updated_at,
+
+          startDate: task.start_date || "",
+
           deadline: task.deadline,
 
           requester_id: task.requester?.id,
 
-          requesterName: task.requester?.fullName || "Unknown",
-
           requester: task.requester,
+          requiredWorkers:
+            task.required_workers || 1,
+
+          status: task.status,
+
+          requesterName:
+            task.requester?.fullName || "Unknown",
+
+          hasApplied: task.hasApplied ?? false,
 
           priority: "Normal",
-          requestCount: 0,
 
-          latitude: task.latitude,
-          longitude: task.longitude,
+          requestCount: 0,
         }));
 
         setTasks(mapped);
@@ -161,20 +194,13 @@ export default function DashboardPage() {
       try {
         setIsLoadingCategories(true);
 
-        const res = await fetch(`${API_BASE_URL}/categories`, {
-          method: "GET",
+        const res = await api.get<Category[]>("/categories", {
           signal: controller.signal,
-          headers: { "Content-Type": "application/json" },
         });
 
-        if (!res.ok) {
-          throw new Error(`Failed to fetch categories (${res.status})`);
-        }
-
-        const data: Category[] = await res.json();
-        setCategories(data);
+        setCategories(res.data);
       } catch (error) {
-        if ((error as Error).name !== "AbortError") {
+        if ((error as Error).name !== "CanceledError") {
           console.error("Error loading categories:", error);
         }
       } finally {

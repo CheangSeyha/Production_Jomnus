@@ -21,7 +21,7 @@ export default function DetailTaskCard({ task, onOpen, onApply }: Props) {
 		const formatDate = (date?: string) => {
 			if (!date) return "No date";
 			const d = new Date(date);
-			return isNaN(d.getTime()) ? "Invalid date" : d.toLocaleDateString();
+			return isNaN(d.getTime()) ? "Invalid date" : d.toLocaleString();
 		};
 		
 
@@ -92,7 +92,7 @@ export default function DetailTaskCard({ task, onOpen, onApply }: Props) {
 				</p>
 
 				<p className="text-[12px] font-semibold text-slate-800">
-					{formatDate(task.createdAt)}
+					{formatDate(task.startDate || task.createdAt)}
 					<span className="px-1.5"> - </span>
 					{formatDate(task.deadline)}
 				</p>
@@ -146,7 +146,7 @@ export default function DetailTaskCard({ task, onOpen, onApply }: Props) {
 
           <div className="flex items-center gap-1 px-3 py-1.5 bg-slate-100 rounded-full text-xs text-slate-600">
             <Clock size={12} />
-            {new Date(task.deadline).toLocaleDateString()}
+            {new Date(task.deadline).toLocaleString()}
           </div>
         </div>
 
