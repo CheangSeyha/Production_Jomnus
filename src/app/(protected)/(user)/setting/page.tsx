@@ -10,25 +10,38 @@ import WorkHistory from "@/components/setting/WorkHistory";
 import ProfileHeader from "@/components/setting/ProfileHeader";
 
 import { useAuthStore } from "@/store/authStore";
-import { em } from "motion/react-client";
+
+type ProjectItem = {
+  id: number;
+  title: string;
+  description: string;
+  tag: string;
+  image?: string;
+};
+
+type FormDataType = {
+  id: number | null;
+  fullName: string;
+  phone: string;
+  city: string;
+  currentRole: string;
+  bio: string;
+  profileImage: string;
+};
 
 export default function SettingPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const {
-    user,
-    accessToken,
-  } = useAuthStore();
-  
-  const updateUser = useAuthStore((state) => state.updateUser) || ((userData) => useAuthStore.setState({ user: userData }));
+  const { user } = useAuthStore();
+
   const setUser = useAuthStore((state) => state.setUser);
-  
+
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormDataType>({
     id: null,
     fullName: "",
     phone: "",
@@ -60,7 +73,7 @@ export default function SettingPage() {
   }, [user]);
 
   // -------------------------
-  // OPTIONAL: fallback fetch (only if user not loaded)
+  // OPTIONAL: fallback fetch
   // -------------------------
   useEffect(() => {
     const fetchUser = async () => {
@@ -78,20 +91,25 @@ export default function SettingPage() {
         const res = await axios.get(
           "http://localhost:3001/api/users/me",
           {
-            headers: { Authorization: `Bearer ${token}` },
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
           }
         );
 
-        updateUser(res.data);
-      }catch (err: any) {
-        console.error("Failed to fetch user:", err?.response?.data || err.message || err);
-      }finally {
+        setUser(res.data);
+      } catch (err: any) {
+        console.error(
+          "Failed to fetch user:",
+          err?.response?.data || err.message || err
+        );
+      } finally {
         setLoading(false);
       }
     };
 
     fetchUser();
-  }, [user, tokenFromUrl, router, updateUser]);
+  }, [user, tokenFromUrl, router, setUser]);
 
   // -------------------------
   // INPUT CHANGE
@@ -100,55 +118,63 @@ export default function SettingPage() {
     e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
   // -------------------------
   // SAVE PROFILE
   // -------------------------
- const handleSave = async () => {
-  setIsSaving(true);
+  const handleSave = async () => {
+    setIsSaving(true);
 
-  try {
-    const token = localStorage.getItem("access_token");
+    try {
+      const token = localStorage.getItem("access_token");
 
-    // Include everything that might have changed
-    const payload = {
-      fullName: formData.fullName,
-      phone: formData.phone,
-      bio: formData.bio,
-      city: formData.city,
-      profileImage: formData.profileImage, // Ensure this is included
-    };
+      const payload = {
+        fullName: formData.fullName,
+        phone: formData.phone,
+        bio: formData.bio,
+        city: formData.city,
+        profileImage: formData.profileImage,
+      };
 
-    const res = await axios.patch(
-      "http://localhost:3001/api/users/me",
-      payload,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
+      const res = await axios.patch(
+        "http://localhost:3001/api/users/me",
+        payload,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
-    // This is the critical line. 
-    // It must update the Zustand state AND LocalStorage.
-    updateUser(res.data);
+      setUser(res.data);
 
-    setSaveSuccess(true);
-    setTimeout(() => setSaveSuccess(false), 3000);
-  } catch (err: any) {
-    console.error("Save Error:", err.response?.data || err.message);
-    alert("Failed to update profile");
-  } finally {
-    setIsSaving(false);
-  }
-};
+      setSaveSuccess(true);
+
+      setTimeout(() => {
+        setSaveSuccess(false);
+      }, 3000);
+    } catch (err: any) {
+      console.error(
+        "Save Error:",
+        err.response?.data || err.message
+      );
+
+      alert("Failed to update profile");
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   // -------------------------
   // PROJECTS
   // -------------------------
-  const [projects, setProjects] = useState([
+  const [projects, setProjects] = useState<ProjectItem[]>([
     {
       id: 1,
       title: "Luxury Penthouse Furniture Setup",
@@ -160,7 +186,7 @@ export default function SettingPage() {
   ]);
 
   const addNewProject = () => {
-    const newProj = {
+    const newProj: ProjectItem = {
       id: Date.now(),
       title: "New Project Title",
       description: "Enter description",
@@ -168,7 +194,7 @@ export default function SettingPage() {
       image: "",
     };
 
-    setProjects([newProj, ...projects]);
+    setProjects((prev) => [newProj, ...prev]);
   };
 
   // -------------------------
@@ -192,6 +218,7 @@ export default function SettingPage() {
             <h1 className="text-3xl font-black text-slate-800">
               Profile Settings
             </h1>
+
             <p className="text-sm text-slate-500 mt-1">
               Update your information below
             </p>
@@ -223,7 +250,9 @@ export default function SettingPage() {
 
         {/* STATS */}
         <section className="bg-white p-8 rounded-3xl shadow-sm">
-          <h3 className="text-xl font-bold">Performance Statistics</h3>
+          <h3 className="text-xl font-bold">
+            Performance Statistics
+          </h3>
 
           <StatsManagement data={user} />
         </section>
