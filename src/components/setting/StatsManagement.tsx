@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import axios from "axios";
+import api from "@/lib/axios";
 import { profile } from "console";
 import { p } from "motion/react-client";
 import { useParams } from "next/navigation";
@@ -32,16 +32,12 @@ export default function StatsManagement({ data }: StatsProps) {
   // Sync state if 'data' prop updates from the parent
   useEffect(() => {
     const fetchStats = async () => {
-      const token = localStorage.getItem("access_token");
-
-      const res = await axios.get(
-        `http://localhost:3001/api/stats/requester/${profileId}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-
-      setRequesterStats(res.data);
+      try {
+        const res = await api.get(`/stats/requester/${profileId}`);
+        setRequesterStats(res.data);
+      } catch (error) {
+        console.error("Failed to fetch requester stats:", error);
+      }
     };
 
       if (profileId) fetchStats();
@@ -50,16 +46,12 @@ export default function StatsManagement({ data }: StatsProps) {
 
   useEffect(() => {
     const fetchPerformerStats = async () => {
-      const token = localStorage.getItem("access_token");
-
-      const res = await axios.get(
-        `http://localhost:3001/api/stats/performer/${profileId}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-
-      setPerformerStats(res.data);
+      try {
+        const res = await api.get(`/stats/performer/${profileId}`);
+        setPerformerStats(res.data);
+      } catch (error) {
+        console.error("Failed to fetch performer stats:", error);
+      }
     };
 
     if (profileId && role === "PERFORMER") {
@@ -75,12 +67,10 @@ export default function StatsManagement({ data }: StatsProps) {
 
   try {
     setLoading(true);
-    const token = localStorage.getItem("access_token");
 
-    const res = await axios.patch(
-      "http://localhost:3001/api/users/me/switch-role", // Ensure URL matches your backend route
-      { role: newRole },
-      { headers: { Authorization: `Bearer ${token}` } }
+    const res = await api.patch(
+      "/users/me/switch-role",
+      { role: newRole }
     );
 
     // 1. Destructure the data coming from the backend

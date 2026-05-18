@@ -4,7 +4,7 @@ import { useState, useRef } from "react";
 import { Edit2, Trash2, Check, X, Camera, Plus } from "lucide-react";
 
 interface WorkItem {
-  id: number | string;
+  id: number;
   title: string;
   description: string;
   tag: string;
@@ -17,7 +17,7 @@ interface WorkHistoryProps {
 }
 
 export default function WorkHistory({ data, setData }: WorkHistoryProps) {
-  const [editingId, setEditingId] = useState<number | string | null>(null);
+  const [editingId, setEditingId] = useState<number | null>(null);
   const [editForm, setEditForm] = useState<WorkItem | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -34,7 +34,7 @@ export default function WorkHistory({ data, setData }: WorkHistoryProps) {
   };
 
   // --- ACTIONS ---
-  const handleDelete = (id: number | string) => {
+  const handleDelete = (id: number) => {
     if (confirm("Are you sure you want to delete this project?")) {
       setData((prev) => prev.filter((item) => item.id !== id));
     }

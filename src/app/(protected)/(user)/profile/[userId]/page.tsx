@@ -1,38 +1,67 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
 import BackButton from "@/components/profile/backbutton";
 import StatsManagement from "@/components/setting/StatsManagement";
 import Image from "next/image";
 import Link from "next/link";
+import api from "@/lib/axios";
 
-// Updated type for Next.js 15+
-type ProfilePageProps = {
-  params: Promise<{
-    userId: string;
-  }>;
+type User = {
+  id: number;
+  fullName: string;
+  email: string;
+  profileImage?: string;
+  city?: string;
+  role?: string;
+  bio?: string;
+  requester_stats?: any;
+  performer_stats?: any;
 };
 
-async function getUserProfile(userId: string) {
-  if (!/^\d+$/.test(userId)) return null;
+export default function ProfilePage() {
+  const params = useParams();
+  const userId = params.userId as string;
 
-  try {
-    const res = await fetch(`http://localhost:3001/api/users/${userId}`, {
-      cache: "no-store",
-      headers: { Accept: "application/json" },
-      signal: AbortSignal.timeout(5000),
-    });
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
-    if (!res.ok) return null;
-    return await res.json();
-  } catch (error) {
-    console.error("Profile Fetch Failed ->", error);
-    return null;
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (!/^\d+$/.test(userId)) {
+        setError(true);
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const res = await api.get(`/users/profile/${userId}`);
+        setUser(res.data);
+        setError(false);
+      } catch (err) {
+        console.error("Profile Fetch Failed ->", err);
+        setError(true);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserProfile();
+  }, [userId]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="text-center">
+          <p className="text-xl font-black text-slate-800">Loading profile...</p>
+        </div>
+      </div>
+    );
   }
-}
 
-export default async function ProfilePage({ params }: ProfilePageProps) {
-  const { userId } = await params;
-  const user = await getUserProfile(userId);
-
-  if (!user) {
+  if (error || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="text-center">

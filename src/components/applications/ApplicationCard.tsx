@@ -1,6 +1,6 @@
 "use client";
 
-import axios from "axios";
+import api from "@/lib/axios";
 import { useState } from "react";
 import {
   Check,
@@ -57,12 +57,9 @@ export default function ApplicationCard({
     try {
       setLoading(true);
 
-      await axios.patch(
-        `http://localhost:3001/api/applications/${application.id}/accept`,
-        {},
-        {
-          withCredentials: true,
-        }
+      await api.patch(
+        `/applications/${application.id}/accept`,
+        {}
       );
 
       onUpdated();
@@ -82,12 +79,9 @@ export default function ApplicationCard({
     try {
       setLoading(true);
 
-      await axios.patch(
-        `http://localhost:3001/api/applications/${application.id}/reject`,
-        {},
-        {
-          withCredentials: true,
-        }
+      await api.patch(
+        `/applications/${application.id}/reject`,
+        {}
       );
 
       onUpdated();
