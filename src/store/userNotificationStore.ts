@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import api from '@/lib/axios';
 import axios from '@/lib/axios';
 
 interface Notification {
@@ -26,10 +27,10 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
   fetchNotifications: async () => {
     set({ isLoading: true });
     try {
-      const res = await axios.get('/notifications');
+      const res = await api.get('/notifications');
       // Ensure fallbacks to avoid 'undefined' errors
       set({ 
-        notifications: res.data.notifications || [], 
+        notifications: res.data.data || [], 
         unreadCount: res.data.unread_count || 0,
         isLoading: false 
       });
