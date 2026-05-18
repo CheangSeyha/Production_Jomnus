@@ -17,7 +17,18 @@ type Props = {
 
 export default function Header({ role = "user", onMenuClick }: Props) {
   const user = useAuthStore((s) => s.user);
-  const unreadCount = useNotificationStore((s) => s.unreadCount);
+  
+  // 1. Grab BOTH the count and the fetch function from the store
+  const { unreadCount, fetchNotifications } = useNotificationStore();
+
+  // 2. Add the useEffect to pull the trigger
+  useEffect(() => {
+    // Only fetch if they are a regular user (we'll handle Admin later!)
+    if (role === "user") {
+      console.log("🚨 Header loaded! Fetching notifications...");
+      fetchNotifications();
+    }
+  }, [fetchNotifications, role]);
 
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
