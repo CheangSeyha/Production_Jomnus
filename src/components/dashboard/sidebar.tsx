@@ -150,7 +150,7 @@ export default function Sidebar({ role, isOpen = false, onClose }: Props) {
             <LifeBuoy size={20} />
             <span className="font-medium">Help & Support</span>
           </Link>
-        </div>s
+        </div>
 
         {/* Logout Button */}
         <div className="p-6 mt-auto">
