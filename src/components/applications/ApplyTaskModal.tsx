@@ -13,6 +13,7 @@ type Props = {
   taskId: number;
   taskTitle: string;
   defaultPrice: number;
+  onApplied?: () => void;
   onClose: () => void;
 };
 
@@ -20,6 +21,7 @@ export default function ApplyTaskModal({
   taskId,
   taskTitle,
   defaultPrice,
+  onApplied,
   onClose,
 }: Props) {
   const [offeredPrice, setOfferedPrice] = useState(
@@ -41,6 +43,7 @@ export default function ApplyTaskModal({
       );
 
       alert("Application submitted successfully!");
+      onApplied?.();
       onClose();
     } catch (err: any) {
       console.error(err);

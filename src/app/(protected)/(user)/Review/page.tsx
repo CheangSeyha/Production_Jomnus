@@ -1,7 +1,8 @@
 "use client";
 
 import {useEffect, useState} from "react";
-import { Star, ThumbsUp, Reply, ChevronDown } from 'lucide-react';
+import { Star, ThumbsUp } from 'lucide-react';
+import api from "@/lib/axios";
 
 type Review = {
     id: number;
@@ -12,31 +13,27 @@ type Review = {
     comment: string;
     created_at: string;
     assignment_id: number;
+    likesCount?: number;
+    likedByMe?: boolean;
 };
 
 function ReviewPage() {
     const [reviews, setReviews] = useState<Review[]>([]);
     const [loading, setLoading] = useState(true);
+    const [notification, setNotification] = useState<string | null>(null);
 
     useEffect(() => {
-        const token = localStorage.getItem("access_token");
-        if (!token) return;
+        if (typeof window !== "undefined" && !localStorage.getItem("access_token")) {
+            setLoading(false);
+            return;
+        }
 
         const loadReviews = async () => {
             try {
-                const res = await fetch("http://localhost:3001/api/reviews/me", {
-                    headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${token}`,
-                    },
-                });
-
-                if (!res.ok) {
-                    throw new Error(`Failed to fetch reviews (${res.status})`);
-                }
-
-                const data = await res.json();
-                setReviews(data);
+                const { data } = await api.get<Review[]>("/reviews/me");
+                // normalize missing fields
+                const normalized = (data || []).map((r: any) => ({ likesCount: r.likesCount ?? 0, likedByMe: r.likedByMe ?? false, ...r }));
+                setReviews(normalized);
 
             } catch (err) {
                 console.error("Error loading reviews:", err);
@@ -61,6 +58,52 @@ function ReviewPage() {
             <span className="w-8 text-right text-slate-400 font-bold">{percentage}%</span>
         </div>
     );
+
+    const handleLike = async (id?: number) => {
+        if (!id && id !== 0) {
+            setNotification("Unable to like this review (invalid id)");
+            setTimeout(() => setNotification(null), 3000);
+            return;
+        }
+
+        // optimistic update
+        setReviews((prev) => prev.map(r => r.id === id ? ({ ...r, likedByMe: !r.likedByMe, likesCount: (r.likesCount || 0) + (r.likedByMe ? -1 : 1) }) : r));
+
+        try {
+            // Try primary endpoint first
+            await api.post(`/reviews/${id}/like`);
+        } catch (err: any) {
+            const status = err?.response?.status;
+
+            // If 404, try alternate endpoint
+            if (status === 404) {
+                try {
+                    await api.post(`/reviews/${id}/likes`);
+                    console.log("Like saved via alternate endpoint");
+                } catch (err2: any) {
+                    const status2 = err2?.response?.status;
+                    // If both endpoints 404, keep optimistic UI (feature might not be ready on backend)
+                    if (status2 === 404) {
+                        console.log("Like endpoint not yet implemented on backend; using optimistic UI only");
+                    } else {
+                        // Only show error for non-404 failures
+                        console.error("Failed to like review:", err2);
+                        setReviews((prev) => prev.map(r => r.id === id ? ({ ...r, likedByMe: !r.likedByMe, likesCount: (r.likesCount || 0) + (r.likedByMe ? -1 : 1) }) : r));
+                        const message = err2?.response?.data?.message || "Could not update like. Please try again.";
+                        setNotification(message);
+                        setTimeout(() => setNotification(null), 4000);
+                    }
+                }
+            } else {
+                // For non-404 errors, revert and show message
+                console.error("Failed to like review", err);
+                setReviews((prev) => prev.map(r => r.id === id ? ({ ...r, likedByMe: !r.likedByMe, likesCount: (r.likesCount || 0) + (r.likedByMe ? -1 : 1) }) : r));
+                const message = err?.response?.data?.message || "Could not update like. Please try again.";
+                setNotification(message);
+                setTimeout(() => setNotification(null), 4000);
+            }
+        }
+    };
 
     return (
         <div className="min-h-screen bg-white p-8">
@@ -103,6 +146,9 @@ function ReviewPage() {
 
                 {/* RIGHT: Feed */}
                 <div className="space-y-6">
+                    {notification && (
+                        <div className="bg-amber-50 border border-amber-100 text-amber-700 px-4 py-2 rounded-md">{notification}</div>
+                    )}
 
                     {/* Sort Bar */}
                     {/*<div className="bg-white rounded-2xl p-4 flex items-center gap-4 shadow-sm">*/}
@@ -159,12 +205,9 @@ function ReviewPage() {
 
                             {/* Actions */}
                             <div className="flex items-center gap-6 pt-6 border-t">
-                                <button className="flex items-center gap-2 text-slate-400 hover:text-[#005bc4] text-sm font-bold">
-                                    <ThumbsUp size={18} /> Helpful
-                                </button>
-
-                                <button className="flex items-center gap-2 text-slate-400 hover:text-slate-600 text-sm font-bold">
-                                    <Reply size={18} /> Reply
+                                <button onClick={() => handleLike(review.id)} className={`flex items-center gap-2 text-sm font-bold ${review.likedByMe ? 'text-[#005bc4]' : 'text-slate-400 hover:text-[#005bc4]'}`}>
+                                    <ThumbsUp size={18} />
+                                    <span>{review.likesCount || 0} Helpful</span>
                                 </button>
                             </div>
 

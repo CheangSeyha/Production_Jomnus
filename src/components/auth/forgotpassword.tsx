@@ -77,7 +77,9 @@ export default function ForgotPasswordForm() {
       setTimeLeft(300);
     } catch (error) {
       const errMessage =
-        error instanceof Error ? error.message : "Failed to request password reset";
+        error instanceof Error
+          ? error.message
+          : "Failed to request password reset";
       setMessage(errMessage);
     } finally {
       setIsSubmitting(false);
@@ -135,17 +137,16 @@ export default function ForgotPasswordForm() {
   return (
     <div className="min-h-screen flex flex-col lg:flex-row bg-white">
       <div className="hidden lg:flex lg:w-1/2 flex-col justify-center items-center relative overflow-hidden">
-          <>
-            <div className="absolute top-10 left-20 z-50 text-center">
-              <h1 className="text-4xl lg:text-5xl xl:text-6xl font-bold text-white leading-tight">
-                Join Us
-                <br />
-                Today
-              </h1>
-            </div>
-            <img src="/Image/content1.svg" alt="" className="relative z-10" />
-          </>
-        )}
+        <>
+          <div className="absolute top-10 left-20 z-50 text-center">
+            <h1 className="text-4xl lg:text-5xl xl:text-6xl font-bold text-white leading-tight">
+              Join Us
+              <br />
+              Today
+            </h1>
+          </div>
+          <img src="/Image/content1.svg" alt="" className="relative z-10" />
+        </>
         {step === "otp" && (
           <>
             <div className="absolute top-1/2 transform -translate-y-1/2 right-0 left-0 z-50 flex justify-center items-center">

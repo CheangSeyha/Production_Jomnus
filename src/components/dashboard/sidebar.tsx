@@ -35,7 +35,7 @@ export default function Sidebar({ role, isOpen = false, onClose }: Props) {
 
   const userNav = [
     { name: "Dashboard", icon: LayoutGrid, href: "/dashboard" },
-    { name: "Active Tasks", icon: ClipboardCheck, href: "/activetask" },
+    // { name: "Active Tasks", icon: ClipboardCheck, href: "/activetask" },
     { name: "Reviews", icon: Star, href: "/Review" },
     { name: "My Tasks", icon: ShoppingBag, href: "/mytask" },
     { name: "My Requests", icon: Handshake, href: "/myrequest" },
@@ -54,12 +54,14 @@ export default function Sidebar({ role, isOpen = false, onClose }: Props) {
     { name: "Support", icon: LifeBuoy, href: "/admin/support" },
   ];
 
+
   const items = role === "admin" ? adminNav : userNav;
 
   const handleLogout = async () => {
     await logout();
     router.replace("/");
   };
+
 
   return (
     <>
@@ -74,16 +76,18 @@ export default function Sidebar({ role, isOpen = false, onClose }: Props) {
 
       {/* Sidebar */}
       <aside
-        className={`
-          fixed md:static
-          top-0 left-0 bottom-0
-          w-64 md:w-80
-          bg-white border-r border-slate-200/60
-          z-40
-          flex flex-col
-          transform transition-all duration-300 ease-out
-          ${isOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full md:translate-x-0 md:shadow-none"}
-        `}
+          className={`
+    w-60 md:w-64
+    bg-white border-r border-slate-200/60
+    flex flex-col
+    h-full
+
+    fixed md:relative top-0 left-0
+
+    transform transition-transform duration-300 ease-out
+
+    ${isOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full md:translate-x-0"}
+  `}
       >
         {/* Mobile Header */}
         <div className="md:hidden flex items-center justify-between p-4 border-b border-slate-200/80">
@@ -98,7 +102,7 @@ export default function Sidebar({ role, isOpen = false, onClose }: Props) {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto px-4 py-6 space-y-1">
+        <nav className="flex-1 min-h-0 overflow-y-auto px-4 py-6 space-y-1">
           {items.map((item) => {
             const isActive = pathname.startsWith(item.href);
 
@@ -119,7 +123,7 @@ export default function Sidebar({ role, isOpen = false, onClose }: Props) {
               >
                 <item.icon
                   size={22}
-                  className={`flex-shrink-0 transition-all ${
+                  className={`shrink-0 transition-all ${
                     isActive
                       ? "text-blue-600"
                       : "text-slate-400 group-hover:text-slate-600"
@@ -164,7 +168,7 @@ export default function Sidebar({ role, isOpen = false, onClose }: Props) {
           >
             <LogOut
               size={22}
-              className="flex-shrink-0"
+              className="shrink-0"
             />
             <span>Log Out</span>
           </button>

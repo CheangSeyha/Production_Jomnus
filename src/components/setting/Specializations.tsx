@@ -15,7 +15,11 @@ const INITIAL_CATEGORIES = [
   { name: "Gardening", active: false },
 ];
 
-export default function Specializations() {
+type SpecializationsProps = {
+  data?: any[];
+};
+
+export default function Specializations({ data }: SpecializationsProps) {
   const [categories, setCategories] = useState(INITIAL_CATEGORIES);
 
   const toggleCategory = (name: string) => {
@@ -32,8 +36,8 @@ export default function Specializations() {
     // 3. Toggle the state
     setCategories((prev) =>
       prev.map((cat) =>
-        cat.name === name ? { ...cat, active: !cat.active } : cat
-      )
+        cat.name === name ? { ...cat, active: !cat.active } : cat,
+      ),
     );
   };
 

@@ -2,6 +2,7 @@
 
 import FormSection from "./FormSection";
 import { Calendar } from "lucide-react";
+import { toDateTimeLocalValue } from "@/utils/dateTime";
 
 type Props = {
   form: any;
@@ -11,10 +12,6 @@ type Props = {
 export default function ScheduleForm({ form, onChange }: Props) {
   const inputClass =
     "h-12 w-full rounded-lg border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-100";
-  const toDateTimeLocalValue = (date: Date) => {
-    const offsetDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
-    return offsetDate.toISOString().slice(0, 16);
-  };
   const nowValue = toDateTimeLocalValue(new Date());
   const deadlineMin = form.startDate
     ? toDateTimeLocalValue(new Date(new Date(form.startDate).getTime() + 60000))
