@@ -3,6 +3,9 @@ import api from "@/lib/axios";
 interface PaginationParams {
   page?: number;
   limit?: number;
+  search?: string;
+  role?: string;
+  status?: string;
 }
 
 export const adminService = {
@@ -18,8 +21,14 @@ export const adminService = {
     return response.data;
   },
 
-  async deleteUser(userId: number) {
-    const response = await api.delete(`/admin/users/${userId}`);
+  // Changed from deleteUser to toggleBanStatus to accurately match backend design intent
+  async banUser(userId: number) {
+    const response = await api.patch(`/admin/users/${userId}/ban`);
+    return response.data;
+  },
+
+  async restoreUser(userId: number) {
+    const response = await api.patch(`/admin/users/${userId}/restore`);
     return response.data;
   },
 
@@ -63,7 +72,6 @@ export const adminService = {
   },
 
   async approveVerification(id: number, adminId?: number) {
-    // Passes transaction context payloads directly through the request body
     const response = await api.patch(`/admin/verifications/${id}/approve`, { adminId });
     return response.data;
   },
@@ -73,8 +81,8 @@ export const adminService = {
     return response.data;
   },
 
-  async resetVerificationToPending(id: number, adminId?: number) {
-    const response = await api.patch(`/admin/verifications/${id}/reset`, { adminId });
+  async resetVerificationToPending(id: number, payload: { reason: string; adminId?: number }) {
+    const response = await api.patch(`/admin/verifications/${id}/reset`, payload);
     return response.data;
   },
 

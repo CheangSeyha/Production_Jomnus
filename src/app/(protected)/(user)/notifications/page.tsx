@@ -1,20 +1,34 @@
 "use client";
 
-import { useState } from "react"; // Added useState
+import { useState, useEffect } from "react"; // ✅ Added useEffect
 import { Bell, CheckCheck, Clock, Info, AlertTriangle } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useNotificationStore } from "@/store/userNotificationStore";
 
 export default function NotificationsPage() {
-  const { notifications, isLoading, markAsRead, markAllAsRead } = useNotificationStore();
+  // ✅ Added fetchNotifications from your Zustand store layer
+  const { notifications, isLoading, markAsRead, markAllAsRead, fetchNotifications } = useNotificationStore();
   
-  // 1. Add state to manage the active filter
   const [activeTab, setActiveTab] = useState<"all" | "unread">("all");
 
-  // 2. Filter the notifications based on the active tab
+  // ✅ Automatically load database data on component mount
+  useEffect(() => {
+    const loadData = async () => {
+      if (fetchNotifications) {
+        try {
+          await fetchNotifications();
+        } catch (error) {
+          console.error("Failed fetching notifications inside component:", error);
+        }
+      }
+    };
+    loadData();
+  }, [fetchNotifications]);
+
+  // Filter the notifications based on the active tab
   const filteredNotifications = notifications?.filter((notif) => {
     if (activeTab === "unread") return !notif.is_read;
-    return true; // Show all for the "all" tab
+    return true; 
   });
 
   return (
@@ -33,7 +47,7 @@ export default function NotificationsPage() {
         </button>
       </div>
 
-      {/* 3. FILTER TABS SECTION */}
+      {/* FILTER TABS SECTION */}
       <div className="flex gap-4 mb-6 border-b border-slate-100 pb-4">
         <button
           onClick={() => setActiveTab("all")}
@@ -54,7 +68,6 @@ export default function NotificationsPage() {
           }`}
         >
           Unread
-          {/* Optional: Show a small dot if there are unread items */}
           {notifications?.some(n => !n.is_read) && activeTab !== "unread" && (
             <span className="absolute -top-1 -right-1 flex h-3 w-3">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
@@ -80,7 +93,6 @@ export default function NotificationsPage() {
             <p className="text-slate-300 text-sm">We'll let you know when something happens.</p>
           </div>
         ) : (
-          /* 4. Use the FILTERED list for mapping */
           filteredNotifications?.map((notif) => (
             <div 
               key={notif.id}
@@ -98,7 +110,8 @@ export default function NotificationsPage() {
                 </p>
                 <div className="flex items-center gap-1 mt-2 text-xs text-slate-400">
                   <Clock size={12} />
-                  {notif.created_at && formatDistanceToNow(new Date(notif.created_at), { addSuffix: true })}
+                  {/* ✅ Clean timestamp fallback syntax to prevent crashes if date string parses out oddly */}
+                  {notif.created_at ? formatDistanceToNow(new Date(notif.created_at), { addSuffix: true }) : "Recent"}
                 </div>
               </div>
               {!notif.is_read && (

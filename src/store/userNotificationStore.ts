@@ -5,7 +5,7 @@ interface Notification {
   id: number;
   message: string;
   is_read: boolean;
-  type: 'INFO' | 'SUCCESS' | 'WARNING'; // Added type for the icons
+  type: 'INFO' | 'SUCCESS' | 'WARNING' | 'APPLICATION_ACCEPTED' | 'APPLICATION_REJECTED' | 'INFO_UPDATE'; 
   created_at: string;
 }
 
@@ -15,7 +15,7 @@ interface NotificationState {
   isLoading: boolean;
   fetchNotifications: () => Promise<void>;
   markAsRead: (id: number) => Promise<void>;
-  markAllAsRead: () => Promise<void>; // Added missing action
+  markAllAsRead: () => Promise<void>; 
 }
 
 export const useNotificationStore = create<NotificationState>((set, get) => ({
@@ -26,16 +26,21 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
   fetchNotifications: async () => {
     set({ isLoading: true });
     try {
+      // ✅ 1. Reverted to match your @Get() endpoint
       const res = await axios.get('/notifications');
-      // Ensure fallbacks to avoid 'undefined' errors
+      
+      // ✅ 2. Read from res.data.data because your backend names the key "data"
+      const parsedNotifications = res.data?.data || [];
+      const parsedUnreadCount = res.data?.unread_count || 0;
+
       set({ 
-        notifications: res.data.notifications || [], 
-        unreadCount: res.data.unread_count || 0,
+        notifications: parsedNotifications, 
+        unreadCount: parsedUnreadCount,
         isLoading: false 
       });
     } catch (error) {
       console.error("Store Error:", error);
-      set({ notifications: [], isLoading: false });
+      set({ notifications: [], unreadCount: 0, isLoading: false });
     }
   },
 
@@ -52,7 +57,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
     }
   },
 
-  markAllAsRead: async () => { // Implemented missing action
+  markAllAsRead: async () => { 
     try {
       await axios.patch('/notifications/read-all');
       const { notifications } = get();

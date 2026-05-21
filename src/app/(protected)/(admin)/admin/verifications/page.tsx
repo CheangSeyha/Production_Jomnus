@@ -55,7 +55,7 @@ export default function AdminVerificationsPage() {
 
   // Tracks which rows have their 3-dots actions menu visible
   const [activeMenuId, setActiveMenuId] = useState<number | null>(null);
-  const menuContainerRef = useRef<HTMLTableSectionElement | null>(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
 
   const [brokenCardImages, setBrokenCardImages] = useState<Record<number, boolean>>({});
   const [brokenSelfieImages, setBrokenSelfieImages] = useState<Record<number, boolean>>({});
@@ -81,12 +81,12 @@ export default function AdminVerificationsPage() {
   // Handle click away and escape hotkey patterns
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      // Logic Fix: Target the parent containment container to prevent individual ref overriding loops
-      if (menuContainerRef.current && !menuContainerRef.current.contains(event.target as Node)) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setActiveMenuId(null);
       }
     }
     
+    // Listen globally for ESC key to dismiss inspection workflow panel
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
         setActiveInspection(null);
@@ -117,6 +117,7 @@ export default function AdminVerificationsPage() {
     try {
       setApproveLoading(verificationId);
       await adminService.approveVerification(verificationId);
+      
       setVerifications((prev) => {
         if (!prev) return null;
         return {
@@ -126,81 +127,99 @@ export default function AdminVerificationsPage() {
           ),
         };
       });
+      
       // Synchronize changes back to modal view if currently open
       if (activeInspection?.id === verificationId) {
         setActiveInspection(prev => prev ? { ...prev, status: "APPROVED" } : null);
       }
-    } catch (err) {
-      alert("Failed to approve verification");
-      console.error(err);
+      setError(null);
+    } catch (err: any) {
+      const backendMessage = err.response?.data?.message || "Failed to approve verification";
+      setError(backendMessage);
+      console.warn("Handled backend validation rejection:", backendMessage);
     } finally {
       setApproveLoading(null);
     }
   };
 
   const handleReject = async (verificationId: number) => {
-    const reason = prompt("Enter a reason for rejection (required):");
-    
-    // Logic Fix: Strict checking for empty text fields or cancellation actions
-    if (reason === null) return; 
-    if (reason.trim() === "") {
-      alert("Rejection reason cannot be blank. Action aborted.");
-      return;
-    }
+    const reason = prompt("Enter a reason for rejection (optional):");
+    if (reason === null) return;
     
     try {
       setRejectLoading(verificationId);
-      await adminService.rejectVerification(verificationId, { reason: reason.trim() });
+      await adminService.rejectVerification(verificationId, { reason });
       setVerifications((prev) => {
         if (!prev) return null;
         return {
           ...prev,
           data: prev.data.map((v) =>
-            v.id === verificationId ? { ...v, status: "REJECTED", rejection_reason: reason.trim() } : v
+            v.id === verificationId ? { ...v, status: "REJECTED", rejection_reason: reason } : v
           ),
         };
       });
       // Synchronize changes back to modal view if currently open
       if (activeInspection?.id === verificationId) {
-        setActiveInspection(prev => prev ? { ...prev, status: "REJECTED", rejection_reason: reason.trim() } : null);
+        setActiveInspection(prev => prev ? { ...prev, status: "REJECTED", rejection_reason: reason } : null);
       }
-    } catch (err) {
-      alert("Failed to reject verification");
+      setError(null);
+    } catch (err: any) {
+      const backendMessage = err.response?.data?.message || "Failed to reject verification";
+      setError(backendMessage);
       console.error(err);
     } finally {
       setRejectLoading(null);
     }
   };
 
-  const handleResetToPending = async (verificationId: number) => {
-    if (!confirm("Are you sure you want to revert this identity verification back to PENDING status? This updates user roles immediately.")) {
-      return;
+const handleResetToPending = async (verificationId: number) => {
+  // 1. Show the popup message field input to the admin
+  const reason = prompt("Enter a reason for resetting this status back to Pending (optional):");
+  
+  // 2. If the admin clicks "Cancel", abort the process completely
+  if (reason === null) return;
+
+  try {
+    setResetLoading(verificationId);
+    setActiveMenuId(null);
+    
+    // 3. Clean up the text input whitespace
+    const cleanReason = reason.trim();
+
+    // 4. Pass the reason object into your service layer payload
+    await adminService.resetVerificationToPending(verificationId, { 
+      reason: cleanReason 
+    });
+    
+    setVerifications((prev) => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        data: prev.data.map((v) =>
+          v.id === verificationId 
+            ? { 
+                ...v, 
+                status: "PENDING", 
+                rejection_reason: cleanReason || null // 5. Preserve the reason in your UI state instead of instantly nullifying it
+              } 
+            : v
+        ),
+      };
+    });
+    
+    // Synchronize changes back to modal view if currently open
+    if (activeInspection?.id === verificationId) {
+      setActiveInspection(prev => prev ? { ...prev, status: "PENDING", rejection_reason: cleanReason || null } : null);
     }
-    try {
-      setResetLoading(verificationId);
-      setActiveMenuId(null);
-      await adminService.resetVerificationToPending(verificationId);
-      
-      setVerifications((prev) => {
-        if (!prev) return null;
-        return {
-          ...prev,
-          data: prev.data.map((v) =>
-            v.id === verificationId ? { ...v, status: "PENDING", rejection_reason: null } : v
-          ),
-        };
-      });
-      // Synchronize changes back to modal view if currently open
-      if (activeInspection?.id === verificationId) {
-        setActiveInspection(prev => prev ? { ...prev, status: "PENDING", rejection_reason: null } : null);
-      }
-    } catch (err) {
-      alert("Failed to reset verification record back to pending status.");
-      console.error(err);
-    } finally {
-      setResetLoading(null);
-    }
-  };
+    setError(null);
+  } catch (err: any) {
+    const backendMessage = err.response?.data?.message || "Failed to reset verification record";
+    setError(backendMessage);
+    console.error(err);
+  } finally {
+    setResetLoading(null);
+  }
+};
 
   const getUserName = (v: Verification): string => {
     if (!v.user) return `User #${v.id || "?"}`;
@@ -238,7 +257,6 @@ export default function AdminVerificationsPage() {
     }
   };
 
-  // Safe arithmetic for paginated item metrics
   const totalItems = verifications?.meta?.totalItems || 0;
   const itemsPerPage = verifications?.meta?.itemsPerPage || 10;
   const currentCountOnPage = verifications?.data?.length || 0;
@@ -277,9 +295,12 @@ export default function AdminVerificationsPage() {
 
       {/* ── Error Display ── */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-2xl p-4 text-red-700 text-sm font-medium flex items-center gap-3">
-          <AlertCircle className="w-5 h-5 flex-shrink-0" />
-          {error}
+        <div className="bg-red-50 border border-red-200 rounded-2xl p-4 text-red-700 text-sm font-medium flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <AlertCircle className="w-5 h-5 flex-shrink-0" />
+            {error}
+          </div>
+          <button onClick={() => setError(null)} className="text-xs underline hover:text-red-900">Dismiss</button>
         </div>
       )}
 
@@ -331,8 +352,7 @@ export default function AdminVerificationsPage() {
                       ))}
                     </tr>
                   </thead>
-                  {/* Container Ref attached to parent node scope instead of inner map cycles */}
-                  <tbody ref={menuContainerRef} className="divide-y divide-slate-50">
+                  <tbody className="divide-y divide-slate-50">
                     {verifications && verifications.data?.length > 0 ? (
                       verifications.data.map((v, index) => {
                         const isPending = v.status === "PENDING";
@@ -476,6 +496,7 @@ export default function AdminVerificationsPage() {
                                   
                                   {activeMenuId === v.id && (
                                     <div 
+                                      ref={menuRef}
                                       className="absolute right-0 mt-1 w-44 rounded-xl bg-white border border-slate-100 shadow-xl py-1.5 z-50 ring-1 ring-black ring-opacity-5 animate-in fade-in slide-in-from-top-1 duration-100"
                                     >
                                       <button
@@ -552,7 +573,7 @@ export default function AdminVerificationsPage() {
                 Activity On This Page
               </h3>
               <div className="space-y-5">
-                {approvedVerifications.slice(0, 2).map((v) => (
+                {approvedVerifications.slice(0, 5).map((v) => (
                   <div key={v.id} className="flex items-start gap-3">
                     <div className="w-9 h-9 rounded-full bg-gradient-to-br from-slate-200 to-slate-300 flex items-center justify-center text-[10px] font-extrabold text-slate-600 flex-shrink-0">
                       {getInitials(v)}
@@ -570,7 +591,7 @@ export default function AdminVerificationsPage() {
                     </div>
                   </div>
                 ))}
-                {rejectedVerifications.slice(0, 1).map((v) => (
+                {rejectedVerifications.slice(0, 5).map((v) => (
                   <div key={v.id} className="flex items-start gap-3">
                     <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center flex-shrink-0 text-[10px] text-slate-400 font-extrabold">
                       {getInitials(v)}
@@ -664,68 +685,52 @@ export default function AdminVerificationsPage() {
                   />
                 ) : (
                   <div className="text-center p-6 space-y-2">
-                    <ShieldCheck className="w-10 h-10 text-slate-700 mx-auto" />
-                    <p className="text-xs text-slate-500 font-bold">Document Image Corrupted or Missing</p>
+                    <ShieldCheck className="w-12 h-12 text-slate-700 mx-auto" />
+                    <p className="text-xs font-semibold text-slate-500">Document image placeholder empty or failing to render.</p>
                   </div>
                 )}
               </div>
             </div>
 
-            {/* Box 2: Face Selfie Match Verification */}
+            {/* Box 2: Selfie Target File */}
             <div className="flex flex-col gap-2">
               <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 px-1">
-                Live Face Check Match
+                Live Verification Selfie
               </span>
               <div className="bg-slate-900 border border-white/5 rounded-2xl overflow-hidden p-2 shadow-2xl flex items-center justify-center aspect-[16/10]">
-                {!brokenSelfieImages[activeInspection.id] && activeInspection.selfie_url ? (
+                {!brokenSelfieImages[activeInspection.id] && activeInspection.id_card_url ? (
                   <img 
-                    src={activeInspection.selfie_url.startsWith('http') ? activeInspection.selfie_url : `http://localhost:3001/${activeInspection.selfie_url}`} 
-                    alt="Live Face Check Match Target" 
+                    src={activeInspection.selfie_url?.startsWith('http') ? activeInspection.selfie_url : `http://localhost:3001/${activeInspection.selfie_url}`} 
+                    alt="Selfie Check Target File" 
                     className="max-w-full max-h-full object-contain rounded-xl"
                   />
                 ) : (
                   <div className="text-center p-6 space-y-2">
-                    <Eye className="w-10 h-10 text-slate-700 mx-auto" />
-                    <p className="text-xs text-slate-500 font-bold">Selfie Check Image Corrupted or Missing</p>
+                    <Eye className="w-12 h-12 text-slate-700 mx-auto" />
+                    <p className="text-xs font-semibold text-slate-500">Selfie document placeholder empty or failing to render.</p>
                   </div>
                 )}
               </div>
             </div>
           </div>
 
-          {/* Bottom Interactive Dashboard Menu Context */}
-          <div className="w-full max-w-6xl flex flex-col sm:flex-row items-center justify-between gap-4 bg-slate-900/60 backdrop-blur-md px-6 py-4 rounded-2xl border border-white/10 z-10">
-            <div className="text-center sm:text-left">
-              <p className="text-xs font-semibold text-slate-300">
-                {activeInspection.status === "PENDING" 
-                  ? "Awaiting your administrative baseline decision profile status override." 
-                  : `Verification instance marked as ${activeInspection.status.toLowerCase()}.`}
-              </p>
-              {activeInspection.rejection_reason && (
-                <p className="text-[11px] font-medium text-red-400 mt-1 max-w-md line-clamp-1">
-                  Reason: {activeInspection.rejection_reason}
-                </p>
-              )}
+          {/* Quick-Action Inline Workspace Control footer inside Lightbox */}
+          {activeInspection.status === "PENDING" && (
+            <div onClick={(e) => e.stopPropagation()} className="w-full max-w-sm flex items-center gap-4 bg-slate-900/80 border border-white/10 p-3 rounded-2xl z-10 mb-2">
+              <button
+                onClick={() => handleApprove(activeInspection.id)}
+                className="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center justify-center gap-2 transition-colors"
+              >
+                <Check className="w-4 h-4" /> Approve Identity
+              </button>
+              <button
+                onClick={() => handleReject(activeInspection.id)}
+                className="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs flex items-center justify-center gap-2 transition-colors"
+              >
+                <X className="w-4 h-4" /> Reject Profile
+              </button>
             </div>
-            {activeInspection.status === "PENDING" && (
-              <div className="flex items-center gap-2 w-full sm:w-auto">
-                <button
-                  onClick={() => handleReject(activeInspection.id)}
-                  disabled={rejectLoading === activeInspection.id || approveLoading === activeInspection.id}
-                  className="flex-1 sm:flex-initial px-4 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white text-xs font-bold transition-colors disabled:opacity-50"
-                >
-                  Reject File
-                </button>
-                <button
-                  onClick={() => handleApprove(activeInspection.id)}
-                  disabled={rejectLoading === activeInspection.id || approveLoading === activeInspection.id}
-                  className="flex-1 sm:flex-initial px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors disabled:opacity-50"
-                >
-                  Approve Verification
-                </button>
-              </div>
-            )}
-          </div>
+          )}
         </div>
       )}
     </div>
