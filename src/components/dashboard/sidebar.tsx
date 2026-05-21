@@ -41,6 +41,7 @@ export default function Sidebar({ role, isOpen = false, onClose }: Props) {
     { name: "My Requests", icon: Handshake, href: "/myrequest" },
     { name: "Messages", icon: MessageSquare, href: "/message" },
     { name: "Settings", icon: Settings, href: "/setting" },
+    { name: "Help & Support", icon: LifeBuoy, href: "/support" }, 
   ];
 
   const adminNav = [
