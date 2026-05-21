@@ -30,6 +30,7 @@ export default function Header({ role = "user", onMenuClick }: Props) {
   const user = useAuthStore((s) => s.user);
   // const user = useUserStore((s) => s.user);
   const unreadCount = useNotificationStore((s) => s.unreadCount);
+  const fetchNotifications = useNotificationStore((s) => s.fetchNotifications);
 
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -43,6 +44,10 @@ export default function Header({ role = "user", onMenuClick }: Props) {
     document.addEventListener("click", handleClick);
     return () => document.removeEventListener("click", handleClick);
   }, []);
+
+  useEffect(() => {
+    fetchNotifications();
+  }, [fetchNotifications]);
 
   const handleLogout = async () => {
     localStorage.removeItem("access_token");
