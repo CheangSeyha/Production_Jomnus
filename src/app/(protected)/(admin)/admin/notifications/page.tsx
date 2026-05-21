@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Bell, Send, Eye, Users, ChevronRight } from "lucide-react";
+import api from "@/lib/axios";
 
 export default function AdminNotificationsPage() {
   const [title, setTitle] = useState("");
@@ -15,13 +16,24 @@ export default function AdminNotificationsPage() {
     if (!title.trim() || !body.trim()) return;
     try {
       setSending(true);
-      // Simulated broadcast delay — replace with real API call
-      await new Promise((r) => setTimeout(r, 1200));
+      
+      await api.post('/notifications/broadcast', {
+        title: title,
+        message: body,
+        type: 'INFO',
+        
+      });
+      
       setSent(true);
       setTimeout(() => setSent(false), 3000);
       setTitle("");
       setBody("");
-    } finally {
+
+    } catch (error) {
+      console.error("Broadcast failed:", error);
+      alert("Failed to send broadcast. Please try again.");
+    }
+      finally {
       setSending(false);
     }
   };
@@ -30,6 +42,7 @@ export default function AdminNotificationsPage() {
     { title: "v2.4 Patch Notes Released", sent: "2 days ago", views: "8.4k" },
     { title: "Holiday Support Hours",     sent: "1 week ago", views: "12.1k" },
   ];
+
 
   return (
     <div className="min-h-screen space-y-8 max-w-[1400px] mx-auto">

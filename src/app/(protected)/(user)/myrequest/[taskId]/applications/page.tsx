@@ -14,6 +14,7 @@ import {
   Wallet,
 } from "lucide-react";
 import api from "@/lib/axios";
+import { toDateTimeLocalValue, toDateTimeLocalISOString } from "@/utils/dateTime";
 import ApplicationOfferCard from "@/components/myrequest/ApplicationOfferCard";
 import WorkerTimelineCard from "@/components/myrequest/WorkerTimeLineCard";
 import TaskMapPreview from "@/components/map/TaskMapPreview";
@@ -70,13 +71,17 @@ type Task = {
     | "IN_PROGRESS"
     | "COMPLETED";
 
-  requiredWorkers: number;
-
-  locationText?: string;
-
   price: number;
 
   deadline: string;
+
+  startDate?: string;
+
+  requiredWorkers: number;
+
+  categoryId?: number;
+
+  locationText?: string;
 
   latitude?: number;
 
@@ -84,6 +89,8 @@ type Task = {
 
   createdAt?: string;
 };
+
+
 const statusStyles: Record<string, string> = {
   POSTED: "bg-emerald-50 text-emerald-700 ring-emerald-200",
   ACCEPTED: "bg-blue-50 text-blue-700 ring-blue-200",
@@ -161,7 +168,7 @@ export default function TaskApplicationsPage() {
         }),
       );
 
-      const formattedTask = {
+      const formattedTask: Task = {
         id: taskRes.data.id,
 
         title: taskRes.data.title,
@@ -173,6 +180,10 @@ export default function TaskApplicationsPage() {
         price: taskRes.data.price,
 
         deadline: taskRes.data.deadline,
+
+        startDate: taskRes.data.start_date,
+
+        categoryId: taskRes.data.category_id,
 
         locationText:
           taskRes.data.location_text,
@@ -187,30 +198,38 @@ export default function TaskApplicationsPage() {
         createdAt:
           taskRes.data.created_at,
       };
-
       setTask(formattedTask);
 
       setEditForm({
-        title: formattedTask.title || "",
+        title: taskRes.data.title || "",
 
         description:
-          formattedTask.description || "",
+          taskRes.data.description || "",
 
-        price: formattedTask.price || 0,
+        price: taskRes.data.price || 0,
 
-        deadline: formattedTask.deadline
-          ? formattedTask.deadline.slice(0, 16)
+        startDate: taskRes.data.start_date
+          ? toDateTimeLocalValue(taskRes.data.start_date)
+          : "",
+
+        deadline: taskRes.data.deadline
+          ? toDateTimeLocalValue(taskRes.data.deadline)
           : "",
 
         locationText:
-          formattedTask.locationText || "",
+          taskRes.data.location_text || "",
 
-        latitude: formattedTask.latitude,
+        latitude:
+          taskRes.data.latitude || undefined,
 
-        longitude: formattedTask.longitude,
+        longitude:
+          taskRes.data.longitude || undefined,
 
         requiredWorkers:
-          formattedTask.requiredWorkers || 1,
+          taskRes.data.required_workers || 1,
+
+        categoryId:
+          taskRes.data.category_id || undefined,
       });
       setApplications(appRes.data);
       setAssignments(assignmentsWithProofs);
@@ -296,10 +315,15 @@ export default function TaskApplicationsPage() {
 
         price: Number(editForm.price),
 
-        deadline:
-          new Date(editForm.deadline).toISOString(),
+        start_date: editForm.startDate
+          ? toDateTimeLocalISOString(editForm.startDate)
+          : null,
 
-        locationText:
+        deadline: editForm.deadline
+          ? toDateTimeLocalISOString(editForm.deadline)
+          : undefined,
+
+        location_text:
           editForm.locationText,
 
         latitude:
@@ -308,8 +332,11 @@ export default function TaskApplicationsPage() {
         longitude:
           editForm.longitude,
 
-        requiredWorkers:
+        required_workers:
           Number(editForm.requiredWorkers),
+
+        category_id:
+          editForm.categoryId,
       });
 
       setIsEditOpen(false);
@@ -388,25 +415,30 @@ export default function TaskApplicationsPage() {
               <button
                 onClick={() => {
                   setEditForm({
-                    title: task.title,
+                    title: task.title || "",
 
-                    description: task.description,
+                    description: task.description || "",
 
-                    price: task.price,
+                    price: task.price || 0,
 
-                    deadline: task.deadline
-                      ? task.deadline.slice(0, 16)
+                    startDate: task.startDate
+                      ? toDateTimeLocalValue(task.startDate)
                       : "",
 
-                    locationText:
-                      task.locationText || "",
+                    deadline: task.deadline
+                      ? toDateTimeLocalValue(task.deadline)
+                      : "",
 
-                    latitude: task.latitude,
+                    locationText: task.locationText || "",
 
-                    longitude: task.longitude,
+                    latitude: task.latitude || undefined,
+
+                    longitude: task.longitude || undefined,
 
                     requiredWorkers:
                       task.requiredWorkers || 1,
+
+                    categoryId: task.categoryId || undefined,
                   });
 
                   setIsEditOpen(true);
@@ -494,7 +526,7 @@ export default function TaskApplicationsPage() {
               Deadline
             </p>
             <p className="mt-2 text-sm font-bold text-slate-950">
-              {new Date(task.deadline).toLocaleDateString()}
+              {new Date(task.deadline).toLocaleString()}
             </p>
           </div>
           <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">

@@ -13,9 +13,9 @@ interface ProfileHeaderProps {
     bio: string;
   };
   email: string;
-  isIdentityVerified?: boolean; // Allowed type parameters safely mapped
+  isIdentityVerified?: boolean;
   onInputChange: (
-    e: any 
+    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | { target: { name: string; value: any } }
   ) => void;
 }
 
@@ -132,7 +132,7 @@ export default function ProfileHeader({
             name="fullName"
             value={data.fullName}
             onChange={onInputChange}
-            placeholder="e.g., Doeung Sreypy"
+            placeholder="e.g., Full Name"
             className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-blue-100 focus:border-blue-300 outline-none transition-all text-slate-800"
           />
         </div>
@@ -177,7 +177,7 @@ export default function ProfileHeader({
             name="currentRole"
             value={data.currentRole}
             onChange={onInputChange}
-            placeholder="e.g., UI/UX Designer"
+            placeholder="e.g., Requester, Performer, UI/UX Designer"
             className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none"
           />
         </div>

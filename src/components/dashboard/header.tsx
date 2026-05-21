@@ -27,10 +27,14 @@ type Props = {
 };
 
 export default function Header({ role = "user", onMenuClick }: Props) {
-  const user = useUserStore((s) => s.user);
-  const setUser = useUserStore((s) => s.setUser); 
+  // Use both stores for maximum compatibility
+  const authUser = useAuthStore((s) => s.user);
+  const storeUser = useUserStore((s) => s.user);
+  const setStoreUser = useUserStore((s) => s.setUser);
   
-  // ─── NOTIFICATION DATA SYNC ──────────────────────────────────────────
+  // Prioritize authUser, fallback to storeUser
+  const user = authUser || storeUser;
+  
   const unreadCount = useNotificationStore((s) => s.unreadCount);
   const fetchNotifications = useNotificationStore((s) => s.fetchNotifications);
 
@@ -51,15 +55,15 @@ export default function Header({ role = "user", onMenuClick }: Props) {
       if (storedUser) {
         try {
           const parsed = JSON.parse(storedUser);
-          if (parsed?.state?.user) {
-            setUser(parsed.state.user);
+          if (parsed?.state?.user && setStoreUser) {
+            setStoreUser(parsed.state.user);
           }
         } catch (e) {
           console.error("Failed to parse user store back layer:", e);
         }
       }
     }
-  }, [user, setUser]);
+  }, [user, setStoreUser]);
 
   useEffect(() => {
     const handleClick = (e: any) => {
@@ -80,8 +84,12 @@ export default function Header({ role = "user", onMenuClick }: Props) {
 
   const is_admin = role === "admin";
   const avatarUrl = getAvatar(user);
-  const isGoogleUser =
-    avatarUrl.includes("googleusercontent.com") || avatarUrl.includes("google");
+  const isGoogleUser = avatarUrl?.includes("googleusercontent.com") || avatarUrl?.includes("google");
+
+  // Get display name with proper fallbacks
+  // Fix: Use only fullName since AuthUser doesn't have 'name' property
+  const displayName = user?.fullName || "Guest User";
+  const firstName = displayName.split(" ")[0] || "Account";
 
   return (
     <header className="sticky top-0 z-[1000] bg-slate-200 backdrop-blur-md border-b border-slate-200/60">
@@ -142,11 +150,11 @@ export default function Header({ role = "user", onMenuClick }: Props) {
                   }`}
                 >
                   <Image
-                    src={avatarUrl}
+                    src={avatarUrl || "/images/default-avatar.png"}
                     alt="Profile"
                     fill
                     className="object-cover"
-                    unoptimized={avatarUrl.includes("dicebear") || isGoogleUser}
+                    unoptimized={avatarUrl?.includes("dicebear") || isGoogleUser}
                   />
                 </div>
                 {isGoogleUser && (
@@ -175,7 +183,7 @@ export default function Header({ role = "user", onMenuClick }: Props) {
               <div className="hidden sm:block text-left">
                 <div className="flex items-center gap-1">
                   <p className="text-[13px] font-bold text-slate-800 leading-none truncate max-w-[100px]">
-                    {user?.fullName?.split(" ")[0] || "Account"}
+                    {firstName}
                   </p>
                   {isVerified && (
                     <span className="text-blue-500 shrink-0" title="Identity Verified">
@@ -218,12 +226,12 @@ export default function Header({ role = "user", onMenuClick }: Props) {
                         }`}
                       >
                         <Image
-                          src={avatarUrl}
+                          src={avatarUrl || "/images/default-avatar.png"}
                           alt="Profile"
                           fill
                           className="object-cover"
                           unoptimized={
-                            avatarUrl.includes("dicebear") || isGoogleUser
+                            avatarUrl?.includes("dicebear") || isGoogleUser
                           }
                         />
                       </div>
@@ -240,7 +248,7 @@ export default function Header({ role = "user", onMenuClick }: Props) {
                             is_admin ? "text-white" : "text-slate-900"
                           }`}
                         >
-                          {user?.fullName || "Welcome!"}
+                          {displayName}
                         </p>
                         {isVerified && (
                           <span className={`${is_admin ? "text-white" : "text-blue-500"} shrink-0`} title="Identity Verified">

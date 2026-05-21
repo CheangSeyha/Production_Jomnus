@@ -262,7 +262,7 @@ export default function EditTaskModal({
                     <p className="mt-2 text-sm font-semibold text-slate-900">
 
                       {form.deadline
-                        ? new Date(form.deadline).toLocaleDateString()
+                        ? new Date(form.deadline).toLocaleString()
                         : "No deadline"}
 
                     </p>

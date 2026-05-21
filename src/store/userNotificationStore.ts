@@ -26,10 +26,10 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
   fetchNotifications: async () => {
     set({ isLoading: true });
     try {
-      // ✅ 1. Reverted to match your @Get() endpoint
+      // Using axios instance from @/lib/axios
       const res = await axios.get('/notifications');
       
-      // ✅ 2. Read from res.data.data because your backend names the key "data"
+      // Safely extract data with fallbacks to avoid undefined errors
       const parsedNotifications = res.data?.data || [];
       const parsedUnreadCount = res.data?.unread_count || 0;
 

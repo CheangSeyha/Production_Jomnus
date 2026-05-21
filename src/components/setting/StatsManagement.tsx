@@ -1,7 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import axios from "axios";
+import api from "@/lib/axios";
+import { profile } from "console";
+import { p } from "motion/react-client";
+import { useParams } from "next/navigation";
+
 
 interface StatsProps {
   data: any; // Ideally, replace 'any' with your User model type
@@ -10,74 +14,110 @@ interface StatsProps {
 export default function StatsManagement({ data }: StatsProps) {
   const [role, setRole] = useState(data?.currentRole || "REQUESTER");
   const [loading, setLoading] = useState(false);
-
-  const [requesterStats, setRequesterStats] = useState({
+  const params = useParams();
+  const profileId = data.id;  
+  
+  const [requester_stats, setRequesterStats] = useState({
     tasks_posted: 0,
     tasks_verified: 0,
     total_spent: 0,
   });
 
-  const [performerStats, setPerformerStats] = useState({
+  const [performer_stats, setPerformerStats] = useState({
     completed_tasks: 0,
-    success_rate: 0,
+    avg_rating: 0,
     response_time: 0,
   });
 
   // Sync state if 'data' prop updates from the parent
   useEffect(() => {
-    if (data) {
-      setRole(data.currentRole || "REQUESTER");
-      if (data.requesterStats) setRequesterStats(data.requesterStats);
-      if (data.performerStats) setPerformerStats(data.performerStats);
+    const fetchStats = async () => {
+      try {
+        const res = await api.get(`/stats/requester/${profileId}`);
+        setRequesterStats(res.data);
+      } catch (error) {
+        console.error("Failed to fetch requester stats:", error);
+      }
+    };
+
+      if (profileId) fetchStats();
+
+  }, [profileId]);
+
+  useEffect(() => {
+    const fetchPerformerStats = async () => {
+      try {
+        const res = await api.get(`/stats/performer/${profileId}`);
+        setPerformerStats(res.data);
+      } catch (error) {
+        console.error("Failed to fetch performer stats:", error);
+      }
+    };
+
+    if (profileId && role === "PERFORMER") {
+      fetchPerformerStats();
     }
-  }, [data]);
+  }, [profileId, role]);
 
   const isRequester = role === "REQUESTER";
 
+
   const handleSwitchRole = async (newRole: "REQUESTER" | "PERFORMER") => {
-    if (newRole === role) return;
+  if (newRole === role) return;
 
-    try {
-      setLoading(true);
-      const token = localStorage.getItem("access_token");
+  try {
+    setLoading(true);
 
-      const res = await axios.patch(
-        "http://localhost:3001/api/users/role",
-        { role: newRole },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+    const res = await api.patch(
+      "/users/me/switch-role",
+      { role: newRole }
+    );
 
-      // Backend should return the updated user object or the stats
-      setRole(newRole);
-      
-      if (res.data?.requesterStats) setRequesterStats(res.data.requesterStats);
-      if (res.data?.performerStats) setPerformerStats(res.data.performerStats);
-      
-    } catch (error) {
-      console.error("Switch role failed:", error);
-      alert("Could not switch role. Please try again.");
-    } finally {
-      setLoading(false);
+    // 1. Destructure the data coming from the backend
+    const { user, access_token, requester_stats, performer_stats } = res.data;
+
+    // 2. IMPORTANT: Save the new token (it contains the new role claim)
+    if (access_token) {
+      localStorage.setItem("access_token", access_token);
     }
-  };
+
+    // 3. Update the UI state
+    setRole(newRole);
+    
+    // 4. Update stats based on what the backend returned
+    if (requester_stats) setRequesterStats(requester_stats);
+    if (performer_stats) setPerformerStats(performer_stats);
+    
+    // Optional: If you have a global user context/store, update it here:
+    // updateUser(user); 
+
+  } catch (error: any) {
+    console.error("Switch role failed:", error);
+    // Display the specific error from the backend (e.g., "Identity verification required")
+    alert(error.response?.data?.message || "Could not switch role.");
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   const statsToDisplay = isRequester
     ? [
         {
           label: "Tasks Posted",
-          value: requesterStats.tasks_posted ?? 0, // Fallback to 0 if null
+          value: requester_stats.tasks_posted ?? 0, // Fallback to 0 if null
           icon: "📝",
           color: "bg-orange-500",
         },
         {
           label: "Verified Tasks",
-          value: requesterStats.tasks_verified ?? 0,
+          value: requester_stats.tasks_verified ?? 0,
           icon: "🛡️",
           color: "bg-green-500",
         },
         {
           label: "Total Investment",
-          value: `$${(requesterStats.total_spent ?? 0).toLocaleString()}`, // Format currency
+          value: `$${(requester_stats.total_spent ?? 0).toLocaleString()}`, // Format currency
           icon: "💰",
           color: "bg-blue-500",
         },
@@ -85,19 +125,19 @@ export default function StatsManagement({ data }: StatsProps) {
     : [
         {
           label: "Tasks Completed",
-          value: performerStats.completed_tasks ?? 0,
+          value: performer_stats.completed_tasks ?? 0,
           icon: "✅",
           color: "bg-blue-500",
         },
         {
-          label: "Success Rate",
-          value: `${performerStats.success_rate ?? 0}%`,
+          label: "Average Rating",
+          value: `${performer_stats.avg_rating ?? 0}`,
           icon: "🎯",
           color: "bg-purple-500",
         },
         {
           label: "Response Time",
-          value: `${performerStats.response_time ?? 0}m`,
+          value: `${performer_stats.response_time ?? 0}m`,
           icon: "⚡",
           color: "bg-yellow-500",
         },
