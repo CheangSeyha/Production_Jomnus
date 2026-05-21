@@ -1,11 +1,15 @@
 "use client";
 
-import { useState, ChangeEvent, DragEvent } from "react";
+import { useState, ChangeEvent, DragEvent, useRef } from "react";
 import { useRouter } from "next/navigation";
 import api from "@/lib/axios";
 
 export default function IdentityVerificationRequestPage() {
   const router = useRouter();
+  
+  // Refs for file inputs
+  const idCardInputRef = useRef<HTMLInputElement>(null);
+  const selfieInputRef = useRef<HTMLInputElement>(null);
   
   // File States
   const [idCardFile, setIdCardFile] = useState<File | null>(null);
@@ -71,16 +75,27 @@ export default function IdentityVerificationRequestPage() {
     }
   };
 
+  // NEW: Handle click on drop zone to open file picker
+  const handleDropZoneClick = (type: "id_card" | "selfie") => {
+    if (type === "id_card") {
+      idCardInputRef.current?.click();
+    } else {
+      selfieInputRef.current?.click();
+    }
+  };
+
   // Removal UI Actions
   const handleRemoveFile = (type: "id_card" | "selfie") => {
     if (type === "id_card") {
       if (idCardPreview) URL.revokeObjectURL(idCardPreview);
       setIdCardFile(null);
       setIdCardPreview(null);
+      if (idCardInputRef.current) idCardInputRef.current.value = "";
     } else {
       if (selfiePreview) URL.revokeObjectURL(selfiePreview);
       setSelfieFile(null);
       setSelfiePreview(null);
+      if (selfieInputRef.current) selfieInputRef.current.value = "";
     }
   };
 
@@ -149,16 +164,27 @@ export default function IdentityVerificationRequestPage() {
               <p className="text-xs text-slate-400 mt-1">Upload a clear, high-resolution photo of your government-issued identity document.</p>
             </div>
             
+            {/* Hidden file input */}
+            <input
+              ref={idCardInputRef}
+              type="file"
+              accept="image/png, image/jpeg, image/jpg"
+              onChange={(e) => handleFileChange(e, "id_card")}
+              className="hidden"
+            />
+
+            {/* Drop zone - NOW CLICKABLE */}
             <div
+              onClick={() => !idCardPreview && handleDropZoneClick("id_card")}
               onDragOver={(e) => handleDragOver(e, "id_card")}
               onDragLeave={() => handleDragLeave("id_card")}
               onDrop={(e) => handleDrop(e, "id_card")}
-              className={`relative aspect-[3/2] w-full rounded-xl overflow-hidden flex flex-col items-center justify-center border transition-all ${
+              className={`relative aspect-[3/2] w-full rounded-xl overflow-hidden flex flex-col items-center justify-center border transition-all cursor-pointer ${
                 idCardPreview 
-                  ? "bg-slate-100 border-slate-200 group cursor-pointer" 
+                  ? "bg-slate-100 border-slate-200 group" 
                   : isDragOverId 
                     ? "bg-blue-50 border-blue-500 border-2 scale-[1.02]" 
-                    : "bg-slate-50 border-dashed border-slate-200"
+                    : "bg-slate-50 border-dashed border-slate-200 hover:bg-slate-100"
               }`}
             >
               {idCardPreview ? (
@@ -167,12 +193,18 @@ export default function IdentityVerificationRequestPage() {
                     src={idCardPreview} 
                     alt="ID Card Preview" 
                     className="w-full h-full object-cover group-hover:opacity-90 transition-opacity" 
-                    onClick={() => setActiveModalImage(idCardPreview)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setActiveModalImage(idCardPreview);
+                    }}
                   />
                   {/* Inspect Overlay Prompt */}
                   <div 
-                    onClick={() => setActiveModalImage(idCardPreview)}
-                    className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity pointer-events-none"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setActiveModalImage(idCardPreview);
+                    }}
+                    className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
                   >
                     <span className="bg-white/90 backdrop-blur text-slate-800 text-[11px] font-bold px-3 py-1.5 rounded-lg shadow-sm flex items-center gap-1">
                       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-3.5 h-3.5">
@@ -196,11 +228,11 @@ export default function IdentityVerificationRequestPage() {
                   </button>
                 </>
               ) : (
-                <div className="text-center p-4 pointer-events-none">
+                <div className="text-center p-4">
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-10 h-10 mx-auto text-slate-400 mb-2">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z" />
                   </svg>
-                  <p className="text-slate-500 text-xs font-semibold">Drag and drop document here</p>
+                  <p className="text-slate-500 text-xs font-semibold">Click or drag and drop document here</p>
                   <p className="text-slate-400 text-[10px] mt-1">Supports PNG, JPG, JPEG</p>
                 </div>
               )}
@@ -213,7 +245,7 @@ export default function IdentityVerificationRequestPage() {
               </label>
             ) : (
               <div className="text-center text-xs text-green-600 font-bold bg-green-50 py-3 rounded-xl border border-green-100 flex items-center justify-center gap-1.5">
-                <svg xmlns="http://www.w3.org/2000/xl" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor" className="w-4 h-4">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor" className="w-4 h-4">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                 </svg>
                 ID Card File Loaded
@@ -228,16 +260,27 @@ export default function IdentityVerificationRequestPage() {
               <p className="text-xs text-slate-400 mt-1">Upload a clear, forward-facing profile portrait photo to complete identification verification.</p>
             </div>
 
+            {/* Hidden file input */}
+            <input
+              ref={selfieInputRef}
+              type="file"
+              accept="image/png, image/jpeg, image/jpg"
+              onChange={(e) => handleFileChange(e, "selfie")}
+              className="hidden"
+            />
+
+            {/* Drop zone - NOW CLICKABLE */}
             <div
+              onClick={() => !selfiePreview && handleDropZoneClick("selfie")}
               onDragOver={(e) => handleDragOver(e, "selfie")}
               onDragLeave={() => handleDragLeave("selfie")}
               onDrop={(e) => handleDrop(e, "selfie")}
-              className={`relative aspect-[3/2] w-full rounded-xl overflow-hidden flex flex-col items-center justify-center border transition-all ${
+              className={`relative aspect-[3/2] w-full rounded-xl overflow-hidden flex flex-col items-center justify-center border transition-all cursor-pointer ${
                 selfiePreview 
-                  ? "bg-slate-100 border-slate-200 group cursor-pointer" 
+                  ? "bg-slate-100 border-slate-200 group" 
                   : isDragOverSelfie 
                     ? "bg-blue-50 border-blue-500 border-2 scale-[1.02]" 
-                    : "bg-slate-50 border-dashed border-slate-200"
+                    : "bg-slate-50 border-dashed border-slate-200 hover:bg-slate-100"
               }`}
             >
               {selfiePreview ? (
@@ -246,12 +289,18 @@ export default function IdentityVerificationRequestPage() {
                     src={selfiePreview} 
                     alt="Selfie Preview" 
                     className="w-full h-full object-cover group-hover:opacity-90 transition-opacity" 
-                    onClick={() => setActiveModalImage(selfiePreview)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setActiveModalImage(selfiePreview);
+                    }}
                   />
                   {/* Inspect Overlay Prompt */}
                   <div 
-                    onClick={() => setActiveModalImage(selfiePreview)}
-                    className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity pointer-events-none"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setActiveModalImage(selfiePreview);
+                    }}
+                    className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
                   >
                     <span className="bg-white/90 backdrop-blur text-slate-800 text-[11px] font-bold px-3 py-1.5 rounded-lg shadow-sm flex items-center gap-1">
                       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-3.5 h-3.5">
@@ -275,11 +324,11 @@ export default function IdentityVerificationRequestPage() {
                   </button>
                 </>
               ) : (
-                <div className="text-center p-4 pointer-events-none">
+                <div className="text-center p-4">
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-10 h-10 mx-auto text-slate-400 mb-2">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z" />
                   </svg>
-                  <p className="text-slate-500 text-xs font-semibold">Drag and drop selfie here</p>
+                  <p className="text-slate-500 text-xs font-semibold">Click or drag and drop selfie here</p>
                   <p className="text-slate-400 text-[10px] mt-1">Supports PNG, JPG, JPEG</p>
                 </div>
               )}

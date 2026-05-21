@@ -471,10 +471,16 @@ const toggleUserBanStatus = async (user: User) => {
         </div>
       )}
 
-      {/* ── ENHANCED TABBED INSPECT DETAILS MODAL ── */}
+      {/* ── ENHANCED TABBED INSPECT DETAILS MODAL WITH CLICK OUTSIDE TO CLOSE ── */}
       {selectedUser && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fadeIn">
-          <div className="bg-white rounded-3xl max-w-xl w-full p-6 shadow-xl border border-slate-100 flex flex-col space-y-5 transform transition-all duration-200">
+        <div 
+          className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fadeIn"
+          onClick={() => setSelectedUser(null)}
+        >
+          <div 
+            className="bg-white rounded-3xl max-w-xl w-full p-6 shadow-xl border border-slate-100 flex flex-col space-y-5 transform transition-all duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
             
             {/* Modal Header */}
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
