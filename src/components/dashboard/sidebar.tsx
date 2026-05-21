@@ -51,7 +51,6 @@ export default function Sidebar({ role, isOpen = false, onClose }: Props) {
     { name: "Applications", icon: FileText, href: "/admin/applications" },
     { name: "Assignments", icon: Layers, href: "/admin/assignments" },
     { name: "Notifications", icon: Bell, href: "/admin/notifications" },
-    { name: "Support", icon: LifeBuoy, href: "/admin/support" },
   ];
 
 
@@ -139,22 +138,7 @@ export default function Sidebar({ role, isOpen = false, onClose }: Props) {
               </Link>
             );
           })}
-        </nav>
-
-        {/* Bottom Section: Support and Logout */}
-        <div className="p-4 border-t border-slate-100 space-y-1">
-          <Link
-            href="/support"
-            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-              pathname === "/support" 
-                ? "bg-blue-50 text-blue-600" 
-                : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
-            }`}
-          >
-            <LifeBuoy size={20} />
-            <span className="font-medium">Help & Support</span>
-          </Link>
-        </div>
+        </nav>        
 
         {/* Logout Button */}
         <div className="p-6 mt-auto">
