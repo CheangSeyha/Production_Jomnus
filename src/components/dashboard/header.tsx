@@ -28,18 +28,26 @@ type Props = {
 
 export default function Header({ role = "user", onMenuClick }: Props) {
   const user = useUserStore((s) => s.user);
-  const setUser = useUserStore((s) => s.setUser); // Extracting setter hook to force sync state if missed
+  const setUser = useUserStore((s) => s.setUser); 
+  
+  // ─── NOTIFICATION DATA SYNC ──────────────────────────────────────────
   const unreadCount = useNotificationStore((s) => s.unreadCount);
+  const fetchNotifications = useNotificationStore((s) => s.fetchNotifications);
 
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const isVerified = isVerifiedUser(user);
 
-  // Sync state loop to catch state variables if standard page router lags behind store seeding
+  // Sync notifications on header mount (solves the page refresh red dot lag)
+  useEffect(() => {
+    fetchNotifications();
+  }, [fetchNotifications]);
+
+  // Sync user state loop from localStorage fallback
   useEffect(() => {
     if (!user && typeof window !== "undefined") {
-      const storedUser = localStorage.getItem("user_store"); // Check your exact zustand key if using persist middleware
+      const storedUser = localStorage.getItem("user_store"); 
       if (storedUser) {
         try {
           const parsed = JSON.parse(storedUser);
@@ -76,7 +84,7 @@ export default function Header({ role = "user", onMenuClick }: Props) {
     avatarUrl.includes("googleusercontent.com") || avatarUrl.includes("google");
 
   return (
-    <header className="sticky top-0 z-1000 bg-slate-200 backdrop-blur-md border-b border-slate-200/60">
+    <header className="sticky top-0 z-[1000] bg-slate-200 backdrop-blur-md border-b border-slate-200/60">
       <div className="flex h-16 sm:h-20 items-center justify-between px-4 sm:px-6 md:px-8">
         <div className="flex items-center gap-3 min-w-0 shrink-0">
           <button
@@ -103,7 +111,7 @@ export default function Header({ role = "user", onMenuClick }: Props) {
         </div>
 
         <div className="flex items-center gap-1.5 sm:gap-4 ml-auto">
-          {/* Notifications */}
+          {/* Notifications Link */}
           <Link
             href={is_admin ? "/admin/notifications" : "/notifications"}
             className="relative p-2.5 rounded-full hover:bg-slate-100 transition-all duration-200 flex-shrink-0 text-slate-500 group"
@@ -113,6 +121,7 @@ export default function Header({ role = "user", onMenuClick }: Props) {
               size={22}
               className="group-hover:rotate-12 transition-transform"
             />
+            {/* Reactive Red Dot Indicator */}
             {unreadCount > 0 && (
               <span className="absolute top-2 right-2 h-2.5 w-2.5 rounded-full bg-rose-500 border-2 border-white animate-pulse" />
             )}
@@ -195,7 +204,6 @@ export default function Header({ role = "user", onMenuClick }: Props) {
                   transition={{ type: "spring", stiffness: 300, damping: 25 }}
                   className="absolute right-0 mt-3 w-80 rounded-[24px] bg-white border border-slate-200 shadow-[0_20px_50px_rgba(0,0,0,0.1)] z-50 py-3 overflow-hidden"
                 >
-                  {/* User Profile Header */}
                   <div
                     className={`px-5 py-5 flex items-center gap-4 ${
                       is_admin
