@@ -50,7 +50,7 @@ export default function AdminVerificationsPage() {
   const [exportLoading, setExportLoading] = useState(false);
   const [page, setPage] = useState(1);
 
-  // ── Upgraded Multi-Image Context State ──
+  // ── Multi-Image Context State ──
   const [activeInspection, setActiveInspection] = useState<Verification | null>(null);
 
   // Tracks which rows have their 3-dots actions menu visible
@@ -172,54 +172,48 @@ export default function AdminVerificationsPage() {
     }
   };
 
-const handleResetToPending = async (verificationId: number) => {
-  // 1. Show the popup message field input to the admin
-  const reason = prompt("Enter a reason for resetting this status back to Pending (optional):");
-  
-  // 2. If the admin clicks "Cancel", abort the process completely
-  if (reason === null) return;
+  const handleResetToPending = async (verificationId: number) => {
+    const reason = prompt("Enter a reason for resetting this status back to Pending (optional):");
+    if (reason === null) return;
 
-  try {
-    setResetLoading(verificationId);
-    setActiveMenuId(null);
-    
-    // 3. Clean up the text input whitespace
-    const cleanReason = reason.trim();
+    try {
+      setResetLoading(verificationId);
+      setActiveMenuId(null);
+      
+      const cleanReason = reason.trim();
 
-    // 4. Pass the reason object into your service layer payload
-    await adminService.resetVerificationToPending(verificationId, { 
-      reason: cleanReason 
-    });
-    
-    setVerifications((prev) => {
-      if (!prev) return null;
-      return {
-        ...prev,
-        data: prev.data.map((v) =>
-          v.id === verificationId 
-            ? { 
-                ...v, 
-                status: "PENDING", 
-                rejection_reason: cleanReason || null // 5. Preserve the reason in your UI state instead of instantly nullifying it
-              } 
-            : v
-        ),
-      };
-    });
-    
-    // Synchronize changes back to modal view if currently open
-    if (activeInspection?.id === verificationId) {
-      setActiveInspection(prev => prev ? { ...prev, status: "PENDING", rejection_reason: cleanReason || null } : null);
+      await adminService.resetVerificationToPending(verificationId, { 
+        reason: cleanReason 
+      });
+      
+      setVerifications((prev) => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          data: prev.data.map((v) =>
+            v.id === verificationId 
+              ? { 
+                  ...v, 
+                  status: "PENDING", 
+                  rejection_reason: cleanReason || null
+                } 
+              : v
+          ),
+        };
+      });
+      
+      if (activeInspection?.id === verificationId) {
+        setActiveInspection(prev => prev ? { ...prev, status: "PENDING", rejection_reason: cleanReason || null } : null);
+      }
+      setError(null);
+    } catch (err: any) {
+      const backendMessage = err.response?.data?.message || "Failed to reset verification record";
+      setError(backendMessage);
+      console.error(err);
+    } finally {
+      setResetLoading(null);
     }
-    setError(null);
-  } catch (err: any) {
-    const backendMessage = err.response?.data?.message || "Failed to reset verification record";
-    setError(backendMessage);
-    console.error(err);
-  } finally {
-    setResetLoading(null);
-  }
-};
+  };
 
   const getUserName = (v: Verification): string => {
     if (!v.user) return `User #${v.id || "?"}`;
@@ -411,7 +405,7 @@ const handleResetToPending = async (verificationId: number) => {
                                   </div>
                                 </div>
                               ) : (
-                                <div className="w-20 h-12 rounded-xl bg-slate-50 border border-slate-200/60 flex items-center justify-center" title="Image unavailable">
+                                <div className="w-20 h-12 rounded-xl bg-slate-50 border border-slate-200/60 flex items-center justify-center cursor-zoom-in" onClick={() => setActiveInspection(v)} title="View context data details">
                                   <ShieldCheck className="w-5 h-5 text-slate-300" />
                                 </div>
                               )}
@@ -437,7 +431,7 @@ const handleResetToPending = async (verificationId: number) => {
                                   </div>
                                 </div>
                               ) : (
-                                <div className="w-10 h-10 rounded-full bg-slate-50 border border-slate-200/60 flex items-center justify-center" title="Selfie unavailable">
+                                <div className="w-10 h-10 rounded-full bg-slate-50 border border-slate-200/60 flex items-center justify-center cursor-zoom-in" onClick={() => setActiveInspection(v)} title="View context data details">
                                   <span className="text-[10px] font-extrabold text-slate-400 select-none">N/A</span>
                                 </div>
                               )}
@@ -635,104 +629,135 @@ const handleResetToPending = async (verificationId: number) => {
         </div>
       )}
 
-      {/* ── UPGRADED GLORIFIED LIGHTBOX INSPECTION MODAL OVERLAY ── */}
-      {activeInspection && (
-        <div 
-          onClick={() => setActiveInspection(null)}
-          className="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-[100] flex flex-col items-center justify-between p-4 sm:p-6 md:p-8 animate-in fade-in duration-200"
-        >
-          {/* Top Navbar Contextual Info */}
-          <div className="w-full max-w-6xl flex items-center justify-between gap-4 text-white z-10 bg-slate-900/60 backdrop-blur-md px-4 py-3 rounded-2xl border border-white/10">
-            <div className="min-w-0">
-              <h4 className="text-sm font-bold text-white truncate">
-                Inspecting: {getUserName(activeInspection)}
-              </h4>
-              <p className="text-[11px] text-slate-400 font-medium truncate mt-0.5">
-                {getUserEmail(activeInspection)}
-              </p>
-            </div>
-            
-            <div className="flex items-center gap-3">
-              <span className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider ${getStatusStyle(activeInspection.status)}`}>
-                {activeInspection.status}
-              </span>
-              <button 
-                onClick={() => setActiveInspection(null)}
-                className="p-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 transition-colors text-white"
-                title="Close Inspection View (Esc)"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
+      {/* ── UPGRADED LIGHTBOX INSPECTION MODAL OVERLAY ── */}
+      {activeInspection && (() => {
+        const modalCardImg = activeInspection.id_card_url 
+          ? (activeInspection.id_card_url.startsWith('http') ? activeInspection.id_card_url : `http://localhost:3001/${activeInspection.id_card_url}`) 
+          : null;
+        const modalSelfieImg = activeInspection.selfie_url 
+          ? (activeInspection.selfie_url.startsWith('http') ? activeInspection.selfie_url : `http://localhost:3001/${activeInspection.selfie_url}`) 
+          : null;
 
-          {/* Core Layout Area: Dual Image Comparison Workspace */}
+        return (
           <div 
-            onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 gap-6 my-auto items-center justify-center select-none animate-in zoom-in-95 duration-200"
+            onClick={() => setActiveInspection(null)}
+            className="fixed inset-0 bg-slate-950/95 backdrop-blur-md z-[100] flex flex-col items-center justify-between p-4 sm:p-6 md:p-8 overflow-y-auto animate-in fade-in duration-200"
           >
-            {/* Box 1: ID Card Document File */}
-            <div className="flex flex-col gap-2">
-              <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 px-1">
-                Provided Identity Document
-              </span>
-              <div className="bg-slate-900 border border-white/5 rounded-2xl overflow-hidden p-2 shadow-2xl flex items-center justify-center aspect-[16/10]">
-                {!brokenCardImages[activeInspection.id] && activeInspection.id_card_url ? (
-                  <img 
-                    src={activeInspection.id_card_url.startsWith('http') ? activeInspection.id_card_url : `http://localhost:3001/${activeInspection.id_card_url}`} 
-                    alt="ID Document Target File" 
-                    className="max-w-full max-h-full object-contain rounded-xl"
-                  />
-                ) : (
-                  <div className="text-center p-6 space-y-2">
-                    <ShieldCheck className="w-12 h-12 text-slate-700 mx-auto" />
-                    <p className="text-xs font-semibold text-slate-500">Document image placeholder empty or failing to render.</p>
-                  </div>
-                )}
+            {/* Top Navbar Contextual Info */}
+            <div className="w-full max-w-6xl flex items-center justify-between gap-4 text-white z-10 bg-slate-900/60 backdrop-blur-md px-4 py-3 rounded-2xl border border-white/10">
+              <div className="min-w-0">
+                <h4 className="text-sm font-bold text-white truncate">
+                  Inspecting: {getUserName(activeInspection)}
+                </h4>
+                <p className="text-[11px] text-slate-400 font-medium truncate mt-0.5">
+                  {getUserEmail(activeInspection)}
+                </p>
+              </div>
+              
+              <div className="flex items-center gap-3">
+                <span className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider ${getStatusStyle(activeInspection.status)}`}>
+                  {activeInspection.status}
+                </span>
+                <button 
+                  onClick={() => setActiveInspection(null)}
+                  className="p-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 transition-colors text-white"
+                  title="Close Inspection View (Esc)"
+                >
+                  <X className="w-4 h-4" />
+                </button>
               </div>
             </div>
 
-            {/* Box 2: Selfie Target File */}
-            <div className="flex flex-col gap-2">
-              <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 px-1">
-                Live Verification Selfie
-              </span>
-              <div className="bg-slate-900 border border-white/5 rounded-2xl overflow-hidden p-2 shadow-2xl flex items-center justify-center aspect-[16/10]">
-                {!brokenSelfieImages[activeInspection.id] && activeInspection.id_card_url ? (
-                  <img 
-                    src={activeInspection.selfie_url?.startsWith('http') ? activeInspection.selfie_url : `http://localhost:3001/${activeInspection.selfie_url}`} 
-                    alt="Selfie Check Target File" 
-                    className="max-w-full max-h-full object-contain rounded-xl"
-                  />
-                ) : (
-                  <div className="text-center p-6 space-y-2">
-                    <Eye className="w-12 h-12 text-slate-700 mx-auto" />
-                    <p className="text-xs font-semibold text-slate-500">Selfie document placeholder empty or failing to render.</p>
-                  </div>
-                )}
+            {/* Core Layout Area: Dual Image Comparison Workspace */}
+            <div 
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 gap-6 my-auto items-center justify-center py-8"
+            >
+              {/* Box 1: ID Card Document File */}
+              <div className="flex flex-col gap-2">
+                <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 px-1">
+                  Provided Identity Document
+                </span>
+                <div className="bg-slate-900 border border-white/5 rounded-2xl h-[280px] sm:h-[420px] overflow-hidden flex items-center justify-center relative group shadow-2xl">
+                  {modalCardImg && !brokenCardImages[activeInspection.id] ? (
+                    <img 
+                      src={modalCardImg} 
+                      alt="ID Card Document" 
+                      className="w-full h-full object-contain"
+                    />
+                  ) : (
+                    <div className="text-center p-6 space-y-2">
+                      <ShieldCheck className="w-12 h-12 text-slate-700 mx-auto" />
+                      <p className="text-xs font-semibold text-slate-500">Identity Document Unobtainable</p>
+                    </div>
+                  )}
+                </div>
               </div>
+
+              {/* Box 2: Live Verification Selfie */}
+              <div className="flex flex-col gap-2">
+                <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 px-1">
+                  User Verification Selfie
+                </span>
+                <div className="bg-slate-900 border border-white/5 rounded-2xl h-[280px] sm:h-[420px] overflow-hidden flex items-center justify-center relative group shadow-2xl">
+                  {modalSelfieImg && !brokenSelfieImages[activeInspection.id] ? (
+                    <img 
+                      src={modalSelfieImg} 
+                      alt="User Live Selfie" 
+                      className="w-full h-full object-contain"
+                    />
+                  ) : (
+                    <div className="text-center p-6 space-y-2">
+                      <Eye className="w-12 h-12 text-slate-700 mx-auto" />
+                      <p className="text-xs font-semibold text-slate-500">Selfie Image Unobtainable</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom Actions Workspace Bar */}
+            <div 
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-md bg-slate-900/90 border border-white/10 rounded-2xl p-4 flex items-center justify-between gap-4 shadow-2xl mb-2"
+            >
+              {activeInspection.status === "PENDING" ? (
+                <>
+                  <button
+                    onClick={() => handleReject(activeInspection.id)}
+                    disabled={rejectLoading !== null || approveLoading !== null}
+                    className="flex-1 py-3 px-4 rounded-xl bg-red-500/20 hover:bg-red-500/30 text-red-400 text-xs font-extrabold uppercase tracking-wider transition-colors flex items-center justify-center gap-2 border border-red-500/20"
+                  >
+                    <X className="w-4 h-4" />
+                    Reject Profile
+                  </button>
+                  <button
+                    onClick={() => handleApprove(activeInspection.id)}
+                    disabled={rejectLoading !== null || approveLoading !== null}
+                    className="flex-1 py-3 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-extrabold uppercase tracking-wider transition-colors flex items-center justify-center gap-2 shadow-lg shadow-blue-600/20"
+                  >
+                    <Check className="w-4 h-4" />
+                    Approve Verify
+                  </button>
+                </>
+              ) : (
+                <div className="w-full text-center space-y-2">
+                  <p className="text-xs text-slate-400 font-medium">
+                    Profile has already been marked as <span className="font-bold text-white">{activeInspection.status}</span>.
+                  </p>
+                  <button
+                    onClick={() => handleResetToPending(activeInspection.id)}
+                    className="inline-flex items-center gap-2 mx-auto px-4 py-2 text-xs font-bold text-slate-300 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-colors"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                    Reset to Pending State
+                  </button>
+                </div>
+              )}
             </div>
           </div>
-
-          {/* Quick-Action Inline Workspace Control footer inside Lightbox */}
-          {activeInspection.status === "PENDING" && (
-            <div onClick={(e) => e.stopPropagation()} className="w-full max-w-sm flex items-center gap-4 bg-slate-900/80 border border-white/10 p-3 rounded-2xl z-10 mb-2">
-              <button
-                onClick={() => handleApprove(activeInspection.id)}
-                className="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center justify-center gap-2 transition-colors"
-              >
-                <Check className="w-4 h-4" /> Approve Identity
-              </button>
-              <button
-                onClick={() => handleReject(activeInspection.id)}
-                className="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs flex items-center justify-center gap-2 transition-colors"
-              >
-                <X className="w-4 h-4" /> Reject Profile
-              </button>
-            </div>
-          )}
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 }

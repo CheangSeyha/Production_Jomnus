@@ -108,13 +108,8 @@ export default function AdminUsersPage() {
     setPage(1);
   };
 
-  const toggleUserBanStatus = async (user: User) => {
+const toggleUserBanStatus = async (user: User) => {
     const isCurrentlyBanned = user.status?.toUpperCase() === "BANNED" || !!user.deletedAt;
-    const promptMessage = isCurrentlyBanned 
-      ? `Are you sure you want to lift restrictions and restore access for ${user.email}?`
-      : `Are you sure you want to ban ${user.email}? This revokes platform privileges immediately.`;
-
-    if (!confirm(promptMessage)) return;
 
     try {
       setActionLoading(user.id);
@@ -160,17 +155,22 @@ export default function AdminUsersPage() {
     }
   };
 
-  // Helper checking dynamic array structures returned from NestJS leftJoin queries
+// Helper checking dynamic array structures or status flags returned from NestJS
   const checkVerificationState = (user: User) => {
     if (user.currentRole?.toUpperCase() === "ADMIN") return "INTERNAL";
     
+    // ✅ PRIORITIZE THE DYNAMIC BACKEND VALUE FIRST:
+    if (user.verificationStatus?.toUpperCase() === "APPROVED") return "VERIFIED";
+    if (user.verificationStatus?.toUpperCase() === "PENDING") return "PENDING";
+    if (user.verificationStatus?.toUpperCase() === "NONE") return "NONE";
+
+    // Fallback checking for relation array structures if loaded elsewhere
     const elements = user.identityVerifications || [];
     if (elements.some(v => v.status?.toUpperCase() === "APPROVED")) return "VERIFIED";
-    if (elements.some(v => v.status?.toUpperCase() === "PENDING") || user.verificationStatus === "PENDING") return "PENDING";
+    if (elements.some(v => v.status?.toUpperCase() === "PENDING")) return "PENDING";
     
     return "NONE";
   };
-
   const pendingCount = users?.data.filter((u) => checkVerificationState(u) === "PENDING").length ?? 0;
   const nonAdminUsers = users?.data.filter((u) => u.currentRole?.toUpperCase() !== "ADMIN") ?? [];
 
