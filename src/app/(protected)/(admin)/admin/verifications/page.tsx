@@ -1,11 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { adminService } from "@/services/adminService";
 import {
-  CheckCircle,
   ShieldCheck,
-  Clock,
   Check,
   X,
   MoreVertical,
@@ -13,20 +11,33 @@ import {
   ChevronRight,
   AlertCircle,
   Download,
+  RotateCcw,
+  Eye,
+  Maximize2,
 } from "lucide-react";
 
 interface Verification {
   id: number;
-  userId?: number;
+  id_card_url?: string;
+  selfie_url?: string;
   status: string;
-  user?: { email: string; fullName: string };
-  createdAt?: string;
+  rejection_reason?: string | null;
+  reviewed_by?: number;
+  reviewed_at?: string;
+  created_at?: string;
+  updated_at?: string;
+  user?: any;
 }
 
 interface PaginatedVerifications {
   data: Verification[];
-  total: number;
-  page: number;
+  meta: {
+    totalItems: number;
+    itemCount: number;
+    itemsPerPage: number;
+    totalPages: number;
+    currentPage: number;
+  };
 }
 
 export default function AdminVerificationsPage() {
@@ -34,29 +45,79 @@ export default function AdminVerificationsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [approveLoading, setApproveLoading] = useState<number | null>(null);
+  const [rejectLoading, setRejectLoading] = useState<number | null>(null);
+  const [resetLoading, setResetLoading] = useState<number | null>(null);
+  const [exportLoading, setExportLoading] = useState(false);
   const [page, setPage] = useState(1);
 
+  // ── Multi-Image Context State ──
+  const [activeInspection, setActiveInspection] = useState<Verification | null>(null);
+
+  // Tracks which rows have their 3-dots actions menu visible
+  const [activeMenuId, setActiveMenuId] = useState<number | null>(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+
+  const [brokenCardImages, setBrokenCardImages] = useState<Record<number, boolean>>({});
+  const [brokenSelfieImages, setBrokenSelfieImages] = useState<Record<number, boolean>>({});
+
+  const fetchVerifications = async () => {
+    try {
+      setLoading(true);
+      const data = await adminService.getVerifications({ page, limit: 10 });
+      setVerifications(data);
+      setError(null);
+    } catch (err) {
+      setError("Failed to fetch verifications");
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchVerifications = async () => {
-      try {
-        setLoading(true);
-        const data = await adminService.getVerifications({ page, limit: 10 });
-        setVerifications(data);
-        setError(null);
-      } catch (err) {
-        setError("Failed to fetch verifications");
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchVerifications();
   }, [page]);
+
+  // Handle click away and escape hotkey patterns
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setActiveMenuId(null);
+      }
+    }
+    
+    // Listen globally for ESC key to dismiss inspection workflow panel
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setActiveInspection(null);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
+
+  const handleExportCSV = async () => {
+    try {
+      setExportLoading(true);
+      await adminService.exportVerificationsToCsv();
+    } catch (err) {
+      alert("Failed to export verification records spreadsheet file.");
+      console.error(err);
+    } finally {
+      setExportLoading(false);
+    }
+  };
 
   const handleApprove = async (verificationId: number) => {
     try {
       setApproveLoading(verificationId);
       await adminService.approveVerification(verificationId);
+      
       setVerifications((prev) => {
         if (!prev) return null;
         return {
@@ -66,23 +127,121 @@ export default function AdminVerificationsPage() {
           ),
         };
       });
-    } catch (err) {
-      alert("Failed to approve verification");
-      console.error(err);
+      
+      // Synchronize changes back to modal view if currently open
+      if (activeInspection?.id === verificationId) {
+        setActiveInspection(prev => prev ? { ...prev, status: "APPROVED" } : null);
+      }
+      setError(null);
+    } catch (err: any) {
+      const backendMessage = err.response?.data?.message || "Failed to approve verification";
+      setError(backendMessage);
+      console.warn("Handled backend validation rejection:", backendMessage);
     } finally {
       setApproveLoading(null);
     }
   };
 
-  const pendingVerifications = verifications?.data.filter((v) => v.status === "PENDING") || [];
-  const approvedVerifications = verifications?.data.filter((v) => v.status === "APPROVED") || [];
-  const rejectedVerifications = verifications?.data.filter((v) => v.status === "REJECTED") || [];
-
-  const getInitials = (name?: string, email?: string) => {
-    if (name) return name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
-    if (email) return email.slice(0, 2).toUpperCase();
-    return "??";
+  const handleReject = async (verificationId: number) => {
+    const reason = prompt("Enter a reason for rejection (optional):");
+    if (reason === null) return;
+    
+    try {
+      setRejectLoading(verificationId);
+      await adminService.rejectVerification(verificationId, { reason });
+      setVerifications((prev) => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          data: prev.data.map((v) =>
+            v.id === verificationId ? { ...v, status: "REJECTED", rejection_reason: reason } : v
+          ),
+        };
+      });
+      // Synchronize changes back to modal view if currently open
+      if (activeInspection?.id === verificationId) {
+        setActiveInspection(prev => prev ? { ...prev, status: "REJECTED", rejection_reason: reason } : null);
+      }
+      setError(null);
+    } catch (err: any) {
+      const backendMessage = err.response?.data?.message || "Failed to reject verification";
+      setError(backendMessage);
+      console.error(err);
+    } finally {
+      setRejectLoading(null);
+    }
   };
+
+  const handleResetToPending = async (verificationId: number) => {
+    const reason = prompt("Enter a reason for resetting this status back to Pending (optional):");
+    if (reason === null) return;
+
+    try {
+      setResetLoading(verificationId);
+      setActiveMenuId(null);
+      
+      const cleanReason = reason.trim();
+
+      await adminService.resetVerificationToPending(verificationId, { 
+        reason: cleanReason 
+      });
+      
+      setVerifications((prev) => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          data: prev.data.map((v) =>
+            v.id === verificationId 
+              ? { 
+                  ...v, 
+                  status: "PENDING", 
+                  rejection_reason: cleanReason || null
+                } 
+              : v
+          ),
+        };
+      });
+      
+      if (activeInspection?.id === verificationId) {
+        setActiveInspection(prev => prev ? { ...prev, status: "PENDING", rejection_reason: cleanReason || null } : null);
+      }
+      setError(null);
+    } catch (err: any) {
+      const backendMessage = err.response?.data?.message || "Failed to reset verification record";
+      setError(backendMessage);
+      console.error(err);
+    } finally {
+      setResetLoading(null);
+    }
+  };
+
+  const getUserName = (v: Verification): string => {
+    if (!v.user) return `User #${v.id || "?"}`;
+    return v.user.fullName || v.user.FullName || v.user.fullname || v.user.name || `User #${v.user.id || v.id}`;
+  };
+
+  const getUserEmail = (v: Verification): string => {
+    if (!v.user) return "no-email@associated.com";
+    return v.user.email || v.user.Email || "no-email@associated.com";
+  };
+
+  const getInitials = (v: Verification) => {
+    const name = getUserName(v);
+    if (!name) return "??";
+    if (name.startsWith("User #")) return `U${name.replace("User #", "")}`;
+
+    return name
+      .split(" ")
+      .filter(Boolean)
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
+  const pendingPageCount = verifications?.data?.filter((v) => v.status === "PENDING").length || 0;
+  const approvedVerifications = verifications?.data?.filter((v) => v.status === "APPROVED") || [];
+  const rejectedVerifications = verifications?.data?.filter((v) => v.status === "REJECTED") || [];
 
   const getStatusStyle = (status: string) => {
     switch (status) {
@@ -92,9 +251,18 @@ export default function AdminVerificationsPage() {
     }
   };
 
-  return (
-    <div className="min-h-screen space-y-8 max-w-[1400px] mx-auto">
+  const totalItems = verifications?.meta?.totalItems || 0;
+  const itemsPerPage = verifications?.meta?.itemsPerPage || 10;
+  const currentCountOnPage = verifications?.data?.length || 0;
+  
+  const fromRange = totalItems === 0 ? 0 : (page - 1) * itemsPerPage + 1;
+  const toRange = (page - 1) * itemsPerPage + currentCountOnPage;
 
+  const totalPages = verifications?.meta?.totalPages || 1;
+  const pageNumbers = Array.from({ length: Math.max(1, totalPages) }, (_, i) => i + 1);
+
+  return (
+    <div className="min-h-screen space-y-8 max-w-[1400px] mx-auto p-4 sm:p-6 lg:p-8">
       {/* ── Header ── */}
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
         <div className="space-y-1">
@@ -102,34 +270,35 @@ export default function AdminVerificationsPage() {
             Identity Verifications
           </h1>
           <p className="text-slate-500 text-sm font-medium max-w-md leading-relaxed">
-            Review and manage community trust profiles. Ensure all submitted
-            documents meet the platform&apos;s security standards.
+            Review and manage community trust profiles. Click on any document image placeholder to inspect details closely.
           </p>
         </div>
 
-        {/* Pending indicator */}
-        {pendingVerifications.length > 0 && (
-          <div className="flex items-center gap-2 flex-shrink-0 self-start mt-1">
-            <span className="relative flex h-3 w-3">
+        {pendingPageCount > 0 && (
+          <div className="flex items-center gap-2 flex-shrink-0 self-start mt-1 bg-orange-50 border border-orange-100 px-3 py-1.5 rounded-xl">
+            <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-3 w-3 bg-orange-500" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-500" />
             </span>
-            <span className="text-sm font-bold text-slate-700">
-              {pendingVerifications.length} Pending Reviews
+            <span className="text-xs font-bold text-orange-800">
+              {pendingPageCount} Pending On This Page
             </span>
           </div>
         )}
       </div>
 
-      {/* ── Error ── */}
+      {/* ── Error Display ── */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-2xl p-4 text-red-700 text-sm font-medium flex items-center gap-3">
-          <AlertCircle className="w-5 h-5 flex-shrink-0" />
-          {error}
+        <div className="bg-red-50 border border-red-200 rounded-2xl p-4 text-red-700 text-sm font-medium flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <AlertCircle className="w-5 h-5 flex-shrink-0" />
+            {error}
+          </div>
+          <button onClick={() => setError(null)} className="text-xs underline hover:text-red-900">Dismiss</button>
         </div>
       )}
 
-      {/* ── Loading ── */}
+      {/* ── Loading Spinner ── */}
       {loading && (
         <div className="flex items-center justify-center h-80">
           <div className="animate-spin rounded-full h-14 w-14 border-4 border-blue-100 border-t-blue-600" />
@@ -138,27 +307,31 @@ export default function AdminVerificationsPage() {
 
       {!loading && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-          {/* ── LEFT: Verification Queue ── */}
+          {/* ── LEFT SIDE: Table Queue ── */}
           <div className="lg:col-span-2 space-y-4">
             <div className="bg-white rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden">
-              {/* Queue Header */}
-              <div className="flex items-center justify-between px-8 py-6 border-b border-slate-100">
+              <div className="flex items-center justify-between px-6 py-5 sm:px-8 sm:py-6 border-b border-slate-100">
                 <h2 className="text-lg font-extrabold text-slate-900 tracking-tight">
                   Verification Queue
                 </h2>
                 <div className="flex items-center gap-2">
-                  <button className="px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-extrabold uppercase tracking-wider shadow-sm hover:bg-blue-700 transition-colors">
+                  <button 
+                    onClick={fetchVerifications}
+                    className="px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-extrabold uppercase tracking-wider shadow-sm hover:bg-blue-700 transition-colors"
+                  >
                     All Data
                   </button>
-                  <button className="px-4 py-2 rounded-xl bg-slate-100 text-slate-600 text-xs font-extrabold uppercase tracking-wider hover:bg-slate-200 transition-colors flex items-center gap-2">
+                  <button 
+                    onClick={handleExportCSV}
+                    disabled={exportLoading}
+                    className="px-4 py-2 rounded-xl bg-slate-100 text-slate-600 text-xs font-extrabold uppercase tracking-wider hover:bg-slate-200 transition-colors flex items-center gap-2 disabled:opacity-50"
+                  >
                     <Download className="w-3.5 h-3.5" />
-                    Export CSV
+                    {exportLoading ? "Exporting..." : "Export CSV"}
                   </button>
                 </div>
               </div>
 
-              {/* Queue Table */}
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                   <thead>
@@ -166,7 +339,7 @@ export default function AdminVerificationsPage() {
                       {["User", "ID Card", "Selfie", "Status", "Actions"].map((h) => (
                         <th
                           key={h}
-                          className="px-8 py-4 text-[11px] font-extrabold text-slate-400 uppercase tracking-[0.15em]"
+                          className="px-6 py-4 sm:px-8 text-[11px] font-extrabold text-slate-400 uppercase tracking-[0.15em]"
                         >
                           {h}
                         </th>
@@ -174,83 +347,162 @@ export default function AdminVerificationsPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-50">
-                    {verifications && verifications.data.length > 0 ? (
+                    {verifications && verifications.data?.length > 0 ? (
                       verifications.data.map((v, index) => {
                         const isPending = v.status === "PENDING";
-                        const initials = getInitials(v.user?.fullName, v.user?.email);
                         const isFirst = index === 0;
+                        const uName = getUserName(v);
+                        
+                        const cardImgSrc = v.id_card_url 
+                          ? (v.id_card_url.startsWith('http') ? v.id_card_url : `http://localhost:3001/${v.id_card_url}`) 
+                          : null;
+
+                        const selfieImgSrc = v.selfie_url 
+                          ? (v.selfie_url.startsWith('http') ? v.selfie_url : `http://localhost:3001/${v.selfie_url}`) 
+                          : null;
+
+                        const isCardBroken = !cardImgSrc || brokenCardImages[v.id];
+                        const isSelfieBroken = !selfieImgSrc || brokenSelfieImages[v.id];
+
                         return (
                           <tr
                             key={v.id}
-                            className={`hover:bg-slate-50/30 transition-colors ${isFirst ? "bg-blue-50/20" : ""}`}
+                            className={`hover:bg-slate-50/30 transition-colors ${isFirst && isPending ? "bg-blue-50/10" : ""}`}
                           >
-                            {/* User */}
-                            <td className="px-8 py-5">
-                              <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-xs font-extrabold flex-shrink-0 shadow-sm">
-                                  {initials}
+                            <td className="px-6 py-4 sm:px-8">
+                              <div className="flex items-center gap-4">
+                                <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-blue-600 text-xs font-bold flex-shrink-0 shadow-sm border border-slate-200/40">
+                                  {getInitials(v)}
                                 </div>
-                                <div className="min-w-0">
-                                  <p className="text-sm font-extrabold text-slate-900 truncate">
-                                    {v.user?.fullName || "Unknown"}
+                                <div className="min-w-0 space-y-0.5">
+                                  <p className="text-sm font-bold text-slate-900 truncate max-w-[140px] sm:max-w-[200px]">
+                                    {uName}
                                   </p>
-                                  <p className="text-xs text-slate-500 font-medium truncate">
-                                    {v.user?.email || "—"}
+                                  <p className="text-xs text-slate-400 font-medium truncate max-w-[140px] sm:max-w-[200px]">
+                                    {getUserEmail(v)}
                                   </p>
                                 </div>
                               </div>
                             </td>
 
-                            {/* ID Card placeholder */}
-                            <td className="px-8 py-5">
-                              <div className="w-20 h-12 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center overflow-hidden">
-                                <ShieldCheck className="w-5 h-5 text-slate-300" />
-                              </div>
+                            {/* ID CARD CELL */}
+                            <td className="px-6 py-4 sm:px-8">
+                              {!isCardBroken ? (
+                                <div 
+                                  onClick={() => setActiveInspection(v)}
+                                  className="w-20 h-12 rounded-xl bg-slate-100 border border-slate-200 overflow-hidden shadow-sm group relative flex items-center justify-center cursor-zoom-in"
+                                >
+                                  <img 
+                                    src={cardImgSrc!} 
+                                    alt="ID Front" 
+                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                                    onError={() => {
+                                      setBrokenCardImages(prev => ({ ...prev, [v.id]: true }));
+                                    }}
+                                  />
+                                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity duration-200">
+                                    <Maximize2 className="w-4 h-4 text-white" />
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className="w-20 h-12 rounded-xl bg-slate-50 border border-slate-200/60 flex items-center justify-center cursor-zoom-in" onClick={() => setActiveInspection(v)} title="View context data details">
+                                  <ShieldCheck className="w-5 h-5 text-slate-300" />
+                                </div>
+                              )}
                             </td>
 
-                            {/* Selfie placeholder */}
-                            <td className="px-8 py-5">
-                              <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center overflow-hidden">
-                                <span className="text-xs font-extrabold text-slate-400">
-                                  {initials}
-                                </span>
-                              </div>
+                            {/* SELFIE CELL */}
+                            <td className="px-6 py-4 sm:px-8">
+                              {!isSelfieBroken ? (
+                                <div 
+                                  onClick={() => setActiveInspection(v)}
+                                  className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 overflow-hidden shadow-sm group relative flex items-center justify-center cursor-zoom-in"
+                                >
+                                  <img 
+                                    src={selfieImgSrc!} 
+                                    alt="Selfie Check" 
+                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                                    onError={() => {
+                                      setBrokenSelfieImages(prev => ({ ...prev, [v.id]: true }));
+                                    }}
+                                  />
+                                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity duration-200 rounded-full">
+                                    <Eye className="w-3.5 h-3.5 text-white" />
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className="w-10 h-10 rounded-full bg-slate-50 border border-slate-200/60 flex items-center justify-center cursor-zoom-in" onClick={() => setActiveInspection(v)} title="View context data details">
+                                  <span className="text-[10px] font-extrabold text-slate-400 select-none">N/A</span>
+                                </div>
+                              )}
                             </td>
 
-                            {/* Status */}
-                            <td className="px-8 py-5">
-                              <span className={`px-3 py-1.5 rounded-full text-[11px] font-extrabold uppercase tracking-wider ${getStatusStyle(v.status)}`}>
+                            <td className="px-6 py-4 sm:px-8">
+                              <span className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider ${getStatusStyle(v.status)}`}>
                                 {v.status === "APPROVED" ? "Approved" : v.status === "REJECTED" ? "Rejected" : "Pending"}
                               </span>
                             </td>
 
-                            {/* Actions */}
-                            <td className="px-8 py-5">
+                            <td className="px-6 py-4 sm:px-8">
                               {isPending ? (
                                 <div className="flex items-center gap-2">
                                   <button
                                     onClick={() => handleApprove(v.id)}
-                                    disabled={approveLoading === v.id}
-                                    className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700 transition-colors disabled:opacity-50 shadow-sm"
+                                    disabled={approveLoading === v.id || rejectLoading === v.id}
+                                    className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700 transition-colors disabled:opacity-50 shadow-sm"
                                     title="Approve"
                                   >
                                     {approveLoading === v.id ? (
-                                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+                                      <div className="animate-spin rounded-full h-3 w-3 border-2 border-white border-t-transparent" />
                                     ) : (
-                                      <Check className="w-4 h-4" />
+                                      <Check className="w-3.5 h-3.5" />
                                     )}
                                   </button>
                                   <button
-                                    className="w-9 h-9 rounded-xl bg-red-500 text-white flex items-center justify-center hover:bg-red-600 transition-colors shadow-sm"
+                                    onClick={() => handleReject(v.id)}
+                                    disabled={approveLoading === v.id || rejectLoading === v.id}
+                                    className="w-8 h-8 rounded-xl bg-red-500 text-white flex items-center justify-center hover:bg-red-600 transition-colors disabled:opacity-50 shadow-sm"
                                     title="Reject"
                                   >
-                                    <X className="w-4 h-4" />
+                                    {rejectLoading === v.id ? (
+                                      <div className="animate-spin rounded-full h-3 w-3 border-2 border-white border-t-transparent" />
+                                    ) : (
+                                      <X className="w-3.5 h-3.5" />
+                                    )}
                                   </button>
                                 </div>
                               ) : (
-                                <button className="w-9 h-9 rounded-xl hover:bg-slate-100 flex items-center justify-center text-slate-400 transition-colors">
-                                  <MoreVertical className="w-4 h-4" />
-                                </button>
+                                <div className="relative inline-block text-left">
+                                  <button 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setActiveMenuId(activeMenuId === v.id ? null : v.id);
+                                    }}
+                                    disabled={resetLoading === v.id}
+                                    className="w-8 h-8 rounded-xl hover:bg-slate-100 flex items-center justify-center text-slate-400 transition-colors focus:bg-slate-100"
+                                  >
+                                    {resetLoading === v.id ? (
+                                      <div className="animate-spin rounded-full h-3 w-3 border-2 border-slate-400 border-t-transparent" />
+                                    ) : (
+                                      <MoreVertical className="w-4 h-4" />
+                                    )}
+                                  </button>
+                                  
+                                  {activeMenuId === v.id && (
+                                    <div 
+                                      ref={menuRef}
+                                      className="absolute right-0 mt-1 w-44 rounded-xl bg-white border border-slate-100 shadow-xl py-1.5 z-50 ring-1 ring-black ring-opacity-5 animate-in fade-in slide-in-from-top-1 duration-100"
+                                    >
+                                      <button
+                                        onClick={() => handleResetToPending(v.id)}
+                                        className="w-full text-left px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-2 transition-colors"
+                                      >
+                                        <RotateCcw className="w-3.5 h-3.5 text-slate-400" />
+                                        Reset to Pending
+                                      </button>
+                                    </div>
+                                  )}
+                                </div>
                               )}
                             </td>
                           </tr>
@@ -261,7 +513,7 @@ export default function AdminVerificationsPage() {
                         <td colSpan={5} className="px-8 py-16 text-center">
                           <ShieldCheck className="w-12 h-12 text-slate-200 mx-auto mb-3" />
                           <p className="text-slate-400 font-semibold text-sm">
-                            No verifications to display
+                            No verifications found
                           </p>
                         </td>
                       </tr>
@@ -270,25 +522,24 @@ export default function AdminVerificationsPage() {
                 </table>
               </div>
 
-              {/* Pagination Footer */}
-              <div className="flex items-center justify-between px-8 py-5 border-t border-slate-100 bg-slate-50/40">
-                <p className="text-sm text-slate-500 font-semibold">
-                  Showing 1-{verifications?.data.length || 0} of{" "}
-                  {verifications?.total || 0} results
+              {/* Pagination controls */}
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-4 sm:px-8 border-t border-slate-100 bg-slate-50/40">
+                <p className="text-xs text-slate-500 font-semibold order-2 sm:order-1">
+                  Showing {fromRange}-{toRange} of {totalItems} results
                 </p>
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1 order-1 sm:order-2">
                   <button
                     onClick={() => setPage(Math.max(1, page - 1))}
                     disabled={page === 1}
-                    className="w-9 h-9 rounded-xl border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-white disabled:opacity-40 transition-all"
+                    className="w-8 h-8 rounded-xl border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-white disabled:opacity-40 transition-all"
                   >
                     <ChevronLeft className="w-4 h-4" />
                   </button>
-                  {[1, 2, 3].map((p) => (
+                  {pageNumbers.map((p) => (
                     <button
                       key={p}
                       onClick={() => setPage(p)}
-                      className={`w-9 h-9 rounded-xl text-sm font-extrabold transition-all ${
+                      className={`w-8 h-8 rounded-xl text-xs font-extrabold transition-all ${
                         page === p
                           ? "bg-blue-600 text-white shadow-md"
                           : "border border-slate-200 text-slate-600 hover:bg-white"
@@ -298,8 +549,9 @@ export default function AdminVerificationsPage() {
                     </button>
                   ))}
                   <button
-                    onClick={() => setPage(page + 1)}
-                    className="w-9 h-9 rounded-xl border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-white transition-all"
+                    onClick={() => setPage(Math.min(totalPages, page + 1))}
+                    disabled={page === totalPages}
+                    className="w-8 h-8 rounded-xl border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-white disabled:opacity-40 transition-all"
                   >
                     <ChevronRight className="w-4 h-4" />
                   </button>
@@ -308,111 +560,204 @@ export default function AdminVerificationsPage() {
             </div>
           </div>
 
-          {/* ── RIGHT: Sidebar ── */}
+          {/* ── RIGHT SIDE: Sidebar Widgets ── */}
           <div className="space-y-5">
-            {/* Recent Activity */}
-            <div className="bg-white rounded-[2rem] border border-slate-100 shadow-sm p-7">
+            <div className="bg-white rounded-[2rem] border border-slate-100 shadow-sm p-6 sm:p-7">
               <h3 className="text-[11px] font-extrabold text-slate-400 uppercase tracking-[0.2em] mb-6">
-                Recent Activity
+                Activity On This Page
               </h3>
               <div className="space-y-5">
-                {approvedVerifications.slice(0, 2).map((v) => (
+                {approvedVerifications.slice(0, 5).map((v) => (
                   <div key={v.id} className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-slate-200 to-slate-300 flex items-center justify-center text-xs font-extrabold text-slate-600 flex-shrink-0">
-                      {getInitials(v.user?.fullName, v.user?.email)}
+                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-slate-200 to-slate-300 flex items-center justify-center text-[10px] font-extrabold text-slate-600 flex-shrink-0">
+                      {getInitials(v)}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-bold text-slate-900 leading-snug">
-                        <span className="font-extrabold">{v.user?.fullName || "User"}</span>{" "}
-                        was approved by Admin
+                      <p className="text-xs font-bold text-slate-900 leading-snug">
+                        <span className="font-extrabold">{getUserName(v)}</span> was approved by Admin
                       </p>
                       <div className="flex items-center gap-1.5 mt-1">
-                        <div className="w-2 h-2 rounded-full bg-green-500" />
-                        <p className="text-xs text-slate-400 font-medium">
-                          {v.createdAt
-                            ? new Date(v.createdAt).toLocaleDateString()
-                            : "recently"}
+                        <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                        <p className="text-[10px] text-slate-400 font-medium">
+                          {v.created_at ? new Date(v.created_at).toLocaleDateString() : "recently"}
                         </p>
                       </div>
                     </div>
                   </div>
                 ))}
-                {rejectedVerifications.slice(0, 1).map((v) => (
+                {rejectedVerifications.slice(0, 5).map((v) => (
                   <div key={v.id} className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center flex-shrink-0">
-                      <span className="text-xs font-extrabold text-slate-400">
-                        {getInitials(v.user?.fullName, v.user?.email)}
-                      </span>
+                    <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center flex-shrink-0 text-[10px] text-slate-400 font-extrabold">
+                      {getInitials(v)}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-bold text-slate-900 leading-snug">
-                        <span className="font-extrabold">{v.user?.fullName || "User"}</span>{" "}
-                        was rejected
+                      <p className="text-xs font-bold text-slate-900 leading-snug">
+                        <span className="font-extrabold">{getUserName(v)}</span> was rejected
                       </p>
                       <div className="flex items-center gap-1.5 mt-1">
-                        <div className="w-2 h-2 rounded-full bg-red-500" />
-                        <p className="text-xs text-slate-400 font-medium">
-                          {v.createdAt
-                            ? new Date(v.createdAt).toLocaleDateString()
-                            : "recently"}
+                        <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                        <p className="text-[10px] text-slate-400 font-medium">
+                          {v.created_at ? new Date(v.created_at).toLocaleDateString() : "recently"}
                         </p>
                       </div>
                     </div>
                   </div>
                 ))}
                 {approvedVerifications.length === 0 && rejectedVerifications.length === 0 && (
-                  <p className="text-sm text-slate-400 font-medium text-center py-4">
-                    No recent activity
+                  <p className="text-xs text-slate-400 font-medium text-center py-4">
+                    No recent changes on this page
                   </p>
                 )}
               </div>
-
-              {/* Summary cluster */}
-              {approvedVerifications.length > 0 && (
-                <div className="mt-6 pt-5 border-t border-slate-100">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="flex -space-x-2">
-                      {approvedVerifications.slice(0, 3).map((v) => (
-                        <div
-                          key={v.id}
-                          className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-300 to-blue-500 border-2 border-white flex items-center justify-center text-[10px] font-extrabold text-white"
-                        >
-                          {getInitials(v.user?.fullName, v.user?.email)}
-                        </div>
-                      ))}
-                      {approvedVerifications.length > 3 && (
-                        <div className="w-8 h-8 rounded-full bg-slate-200 border-2 border-white flex items-center justify-center text-[10px] font-extrabold text-slate-600">
-                          +{approvedVerifications.length - 3}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <p className="text-xs text-slate-500 font-semibold">
-                    {approvedVerifications.length} verifications successfully processed
-                  </p>
-                </div>
-              )}
             </div>
 
-            {/* Trust & Safety Guidelines */}
-            <div className="bg-[#0052CC] rounded-[2rem] p-7 text-white shadow-xl">
+            <div className="bg-[#0052CC] rounded-[2rem] p-6 sm:p-7 text-white shadow-xl">
               <div className="w-10 h-10 rounded-2xl bg-white/10 flex items-center justify-center mb-5 border border-white/10">
                 <ShieldCheck className="w-5 h-5 text-white" />
               </div>
               <h3 className="text-xl font-extrabold tracking-tight mb-3">
                 Trust &amp; Safety Guidelines
               </h3>
-              <p className="text-blue-100 text-sm font-medium leading-relaxed opacity-80 mb-6">
-                Ensure the document photo matches the live selfie. Check for
-                valid expiration dates and clear text rendering.
+              <p className="text-blue-100 text-xs font-medium leading-relaxed opacity-80 mb-6">
+                Ensure the document photo matches the live selfie. Check for valid expiration dates and clear text rendering.
               </p>
-              <button className="w-full py-3 rounded-2xl bg-white/15 hover:bg-white/25 text-white text-sm font-extrabold uppercase tracking-widest border border-white/10 transition-colors">
+              <button className="w-full py-3 rounded-2xl bg-white/15 hover:bg-white/25 text-white text-xs font-extrabold uppercase tracking-widest border border-white/10 transition-colors">
                 Review Policy
               </button>
             </div>
           </div>
         </div>
       )}
+
+      {/* ── UPGRADED LIGHTBOX INSPECTION MODAL OVERLAY ── */}
+      {activeInspection && (() => {
+        const modalCardImg = activeInspection.id_card_url 
+          ? (activeInspection.id_card_url.startsWith('http') ? activeInspection.id_card_url : `http://localhost:3001/${activeInspection.id_card_url}`) 
+          : null;
+        const modalSelfieImg = activeInspection.selfie_url 
+          ? (activeInspection.selfie_url.startsWith('http') ? activeInspection.selfie_url : `http://localhost:3001/${activeInspection.selfie_url}`) 
+          : null;
+
+        return (
+          <div 
+            onClick={() => setActiveInspection(null)}
+            className="fixed inset-0 bg-slate-950/95 backdrop-blur-md z-[100] flex flex-col items-center justify-between p-4 sm:p-6 md:p-8 overflow-y-auto animate-in fade-in duration-200"
+          >
+            {/* Top Navbar Contextual Info */}
+            <div className="w-full max-w-6xl flex items-center justify-between gap-4 text-white z-10 bg-slate-900/60 backdrop-blur-md px-4 py-3 rounded-2xl border border-white/10">
+              <div className="min-w-0">
+                <h4 className="text-sm font-bold text-white truncate">
+                  Inspecting: {getUserName(activeInspection)}
+                </h4>
+                <p className="text-[11px] text-slate-400 font-medium truncate mt-0.5">
+                  {getUserEmail(activeInspection)}
+                </p>
+              </div>
+              
+              <div className="flex items-center gap-3">
+                <span className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider ${getStatusStyle(activeInspection.status)}`}>
+                  {activeInspection.status}
+                </span>
+                <button 
+                  onClick={() => setActiveInspection(null)}
+                  className="p-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 transition-colors text-white"
+                  title="Close Inspection View (Esc)"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Core Layout Area: Dual Image Comparison Workspace */}
+            <div 
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 gap-6 my-auto items-center justify-center py-8"
+            >
+              {/* Box 1: ID Card Document File */}
+              <div className="flex flex-col gap-2">
+                <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 px-1">
+                  Provided Identity Document
+                </span>
+                <div className="bg-slate-900 border border-white/5 rounded-2xl h-[280px] sm:h-[420px] overflow-hidden flex items-center justify-center relative group shadow-2xl">
+                  {modalCardImg && !brokenCardImages[activeInspection.id] ? (
+                    <img 
+                      src={modalCardImg} 
+                      alt="ID Card Document" 
+                      className="w-full h-full object-contain"
+                    />
+                  ) : (
+                    <div className="text-center p-6 space-y-2">
+                      <ShieldCheck className="w-12 h-12 text-slate-700 mx-auto" />
+                      <p className="text-xs font-semibold text-slate-500">Identity Document Unobtainable</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Box 2: Live Verification Selfie */}
+              <div className="flex flex-col gap-2">
+                <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 px-1">
+                  User Verification Selfie
+                </span>
+                <div className="bg-slate-900 border border-white/5 rounded-2xl h-[280px] sm:h-[420px] overflow-hidden flex items-center justify-center relative group shadow-2xl">
+                  {modalSelfieImg && !brokenSelfieImages[activeInspection.id] ? (
+                    <img 
+                      src={modalSelfieImg} 
+                      alt="User Live Selfie" 
+                      className="w-full h-full object-contain"
+                    />
+                  ) : (
+                    <div className="text-center p-6 space-y-2">
+                      <Eye className="w-12 h-12 text-slate-700 mx-auto" />
+                      <p className="text-xs font-semibold text-slate-500">Selfie Image Unobtainable</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom Actions Workspace Bar */}
+            <div 
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-md bg-slate-900/90 border border-white/10 rounded-2xl p-4 flex items-center justify-between gap-4 shadow-2xl mb-2"
+            >
+              {activeInspection.status === "PENDING" ? (
+                <>
+                  <button
+                    onClick={() => handleReject(activeInspection.id)}
+                    disabled={rejectLoading !== null || approveLoading !== null}
+                    className="flex-1 py-3 px-4 rounded-xl bg-red-500/20 hover:bg-red-500/30 text-red-400 text-xs font-extrabold uppercase tracking-wider transition-colors flex items-center justify-center gap-2 border border-red-500/20"
+                  >
+                    <X className="w-4 h-4" />
+                    Reject Profile
+                  </button>
+                  <button
+                    onClick={() => handleApprove(activeInspection.id)}
+                    disabled={rejectLoading !== null || approveLoading !== null}
+                    className="flex-1 py-3 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-extrabold uppercase tracking-wider transition-colors flex items-center justify-center gap-2 shadow-lg shadow-blue-600/20"
+                  >
+                    <Check className="w-4 h-4" />
+                    Approve Verify
+                  </button>
+                </>
+              ) : (
+                <div className="w-full text-center space-y-2">
+                  <p className="text-xs text-slate-400 font-medium">
+                    Profile has already been marked as <span className="font-bold text-white">{activeInspection.status}</span>.
+                  </p>
+                  <button
+                    onClick={() => handleResetToPending(activeInspection.id)}
+                    className="inline-flex items-center gap-2 mx-auto px-4 py-2 text-xs font-bold text-slate-300 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-colors"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                    Reset to Pending State
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
