@@ -12,6 +12,7 @@ import {
   AlertCircle,
   Clock,
   Zap,
+  DivideCircle,
 } from "lucide-react";
 
 interface Application {
@@ -20,8 +21,18 @@ interface Application {
   userId?: number;
   status?: string;
   appliedAt?: string;
-  offeredPrice?: number;
-  task?: { title: string; category?: string; type?: string };
+  offered_price?: number;
+
+  task?: { 
+    title: string; 
+    description?: string;
+    category?: string; 
+    type?: string;
+    requester?: {
+      fullName: string;
+      email: string;
+    };
+  };
   performer?: { fullName: string; email: string; isTopPerformer?: boolean };
 }
 
@@ -33,6 +44,8 @@ interface PaginatedApplications {
 
 export default function AdminApplicationsPage() {
   const [applications, setApplications] = useState<PaginatedApplications | null>(null);
+  const [selectedApplication, setSelectedApplication] =
+  useState<Application | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
@@ -43,6 +56,9 @@ export default function AdminApplicationsPage() {
       try {
         setLoading(true);
         const data = await adminService.getApplications({ page, limit: LIMIT });
+        console.log("FULL RESPONSE:", data);
+        console.log("DATA:", data.data);
+        console.log("APPLICATIONS:", data.data?.data);
         setApplications(data);
         setError(null);
       } catch (err) {
@@ -70,8 +86,19 @@ export default function AdminApplicationsPage() {
   };
 
   const total = applications?.total ?? 0;
-  const pendingCount = applications?.data.filter((a) => a.status === "PENDING").length ?? 0;
+  const pendingCount = applications?.data?.filter((a) => a.status === "PENDING")?.length ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / LIMIT));
+
+  const handleAccept = async (id: number) => {
+    try {
+
+      alert(`Accepting application ${id}`);
+      
+      setSelectedApplication(null);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   return (
     <div className="min-h-screen space-y-8 max-w-[1400px] mx-auto">
@@ -217,8 +244,8 @@ export default function AdminApplicationsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {applications && applications.data.length > 0 ? (
-                  applications.data.map((app) => (
+                {(applications?.data?.length ?? 0) > 0 ? (
+                  applications?.data?.map((app) => (
                     <tr
                       key={app.id}
                       className="hover:bg-slate-50/30 transition-colors group"
@@ -257,8 +284,8 @@ export default function AdminApplicationsPage() {
                       {/* Offered Price */}
                       <td className="px-8 py-6">
                         <span className="text-base font-extrabold text-blue-600 tabular-nums">
-                          {app.offeredPrice != null
-                            ? `$${app.offeredPrice.toFixed(2)}`
+                          {app.offered_price != null
+                            ? `$${app.offered_price.toFixed(2)}`
                             : "—"}
                         </span>
                       </td>
@@ -277,6 +304,7 @@ export default function AdminApplicationsPage() {
                         <button
                           className="p-2.5 rounded-xl text-blue-500 hover:bg-blue-50 transition-colors"
                           title="View application"
+                          onClick={() => setSelectedApplication(app)}
                         >
                           <Eye className="w-5 h-5" />
                         </button>
@@ -300,8 +328,9 @@ export default function AdminApplicationsPage() {
           {/* Pagination Footer */}
           <div className="flex items-center justify-between px-8 py-5 border-t border-slate-100 bg-slate-50/40">
             <p className="text-sm text-slate-500 font-semibold">
-              Showing 1 to {applications?.data.length ?? 0} of {total} applications
+              Showing 1 to {applications?.data?.length ?? 0} of {total} applications
             </p>
+
             <div className="flex items-center gap-1">
               <button
                 onClick={() => setPage(Math.max(1, page - 1))}
@@ -310,8 +339,11 @@ export default function AdminApplicationsPage() {
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
+
+
               {Array.from({ length: Math.min(3, totalPages) }).map((_, i) => {
                 const p = i + 1;
+
                 return (
                   <button
                     key={p}
@@ -337,6 +369,79 @@ export default function AdminApplicationsPage() {
           </div>
         </div>
       )}
+      {/* ── Application Details Modal */}
+      {selectedApplication && (
+      <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50">
+
+      <div className="bg-white p-8 rounded-2xl w-full max-w-lg shadow-xl">
+
+      <h2 className="text-2xl font-bold mb-6">
+      Application Details
+      </h2>
+
+      <div className="space-y-4">
+
+      <div>
+        <h2 className="text-2xl font-bold">
+          {selectedApplication.task?.title}
+        </h2>
+
+        <p>
+          {selectedApplication.task?.description}
+        </p>
+
+        <p>
+          <b>Budget:</b>{" "}
+          ${selectedApplication.offered_price}
+        </p>
+
+        <p>
+          <b>Requester:</b>{" "}
+          {selectedApplication.task?.requester?.fullName}
+        </p>
+
+        <p>
+          <b>Requester Email:</b>{" "}
+          {selectedApplication.task?.requester?.email}
+        </p>
+
+        <p>
+          <b>Performer:</b>{" "}
+          {selectedApplication.performer?.fullName}
+        </p>
+
+        <p>
+          <b>Performer Email:</b>{" "}
+          {selectedApplication.performer?.email}
+        </p>
+
+        <p>
+          <b>Status:</b>{" "}
+          {selectedApplication.status}
+        </p>
+     </div>
+
+      </div>
+
+      <div className="mt-6 flex justify-end">
+
+      <button
+      onClick={() =>
+      setSelectedApplication(null)
+      }
+      className="bg-red-500 text-white px-5 py-2 rounded-lg"
+      >
+      Close
+      </button>
+
+      </div>
+
+      </div>
+
+      </div>
+      )}
+      
     </div>
+    
   );
 }
