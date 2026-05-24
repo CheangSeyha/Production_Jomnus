@@ -10,6 +10,7 @@ import TaskOverview from "@/components/myrequest/TaskOverview";
 import { useTaskStore } from "@/store/taskStore";
 
 import api from "@/lib/axios";
+import { toDateTimeLocalISOString } from "@/utils/dateTime";
 
 export default function Step2Page() {
   const router = useRouter();
@@ -57,12 +58,10 @@ export default function Step2Page() {
         price: Number(form.price),
 
         startDate: form.startDate
-          ? new Date(form.startDate).toISOString()
+          ? toDateTimeLocalISOString(form.startDate)
           : undefined,
 
-        deadline: new Date(
-          form.deadline
-        ).toISOString(),
+        deadline: toDateTimeLocalISOString(form.deadline),
 
         locationText: form.locationText,
 

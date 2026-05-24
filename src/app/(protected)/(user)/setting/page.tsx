@@ -3,251 +3,227 @@
 import { useEffect, useState, ChangeEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import axios from "axios";
+
 import StatsManagement from "@/components/setting/StatsManagement";
 import Specializations from "@/components/setting/Specializations";
 import WorkHistory from "@/components/setting/WorkHistory";
 import ProfileHeader from "@/components/setting/ProfileHeader";
-import { useUserStore } from "@/store/userStore";
+import { useAuthStore } from "@/store/authStore";
 
-// Define WorkItem interface to match WorkHistory component
+// Match the WorkItem interface exactly as expected by WorkHistory component
+// The WorkHistory component expects id to be number, not string | number
 interface WorkItem {
-  id: number | string;
+  id: number;  // Changed from number | string to number
   title: string;
   description: string;
   tag: string;
   image?: string;
 }
 
+type FormDataType = {
+  id: number | null;
+  fullName: string;
+  phone: string;
+  city: string;
+  currentRole: string;
+  bio: string;
+  profileImage: string;
+};
+
 export default function SettingPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { setUser, updateUser } = useUserStore();
 
-  const [formData, setFormData] = useState<any>({
+  const { user, setUser } = useAuthStore();
+
+  const [loading, setLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+  const [rawData, setRawData] = useState<any>(null);
+
+  const [formData, setFormData] = useState<FormDataType>({
     id: null,
     fullName: "",
     phone: "",
     city: "",
     currentRole: "",
     bio: "",
-    profileImage: null,
+    profileImage: "",
   });
-
-  const [rawData, setRawData] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
-  const [saveSuccess, setSaveSuccess] = useState(false);
 
   const tokenFromUrl = searchParams.get("token");
 
-  // useEffect(() => {
-  //   const fetchUserData = async () => {
-  //     try {
-  //       const token = tokenFromUrl || localStorage.getItem("access_token");
-  //       const response = await axios.get("http://localhost:3001/api/users/me", {
-  //         headers: { Authorization: `Bearer ${token}` },
-  //       });
-
-  //       const user = response.data;
-  //       setRawData(user);
-
-  //       setFormData({
-  //         id: user.id,
-  //         fullName: user.fullName || "",
-  //         phone: user.phone || "",
-  //         locationText: user.locationText || (user.city && user.country ? `${user.city}, ${user.country}` : user.city || user.country || ""),
-  //         travelRadius: user.travelRadius || 0,
-  //         bio: user.bio || "",
-  //         profileImage: user.profileImage || user.picture || "",
-  //       });
-  //     } catch (error) {
-  //       console.error("Error fetching user:", error);
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   };
-  //   fetchUserData();
-  // }, []);
-
+  // -------------------------
+  // INIT FORM FROM STORE USER
+  // -------------------------
   useEffect(() => {
-    const fetchUserData = async () => {
+    if (user) {
+      setFormData({
+        id: user.id || null,
+        fullName: user.fullName || "",
+        phone: user.phone || "",
+        city: user.city || "",
+        currentRole: user.currentRole || user.role || "",
+        bio: user.bio || "",
+        profileImage: user.profileImage || "",
+      });
+      setRawData(user);
+      setLoading(false);
+    }
+  }, [user]);
+
+  // -------------------------
+  // OPTIONAL: fallback fetch
+  // -------------------------
+  useEffect(() => {
+    const fetchUser = async () => {
+      if (user) return;
+
       try {
         const token = tokenFromUrl || localStorage.getItem("access_token");
-        const response = await axios.get("http://localhost:3001/api/users/me", {
-          headers: { Authorization: `Bearer ${token}` },
+
+        if (!token) {
+          router.push("/auth/signin");
+          return;
+        }
+
+        const res = await axios.get("http://localhost:3001/api/users/me", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         });
 
-        const user = response.data;
+        const fetchedUser = res.data;
 
-        // SYNC THE STORE: This makes the Header show the data on page load
-        setUser(user);
+        // NORMALIZE: Ensure frontend always safely tracks identity status across case types
+        const normalizedUser = {
+          ...fetchedUser,
+          isIdentityVerified:
+            fetchedUser.isIdentityVerified ??
+            fetchedUser.is_identity_verified ??
+            false,
+        };
 
-        setRawData(user);
+        setUser(normalizedUser);
+        setRawData(normalizedUser);
         setFormData({
-          id: user.id,
-          fullName: user.fullName || "",
-          phone: user.phone || "",
+          id: normalizedUser.id || null,
+          fullName: normalizedUser.fullName || "",
+          phone: normalizedUser.phone || "",
           city:
-            user.locationText ||
-            (user.city && user.country
-              ? `${user.city}, ${user.country}`
-              : user.city || user.country || ""),
-          currentRole: user.currentRole || "",
-          bio: user.bio || "",
-          profileImage: user.profileImage || user.picture || "",
+            normalizedUser.locationText ||
+            (normalizedUser.city && normalizedUser.country
+              ? `${normalizedUser.city}, ${normalizedUser.country}`
+              : normalizedUser.city || normalizedUser.country || ""),
+          currentRole: normalizedUser.currentRole || normalizedUser.role || "",
+          bio: normalizedUser.bio || "",
+          profileImage: normalizedUser.profileImage || normalizedUser.picture || "",
         });
-      } catch (error) {
-        console.error("Error fetching user:", error);
+      } catch (err: any) {
+        console.error(
+          "Failed to fetch user:",
+          err?.response?.data || err.message || err
+        );
       } finally {
         setLoading(false);
       }
     };
-    fetchUserData();
-  }, [setUser]); // Add setUser to dependencies
 
+    fetchUser();
+  }, [user, tokenFromUrl, router, setUser]);
+
+  // -------------------------
+  // INPUT CHANGE
+  // -------------------------
+  // Fix: Properly type the onChange handler to match ProfileHeader's expected type
   const handleInputChange = (
-    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | { target: { name: string; value: any } }
   ) => {
     const { name, value } = e.target;
-    setFormData((prev: any) => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
-  // const handleSave = async () => {
-  //   setIsSaving(true);
-  //   setSaveSuccess(false);
-
-  //   try {
-  //     const token = localStorage.getItem("access_token");
-
-  //     const payload: any = {
-  //       fullName: formData.fullName || undefined,
-  //       phone: formData.phone || undefined,
-  //       bio: formData.bio || undefined,
-  //       city: formData.city || undefined,
-  //       country: formData.country || undefined,
-
-  //       // IMPORTANT: only send valid URL
-  //       profileImage:
-  //         typeof formData.profileImage === "string" &&
-  //         formData.profileImage.startsWith("http")
-  //           ? formData.profileImage
-  //           : undefined,
-  //     };
-
-  //     await axios.patch(
-  //       "http://localhost:3001/api/users/me",
-  //       {
-  //         fullName: formData.fullName || "",
-  //         phone: formData.phone || "",
-  //         bio: formData.bio || "",
-  //         city: formData.city || "",
-  //         country: formData.country || "",
-  //         profileImage: formData.profileImage || "",
-  //       },
-  //       {
-  //         headers: {
-  //           Authorization: `Bearer ${token}`,
-  //         },
-  //       }
-  //     );
-
-  //     setSaveSuccess(true);
-  //     setTimeout(() => setSaveSuccess(false), 3000);
-
-  //   } catch (error: any) {
-  //     console.log("ERROR:", error?.response?.data);
-  //     alert(error?.response?.data?.message || "Failed to save changes.");
-  //   } finally {
-  //     setIsSaving(false);
-  //   }
-  // };
-
+  // -------------------------
+  // SAVE PROFILE
+  // -------------------------
   const handleSave = async () => {
     setIsSaving(true);
-    setSaveSuccess(false);
 
     try {
       const token = localStorage.getItem("access_token");
 
-      // This is the data you are sending to the backend
-      const updatePayload = {
-        fullName: formData.fullName || "",
-        phone: formData.phone || "",
-        bio: formData.bio || "",
-        city: formData.city || "",
-        country: formData.country || "",
-        profileImage: formData.profileImage || "",
+      const payload = {
+        fullName: formData.fullName,
+        phone: formData.phone,
+        bio: formData.bio,
+        city: formData.city,
+        profileImage: formData.profileImage,
       };
 
-      const response = await axios.patch(
+      const res = await axios.patch(
         "http://localhost:3001/api/users/me",
-        updatePayload,
+        payload,
         {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        },
+        }
       );
 
-      // --- THE MISSING PIECE ---
-      // Update the Zustand store so the Header changes instantly!
-      // If your backend returns the updated user, use response.data
-      // Otherwise, use your local updatePayload
-      updateUser(response.data || updatePayload);
-      // --------------------------
+      // Update the user in store with the response
+      setUser(res.data);
+      setRawData(res.data);
 
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
-    } catch (error: any) {
-      console.log("ERROR:", error?.response?.data);
-      alert(error?.response?.data?.message || "Failed to save changes.");
+    } catch (err: any) {
+      console.error(
+        "Save Error:",
+        err.response?.data || err.message
+      );
+      alert(err.response?.data?.message || "Failed to update profile");
     } finally {
       setIsSaving(false);
     }
   };
 
-  const uploadProfileImage = async (file: File) => {
-    const formData = new FormData();
-    formData.append("file", file);
-
-    const res = await axios.post(
-      "http://localhost:3001/api/users/upload-avatar",
-      formData,
-    );
-
-    setFormData((prev: any) => ({
-      ...prev,
-      profileImage: res.data.url, // store URL only
-    }));
-  };
-
-  // Inside SettingPage function
+  // -------------------------
+  // PROJECTS
+  // -------------------------
+  // Fix: Use number for id, not Date.now() which returns number but ensure it's within number range
   const [projects, setProjects] = useState<WorkItem[]>([
     {
       id: 1,
       title: "Luxury Penthouse Furniture Setup",
       description:
-        "Full white-glove assembly for a 4-bedroom penthouse in the Marina District.",
+        "Full white-glove assembly for a 4-bedroom penthouse.",
       tag: "Relocation Logistics",
       image: "/images/jomnus.png",
     },
   ]);
 
   const addNewProject = () => {
-    const newProj = {
-      id: Date.now(), // Unique ID
+    const newProj: WorkItem = {
+      id: Date.now(), // Date.now() returns number, which is fine
       title: "New Project Title",
-      description: "Enter your project description here.",
+      description: "Enter description",
       tag: "General",
       image: "",
     };
-    setProjects([newProj, ...projects]);
+
+    setProjects((prev) => [newProj, ...prev]);
   };
 
-  if (loading) {
+  // -------------------------
+  // LOADING STATE
+  // -------------------------
+  if (loading || !user) {
     return (
       <div className="flex justify-center items-center h-screen bg-slate-50 text-slate-400 font-medium">
-        Authenticating...
+        Loading profile...
       </div>
     );
   }
@@ -255,38 +231,84 @@ export default function SettingPage() {
   return (
     <div className="min-h-screen bg-slate-50">
       <div className="max-w-7xl mx-auto p-4 md:p-8 space-y-12">
-        {/* Title & Save Bar */}
+        {/* HEADER */}
         <div className="flex justify-between items-center border-b pb-6 bg-white p-6 rounded-2xl shadow-sm">
           <div>
-            <h1 className="text-3xl font-black text-slate-800 tracking-tighter">
+            <h1 className="text-3xl font-black text-slate-800">
               Profile Settings
             </h1>
             <p className="text-sm text-slate-500 mt-1">
-              You are logged in successfully. Update your information below.
+              Update your information below
             </p>
           </div>
+
           <div className="flex gap-4 items-center">
             {saveSuccess && (
-              <span className="text-xs text-green-600 font-bold uppercase tracking-widest animate-pulse">
-                Changes saved!
+              <span className="text-green-600 text-xs font-bold">
+                Saved!
               </span>
             )}
+
             <button
               onClick={handleSave}
               disabled={isSaving}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-bold text-sm transition-all disabled:opacity-50 shadow-lg shadow-blue-200"
+              className="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold disabled:opacity-50"
             >
               {isSaving ? "Saving..." : "Save Changes"}
             </button>
           </div>
         </div>
 
-        {/* Profile Details */}
+        {/* Profile Details Header Component */}
         <ProfileHeader
           data={formData}
           onInputChange={handleInputChange}
-          email={rawData?.email}
+          email={rawData?.email || user?.email}
+          isIdentityVerified={rawData?.isIdentityVerified}
         />
+
+        {/* IDENTITY VERIFICATION BOX */}
+        <section className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="flex items-start gap-4">
+              <div className={`p-4 rounded-2xl ${rawData?.isIdentityVerified ? 'bg-green-50 text-green-600' : 'bg-amber-50 text-amber-600'}`}>
+                {rawData?.isIdentityVerified ? (
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-6 h-6">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z" />
+                  </svg>
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                  </svg>
+                )}
+              </div>
+              <div>
+                <h3 className="font-bold text-xl text-slate-800 flex items-center gap-2">
+                  Identity Verification Status
+                  {rawData?.isIdentityVerified && (
+                    <span className="bg-green-100 text-green-700 text-xs px-2.5 py-0.5 rounded-full font-black tracking-wide">
+                      VERIFIED
+                    </span>
+                  )}
+                </h3>
+                <p className="text-xs text-slate-400 mt-1 max-w-xl">
+                  {rawData?.isIdentityVerified 
+                    ? "Your profile identity is fully verified. Your account exhibits trust badges across your listings." 
+                    : "Verify your profile by providing identification credentials to unlock reliable task matching parameters and platform trust markers."}
+                </p>
+              </div>
+            </div>
+            
+            {!rawData?.isIdentityVerified && (
+              <button
+                onClick={() => router.push("/setting/verify")}
+                className="bg-slate-900 hover:bg-slate-800 text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-all shadow-md shrink-0"
+              >
+                Verify Profile
+              </button>
+            )}
+          </div>
+        </section>
 
         {/* Stats Section */}
         <section className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100">
@@ -296,7 +318,7 @@ export default function SettingPage() {
                 Performance Statistics
               </h3>
               <p className="text-xs text-slate-400 mt-1">
-                {rawData?.currentRole === "REQUESTER"
+                {(rawData?.currentRole || rawData?.role) === "REQUESTER"
                   ? "Viewing your activity as a task requester."
                   : "Viewing your activity as a task performer."}
               </p>
@@ -304,21 +326,19 @@ export default function SettingPage() {
             <div className="flex gap-2">
               <span
                 className={`text-[10px] px-3 py-1 rounded-full font-black uppercase tracking-widest border ${
-                  rawData?.currentRole === "REQUESTER"
+                  (rawData?.currentRole || rawData?.role) === "REQUESTER"
                     ? "bg-orange-50 text-orange-600 border-orange-100"
                     : "bg-blue-50 text-blue-600 border-blue-100"
                 }`}
               >
-                {rawData?.currentRole} Mode
+                {rawData?.currentRole || rawData?.role} Mode
               </span>
             </div>
           </div>
           <StatsManagement data={rawData} />
         </section>
 
-        {/* Portfolio Section */}
-
-        {/* Work History Section - Only visible/more prominent for Performers */}
+        {/* Work History Section */}
         <section className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100">
           <div className="flex justify-between items-center mb-6">
             <div>
@@ -329,20 +349,18 @@ export default function SettingPage() {
                 Showcase your best completed tasks.
               </p>
             </div>
-            {/* 3. ATTACH THE ADD FUNCTION HERE */}
             <button
               onClick={addNewProject}
-              className="text-blue-600 bg-blue-50 hover:bg-blue-100 px-5 py-2.5 rounded-xl text-sm font-bold transition-colors"
+              className="text-blue-600 font-bold"
             >
-              + Add New Case Study
+              + Add Case Study
             </button>
           </div>
-          {/* 4. PASS DATA AND SETTER TO COMPONENT */}
           <WorkHistory data={projects} setData={setProjects} />
         </section>
 
-        {/* Only Performers need to showcase specific skills/specializations */}
-        {rawData?.currentRole === "PERFORMER" && (
+        {/* Specializations Skill Tags Section */}
+        {(rawData?.currentRole === "PERFORMER" || rawData?.role === "PERFORMER") && (
           <section className="animate-in fade-in duration-500">
             <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100">
               <div className="flex justify-between items-center mb-6">
@@ -355,7 +373,7 @@ export default function SettingPage() {
                   </p>
                 </div>
               </div>
-              <Specializations data={rawData?.specializations} />
+              <Specializations data={rawData?.specializations || []} />
             </div>
           </section>
         )}

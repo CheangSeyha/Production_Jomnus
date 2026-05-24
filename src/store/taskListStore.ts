@@ -6,9 +6,9 @@ export type Task = {
   description?: string;
   price: number;
   deadline: string;
-  status: "DRAFT" | "POSTED" | "ACCEPTED" | "IN_PROGRESS" | "COMPLETED";
-  location_text?: string;
-  created_at: string;
+  status: "OPEN" | "COMPLETED" | "CANCELLED";
+  locationText?: string;
+  createdAt: string;
 };
 
 type TaskStore = {
