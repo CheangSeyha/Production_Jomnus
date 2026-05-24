@@ -1,11 +1,11 @@
 "use client";
 
 import { MapPin, Clock, Info } from "lucide-react";
-import dynamic from "next/dynamic";
 import { getTaskBadges } from "../../utils/taskBadge";
 import { getFakeInterest } from "@/utils/random";
 import { Task } from "@/types/task";
 import { useRouter } from "next/navigation";
+
 type Props = {
   task: Task;
   onOpen: (task: Task) => void;
@@ -25,11 +25,6 @@ export default function DetailTaskCard({ task, onOpen, onApply }: Props) {
 		};
 		
 
-		const TaskMapPreview = dynamic(
-			() => import("@/components/map/TaskMapPreview"),
-			{ ssr: false }
-		);
-
 		const badges = getTaskBadges(task);
 		const interest = getFakeInterest(task.id)
 
@@ -45,110 +40,94 @@ export default function DetailTaskCard({ task, onOpen, onApply }: Props) {
 		};
 		
     return (
-    <div
+		<div
+			onClick={() => onOpen(task)}
 			className="
 				bg-white rounded-3xl border border-slate-200
-				shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-300
-				overflow-hidden group
+				hover:border-blue-300
+				shadow-sm hover:shadow-xl
+				transition-all duration-300
+				overflow-hidden group cursor-pointer
+				hover:-translate-y-1
 			"
-    >
-			<div className="relative">
-				{/* MAP */}
-				{task.latitude && task.longitude && (
-					<TaskMapPreview
-						lat={task.latitude}
-						lng={task.longitude}
-					/>
-				)}
-		
-				<div className="text-red-500 absolute bottom-3 left-3 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-medium shadow z-[1000]">
-					📍 View location
-				</div>
-			</div>
+		>
 
-      <div className="p-6 space-y-8">
+			
+      <div className="p-5 space-y-5">
         {/* HEADER */}
-        <div className="flex justify-between items-start">
-			<div
-				onClick={handleProfileClick} // 👈 Use the new function
-				className="flex items-start gap-3 cursor-pointer p-2 rounded-xl hover:bg-slate-50 transition"
-			>
-				<div className="w-11 h-11 rounded-full bg-slate-200 overflow-hidden">
-				<img
-					src={
-						(task as any)?.requester?.profile_image ||
-						`https://api.dicebear.com/7.x/avataaars/svg?seed=${
-							(task as any)?.requester?.fullName || "unknown"
-						}`
-					}
-					alt={(task as any)?.requester?.fullName || "Unknown"}
-					className="w-full h-full object-cover"
-				/>
-				</div>
 
-				<div className="flex flex-col gap-1.5">
-				<p className="text-[20px] font-semibold text-orange-700 hover:underline">
-					{(task as any)?.requester?.fullName || task.requesterName || "Unknown User"}
-				</p>
-
-				<p className="text-[12px] font-semibold text-slate-800">
-					{formatDate(task.startDate || task.createdAt)}
-					<span className="px-1.5"> - </span>
-					{formatDate(task.deadline)}
-				</p>
-
-				<div className="flex flex-row gap-1.5 flex-wrap">
-					{badges.map((badge, i) => (
-					<span
-						key={i}
-						className={`px-3 py-1 text-xs font-semibold rounded-md ${badge.color}`}
+				<div className="flex items-start justify-between gap-4">
+					<div
+						onClick={handleProfileClick}
+						className="flex items-center gap-3"
 					>
-						{badge.label}
-					</span>
-					))}
+						<div className="relative">
+							<img
+								src={
+									(task as any)?.requester?.profile_image ||
+									`https://api.dicebear.com/7.x/avataaars/svg?seed=${
+										(task as any)?.requester?.fullName || "unknown"
+									}`
+								}
+								alt={(task as any)?.requester?.fullName || "Unknown"}
+								className="w-12 h-12 rounded-2xl object-cover border border-slate-200"
+							/>
+
+							<div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full" />
+						</div>
+
+						<div>
+							<p className="text-sm font-semibold text-slate-900">
+								{(task as any)?.requester?.fullName || task.requesterName}
+							</p>
+
+							<p className="text-xs text-slate-500">
+								{formatDate(task.startDate || task.createdAt)}
+							</p>
+						</div>
+					</div>
+
+					<div className="bg-orange-50 text-orange-600 px-4 py-2 rounded-2xl">
+						<p className="text-[10px] uppercase tracking-wide font-semibold">
+							Budget
+						</p>
+
+						<p className="text-xl font-black">
+							${task.price}
+						</p>
+					</div>
 				</div>
+
+				<div className="space-y-2">
+					<h2 className="text-2xl font-bold tracking-tight text-slate-900 group-hover:text-blue-600 transition-colors">
+						{task.title}
+					</h2>
+
+					<p className="text-sm leading-relaxed text-slate-600 line-clamp-2">
+						{task.description}
+					</p>
 				</div>
-			</div>
-
-			<div className="text-right">
-				<p className="text-xs text-slate-400 uppercase tracking-wide">
-				Budget
-				</p>
-
-				<p className="text-2xl font-extrabold text-orange-800">
-				${task.price}
-				</p>
-
-				<div className="text-xs text-blue-700">
-				👀 {interest} people interested
-				</div>
-			</div>	
-		</div>
-
-        {/* TITLE */}
-				<h2 className="text-xl font-bold text-slate-900 leading-tight group-hover:text-blue-600">
-					{task.title}
-				</h2>
-
-        {/* DESCRIPTION */}
-        <p className="text-sm text-slate-600 line-clamp-2">
-          {task.description}
-        </p>
 
         {/* META */}
-        <div className="flex flex-wrap gap-2">
-				<div className="flex items-center gap-2 text-sm text-slate-600">
-					<MapPin size={14} className="text-blue-500" />
-					<span className="truncate max-w-[300px]">
-						{task.locationText || "No location"}
-					</span>
-				</div>
+				<div className="flex flex-wrap items-center gap-3 rounded-2xl bg-slate-50 p-3">
+					<div className="flex items-center gap-2 text-sm text-slate-700">
+						<MapPin size={15} className="text-blue-500" />
 
-          <div className="flex items-center gap-1 px-3 py-1.5 bg-slate-100 rounded-full text-xs text-slate-600">
-            <Clock size={12} />
-            {new Date(task.deadline).toLocaleString()}
-          </div>
-        </div>
+						<span className="truncate max-w-[250px]">
+							{task.locationText || "No location"}
+						</span>
+					</div>
+
+					<div className="h-4 w-px bg-slate-200" />
+
+					<div className="flex items-center gap-2 text-sm text-slate-700">
+						<Clock size={14} className="text-slate-400" />
+
+						<span>
+							{new Date(task.deadline).toLocaleDateString()}
+						</span>
+					</div>
+				</div>
 
         {/* ACTION */}
         <div className="flex gap-3 pt-2">
@@ -167,13 +146,6 @@ export default function DetailTaskCard({ task, onOpen, onApply }: Props) {
 					>
 						{task.hasApplied ? "Applied the task" : "Apply the task"}
 					</button>
-
-          <button 
-						onClick={() => onOpen(task)}
-						className="cursor-pointer px-4 rounded-xl border border-slate-200 hover:bg-slate-50">
-            <Info size={18} />
-          </button>
-
 
         </div>
       </div>

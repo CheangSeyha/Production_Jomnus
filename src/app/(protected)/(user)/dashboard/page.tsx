@@ -4,10 +4,10 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ChevronLeft, ChevronRight, SlidersHorizontal } from "lucide-react";
 import DetailTaskCard from "@/components/myrequest/DetailTaskCard";
-import TaskDetailModal from "@/components/myrequest/TaskDetailModal";
 import { Task } from "@/types/task";
 import ApplyTaskModal from "@/components/applications/ApplyTaskModal";
 import api from "@/lib/axios";
+import dynamic from "next/dynamic";
 
 type Category = {
   id: number;
@@ -40,6 +40,8 @@ type TaskApi = {
 
   required_workers?: number;
 
+  categories?: Category[];
+
   status:
     | "POSTED"
     | "ACCEPTED"
@@ -71,12 +73,19 @@ export default function DashboardPage() {
   const [selectedCategory, setSelectedCategory] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-
+  const [sortBy, setSortBy] = useState("newest");
   const [tasks, setTasks] = useState<Task[]>([]);
 
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
   const [selectedApplyTask, setSelectedApplyTask] = useState<Task | null>(null);  
+
+  const [selectedPrice, setSelectedPrice] = useState("");
+
+  const SharedTaskMap = dynamic(
+    () => import("@/components/map/SharedTaskMap"),
+    { ssr: false }
+  );
 
   const markTaskApplied = (taskId: number) => {
     setTasks((currentTasks) =>
@@ -91,23 +100,103 @@ export default function DashboardPage() {
 
     return [...tasks]
       .filter((task) => {
-        if (!normalizedSearch) return true;
 
-        return [
-          task.title,
-          task.description,
-          task.locationText,
-          task.requesterName,
-        ]
-          .filter(Boolean)
-          .some((value) => String(value).toLowerCase().includes(normalizedSearch));
+
+      console.log({
+        title: task.title,
+        categoryIds: task.categoryIds,
+        selectedCategory,
+        matches:
+          task.categoryIds?.includes(Number(selectedCategory)),
+      });
+        // SEARCH
+        const matchesSearch =
+          !normalizedSearch ||
+          [
+            task.title,
+            task.description,
+            task.locationText,
+            task.requesterName,
+          ]
+            .filter(Boolean)
+            .some((value) =>
+              String(value).toLowerCase().includes(normalizedSearch)
+            );
+
+        // CATEGORY
+        const matchesCategory =
+          !selectedCategory ||
+          task.categoryIds?.includes(Number(selectedCategory));
+        // PRICE
+        let matchesPrice = true;
+
+        if (selectedPrice) {
+          const price = task.price;
+
+          switch (selectedPrice) {
+            case "0-5":
+              matchesPrice = price <= 5;
+              break;
+
+            case "5-20":
+              matchesPrice = price > 5 && price <= 20;
+              break;
+
+            case "20-50":
+              matchesPrice = price > 20 && price <= 50;
+              break;
+
+            case "50-100":
+              matchesPrice = price > 50 && price <= 100;
+              break;
+
+            case "100+":
+              matchesPrice = price > 100;
+              break;
+          }
+        }
+
+        return (
+          matchesSearch &&
+          matchesCategory &&
+          matchesPrice
+        );
       })
-      .sort(
-        (a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-      );
-  }, [searchTerm, tasks]);
+      .sort((a, b) => {
+        switch (sortBy) {
+          case "oldest":
+            return (
+              new Date(a.createdAt).getTime() -
+              new Date(b.createdAt).getTime()
+            );
 
+          case "highest-price":
+            return b.price - a.price;
+
+          case "lowest-price":
+            return a.price - b.price;
+
+          case "deadline":
+            return (
+              new Date(a.deadline).getTime() -
+              new Date(b.deadline).getTime()
+            );
+
+          case "newest":
+          default:
+            return (
+              new Date(b.createdAt).getTime() -
+              new Date(a.createdAt).getTime()
+            );
+        }
+      })
+  }, [
+    searchTerm,
+    selectedCategory,
+    selectedPrice,
+    tasks,
+    sortBy
+  ]);
   const totalPages = Math.max(1, Math.ceil(filteredTasks.length / TASKS_PER_PAGE));
   const paginatedTasks = filteredTasks.slice(
     (currentPage - 1) * TASKS_PER_PAGE,
@@ -135,11 +224,17 @@ export default function DashboardPage() {
         const res = await api.get<TaskApi[]>("/tasks")
 
         const data = res.data;
+        console.log("API RESPONSE:", data);
 
 
         const mapped: Task[] = data.map((task) => ({
           id: task.id,
 
+          categoryIds:
+          Array.isArray(task.categories)
+            ? task.categories.map((c) => c.id)
+            : [],
+          
           title: task.title,
 
           description: task.description || "",
@@ -177,8 +272,13 @@ export default function DashboardPage() {
 
           requestCount: 0,
         }));
-
+        console.log("MAPPED TASKS:", mapped);
         setTasks(mapped);
+
+        if (mapped.length > 0) {
+          setSelectedTask(mapped[0]);
+        }
+
       } catch (error) {
         console.error("Error loading tasks:", error);
       }
@@ -223,8 +323,8 @@ export default function DashboardPage() {
   }, [currentPage, totalPages]);
 
   return (
-    <div className="min-h-screen bg-white p-4 md:p-8">
-      <div className="max-w-7xl mx-auto space-y-8">
+    <div className="h-full overflow-hidden bg-white px-4 py-3 md:px-6 md:py-4 ">
+      <div className="max-w-[1700px] mx-auto h-full flex flex-col gap-4">
         {/* Filter Bar */}
         <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-slate-100 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
           <div className="flex-1 space-y-2 sm:col-span-2 lg:col-span-1">
@@ -264,7 +364,7 @@ export default function DashboardPage() {
               </option>
 
               {categories.map((category) => (
-                <option key={category.id} value={category.id}>
+                <option key={category.id} value={String(category.id)}>
                   {category.name}
                 </option>
               ))}
@@ -275,19 +375,41 @@ export default function DashboardPage() {
             <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">
               Price Range
             </label>
-            <select className="w-full bg-slate-50 border-none rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-blue-500 appearance-none">
-              <option>Any Price</option>
+            <select
+            value={selectedPrice}
+            onChange={(e) => setSelectedPrice(e.target.value)}
+            className="w-full bg-slate-50 border-none rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-blue-500 appearance-none">
+              <option value="">Any Price</option>
+              <option value="0-5">$0 - $5</option>
+              <option value="5-20">$5 - $20</option>
+              <option value="20-50">$20 - $50</option>
+              <option value="50-100">$50 - $100</option>
+              <option value="100+">$100+</option>
             </select>
           </div>
 
-          <button className="bg-[#0069d9] text-white px-8 py-3 rounded-xl font-bold hover:bg-blue-700 transition-colors h-12 w-full sm:col-span-2 lg:col-span-1">
-            Apply Filters
-          </button>
+          <div className="w-full space-y-2">
+            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">
+              Sort By
+            </label>
+
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="w-full bg-slate-50 border-none rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-blue-500 appearance-none"
+            >
+              <option value="newest">Newest</option>
+              <option value="oldest">Oldest</option>
+              <option value="highest-price">Highest Price</option>
+              <option value="lowest-price">Lowest Price</option>
+              <option value="deadline">Deadline Soon</option>
+            </select>
+          </div>
         </div>
 
         {/* Task Cards Container */}
-        <div className="space-y-6">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+        <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between mb-10">
             <div>
               <h2 className="text-xl font-bold text-slate-900">Available Tasks</h2>
               <p className="text-sm text-slate-500">
@@ -300,10 +422,34 @@ export default function DashboardPage() {
           </div>
 
           {/* Task card*/}
-          <div className="space-y-6">
-            {paginatedTasks.map((task) => (
-              <DetailTaskCard key={task.id} task={task} onOpen={setSelectedTask} onApply={setSelectedApplyTask}/>
-            ))}
+          <div className="grid flex-1 min-h-0 grid-cols-1 xl:grid-cols-[600px_1fr] gap-6">
+
+
+            {/* RIGHT SHARED MAP */}
+            <div className="sticky top-6 self-start h-[calc(100vh-370px)] w-full rounded-3xl overflow-hidden border border-slate-200 shadow-sm bg-white">
+              {filteredTasks.length > 0 ? (
+                <SharedTaskMap
+                  lat={selectedTask?.latitude}
+                  lng={selectedTask?.longitude}
+                />
+              ) : (
+                <div className="h-full flex items-center justify-center text-slate-400">
+                  No matching task location
+                </div>
+              )}
+            </div>
+
+            {/* LEFT TASK LIST */}
+            <div className="overflow-y-auto pr-2 space-y-6 min-h-0">
+              {paginatedTasks.map((task) => (
+                <DetailTaskCard
+                  key={task.id}
+                  task={task}
+                  onOpen={setSelectedTask}
+                  onApply={setSelectedApplyTask}
+                />
+              ))}
+            </div>
           </div>
 
           {filteredTasks.length === 0 && (
@@ -336,13 +482,6 @@ export default function DashboardPage() {
                 </button>
               </div>
             </div>
-          )}
-
-          {selectedTask && (
-            <TaskDetailModal
-              task={selectedTask}
-              onClose={() => setSelectedTask(null)}
-            />
           )}
         </div>
       </div>

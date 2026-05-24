@@ -13,7 +13,7 @@ export default function UserLayout({ children }: UserLayoutProps) {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     return (
-        <div className="h-screen w-full flex flex-col bg-slate-50/50">
+        <div className="h-screen w-full flex flex-col bg-white">
             <Navbar role="user" onMenuClick={() => setIsSidebarOpen(true)} />
 
             <div className="flex flex-1 min-h-0">
