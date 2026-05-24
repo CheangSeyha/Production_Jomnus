@@ -25,7 +25,7 @@ export default function TaskDetailModal({ task, onClose }: any) {
   return (
     <div
       onClick={onClose}
-      className="fixed inset-0 z-[9999] bg-black/40 flex items-center justify-center"
+      className="fixed inset-0 z-1001 bg-black/40 flex items-center justify-center"
     >
       <div
         onClick={(e) => e.stopPropagation()}

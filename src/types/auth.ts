@@ -1,12 +1,17 @@
-export type UserRole = "ADMIN" | "USER";
+export type UserRole = "ADMIN" | "USER" | "REQUESTER" | "PERFORMER";
 
 export interface AuthUser {
   id: number;
   email: string;
   fullName: string;
   role: UserRole;
+  currentRole?: UserRole;
+  phone?: string;
+  city?: string;
+  bio?: string;
   profileImage?: string;
   picture?: string;
+  specializations?: unknown[];
 }
 
 export interface AuthResponse {

@@ -25,7 +25,7 @@ export default function Navbar() {
   return (
     <header className="sticky top-0 z-50 w-full bg-white border-b border-slate-200/70">
       <nav className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex h-16 sm:h-18 md:h-20 items-center justify-between">
+        <div className="flex h-16 sm:h-18 md:h-20 items-center justify-between ">
           {/* LEFT: Logo + Desktop Nav */}
           <div className="flex items-center gap-2 sm:gap-4 md:gap-8 lg:gap-12 flex-1 min-w-0">
 
@@ -64,7 +64,7 @@ export default function Navbar() {
           </div>
 
           {/* RIGHT: Auth Buttons (Desktop) + Mobile Menu Button */}
-          <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             {/* Desktop Auth Buttons */}
             <div className="hidden md:flex items-center gap-2 sm:gap-3">
               <a

@@ -2,10 +2,10 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import axios from "axios";
 import { ChevronLeft, ChevronRight, ClipboardList, Plus, Search } from "lucide-react";
 import { useTaskListStore } from "@/store/taskListStore";
 import TaskCard from "@/components/myrequest/TaskCard";
+import api from "@/lib/axios";
 
 const REQUESTS_PER_PAGE = 6;
 
@@ -28,7 +28,7 @@ export default function MyRequestPage() {
           task.title,
           task.description,
           task.status,
-          task.location_text,
+          task.locationText ?? (task as any).location_text,
         ]
           .filter(Boolean)
           .some((value) =>
@@ -44,9 +44,9 @@ export default function MyRequestPage() {
       });
     }
 
-    return [...result].sort(
-      (a, b) =>
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+    return [...result].sort((a, b) =>
+      new Date((b as any).createdAt ?? (b as any).created_at).getTime() -
+      new Date((a as any).createdAt ?? (a as any).created_at).getTime(),
     );
   }, [query, tasks, filter]);
 
@@ -60,10 +60,7 @@ export default function MyRequestPage() {
   useEffect(() => {
     const fetchTasks = async () => {
       try {
-        const res = await axios.get(
-          "http://localhost:3001/api/tasks/me",
-          { withCredentials: true }
-        );
+        const res = await api.get("/tasks/me");
         setTasks(res.data);
       } catch (err) {
         console.error("Failed to fetch tasks", err);

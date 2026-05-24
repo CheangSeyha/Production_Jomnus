@@ -8,6 +8,9 @@ type AuthState = {
   isLoading: boolean;
   error: string | null;
   isInitialized: boolean;
+  // --- ADDED ACTION ---
+  setUser: (user: AuthUser) => void; 
+  // --------------------
   login: (payload: LoginPayload) => Promise<AuthUser>;
   register: (payload: RegisterPayload) => Promise<AuthUser>;
   logout: () => Promise<void>;
@@ -39,6 +42,19 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   isLoading: false,
   error: null,
   isInitialized: false,
+
+  // Action to update user globally (used by Settings page)
+  setUser: (userData) => {
+    // 1. Sync to LocalStorage so the data persists on refresh
+    if (typeof window !== "undefined") {
+      localStorage.setItem("user_data", JSON.stringify(userData));
+      // If your backend changes the role, update this too
+      localStorage.setItem("user_role", userData.role || userData.currentRole);
+    }
+    
+    // 2. Update the actual state for the Header/UI
+    set({ user: userData });
+  },
 
   async initializeAuth() {
     // Check if user data exists in localStorage on app load
