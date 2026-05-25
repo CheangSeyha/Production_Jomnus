@@ -28,7 +28,7 @@ export default function MiniTaskMap({ lat, lng }: Props) {
 
   if (!lat || !lng) {
     return (
-      <div className="h-[130px] w-full bg-slate-100 animate-pulse" />
+      <div className="h-[130px] w-full animate-pulse bg-sky-100" />
     );
   }
 
@@ -44,13 +44,13 @@ export default function MiniTaskMap({ lat, lng }: Props) {
         attributionControl={false}
         className="h-full w-full"
       >
-        <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" />
+        <TileLayer url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png" />
 
         <Marker position={[lat, lng]} />
       </MapContainer>
 
       {/* DARK OVERLAY */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-t from-sky-950/45 via-sky-900/10 to-transparent pointer-events-none" />
     </div>
   );
 }
