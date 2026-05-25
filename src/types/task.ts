@@ -31,7 +31,7 @@ export type Task = {
 
   requiredWorkers?: number;
 
-  categoryId?: number;
+  categoryIds?: number[];
 
   status:
     | "POSTED"

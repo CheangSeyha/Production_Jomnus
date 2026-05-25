@@ -83,46 +83,46 @@ export default function MyRequestPage() {
 
 
   return (
-    <div className="min-h-screen overflow-y-auto bg-slate-50">
+    <div className="min-h-screen overflow-y-auto">
       <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:py-10">
-        <div className="mb-6 flex flex-col gap-4 rounded-lg border border-slate-200 bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+        <div className="mb-6 flex flex-col gap-4 rounded-3xl border border-sky-200 bg-white/90 p-6 shadow-[0_18px_45px_rgba(14,165,233,0.12)] sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-700">
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-sky-600">
               Requests
             </p>
-            <h1 className="mt-2 text-2xl font-bold text-slate-950">
+            <h1 className="mt-2 text-3xl font-black text-slate-950">
               My Requests
             </h1>
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-1 text-sm font-medium leading-6 text-slate-500">
               Manage your posted tasks, deadlines, and worker activity. Latest requests appear first.
             </p>
           </div>
 
           <button
             onClick={() => router.push("/myrequest/create")}
-            className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-sky-600 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-700"
+            className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl bg-sky-600 px-5 text-sm font-black text-white shadow-sm shadow-sky-200 transition hover:-translate-y-0.5 hover:bg-cyan-500"
           >
             <Plus size={17} />
             Create Task
           </button>
         </div>
 
-        <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="mb-5 flex flex-col gap-4 rounded-3xl border border-sky-100 bg-white/80 p-4 shadow-sm lg:flex-row lg:items-center lg:justify-between">
 
           {/* SEARCH */}
           <div className="relative max-w-md flex-1">
             <Search
               size={17}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-sky-500"
             />
 
             <input
               className="
-                h-11 w-full rounded-xl
-                border border-slate-200 bg-white
-                pl-10 pr-4 text-sm outline-none
+                h-11 w-full rounded-2xl
+                border border-sky-200 bg-sky-50/70
+                pl-10 pr-4 text-sm font-semibold outline-none
                 transition placeholder:text-slate-400
-                focus:border-sky-500 focus:ring-4 focus:ring-sky-100
+                focus:border-sky-400 focus:bg-white focus:ring-4 focus:ring-sky-100
               "
               placeholder="Search requests"
               type="search"
@@ -151,8 +151,8 @@ export default function MyRequestPage() {
 
                   ${
                     filter === item.value
-                      ? "bg-blue-600 text-white shadow-md"
-                      : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-100"
+                      ? "bg-sky-600 text-white shadow-md shadow-sky-200"
+                      : "bg-white border border-sky-100 text-slate-600 hover:bg-sky-50 hover:text-sky-700"
                   }
                 `}
               >
@@ -163,18 +163,18 @@ export default function MyRequestPage() {
           </div>
 
           {/* COUNT */}
-          <div className="text-sm text-slate-500 whitespace-nowrap">
+          <div className="rounded-2xl border border-sky-100 bg-white px-4 py-2 text-sm font-black text-sky-700 whitespace-nowrap">
             {filteredTasks.length}{" "}
             {filteredTasks.length === 1 ? "request" : "requests"}
           </div>
         </div>
 
         {tasks.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-slate-300 bg-white p-10 text-center">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-lg bg-sky-50 text-sky-700">
+          <div className="rounded-3xl border-2 border-dashed border-sky-200 bg-white/85 p-10 text-center">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-50 text-sky-700">
               <ClipboardList size={24} />
             </div>
-            <h2 className="mt-4 text-lg font-semibold text-slate-950">
+            <h2 className="mt-4 text-lg font-black text-slate-950">
               No requests yet
             </h2>
             <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
@@ -183,15 +183,15 @@ export default function MyRequestPage() {
 
             <button
               onClick={() => router.push("/myrequest/create")}
-              className="mt-5 inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-sky-600 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-700"
+              className="mt-5 inline-flex h-11 items-center justify-center gap-2 rounded-2xl bg-sky-600 px-5 text-sm font-black text-white shadow-sm transition hover:bg-cyan-500"
             >
               <Plus size={17} />
               Create Your First Task
             </button>
           </div>
         ) : filteredTasks.length === 0 ? (
-          <div className="rounded-lg border border-slate-200 bg-white p-8 text-center">
-            <h2 className="text-base font-semibold text-slate-950">
+          <div className="rounded-3xl border border-sky-100 bg-white/85 p-8 text-center">
+            <h2 className="text-base font-black text-slate-950">
               No matching requests
             </h2>
             <p className="mt-2 text-sm text-slate-500">
@@ -207,7 +207,7 @@ export default function MyRequestPage() {
             </div>
 
             {filteredTasks.length > REQUESTS_PER_PAGE && (
-              <div className="mt-5 flex flex-col gap-3 rounded-lg border border-slate-200 bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="mt-5 flex flex-col gap-3 rounded-3xl border border-sky-100 bg-white/90 p-4 sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-sm text-slate-500">
                   Page {currentPage} of {totalPages}
                 </p>
@@ -215,7 +215,7 @@ export default function MyRequestPage() {
                   <button
                     onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
                     disabled={currentPage === 1}
-                    className="inline-flex h-10 items-center gap-2 rounded-lg border border-slate-200 px-3 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                    className="inline-flex h-10 items-center gap-2 rounded-xl border border-sky-200 px-3 text-sm font-bold text-sky-700 transition hover:bg-sky-50 disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     <ChevronLeft size={16} />
                     Previous
@@ -223,7 +223,7 @@ export default function MyRequestPage() {
                   <button
                     onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
                     disabled={currentPage === totalPages}
-                    className="inline-flex h-10 items-center gap-2 rounded-lg border border-slate-200 px-3 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                    className="inline-flex h-10 items-center gap-2 rounded-xl border border-sky-200 bg-sky-600 px-3 text-sm font-bold text-white transition hover:bg-cyan-500 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500"
                   >
                     Next
                     <ChevronRight size={16} />
