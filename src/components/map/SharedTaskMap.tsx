@@ -1,7 +1,7 @@
 "use client";
  
 import { useEffect, useState, useCallback } from "react";
-import { LocateFixed, Search, X } from "lucide-react";
+import { LocateFixed, MapPin, Search, X } from "lucide-react";
 import {
   MapContainer,
   TileLayer,
@@ -25,6 +25,35 @@ type RouteInfo = {
   polyline: LatLng[];
   distanceKm: number;
   durationMin: number;
+};
+
+type SearchResult = {
+  place_id: number;
+  display_name: string;
+  lat: string;
+  lon: string;
+  type?: string;
+  address?: {
+    city?: string;
+    town?: string;
+    village?: string;
+    suburb?: string;
+    country?: string;
+  };
+};
+
+type SearchSuggestion = {
+  id: number;
+  label: string;
+  detail: string;
+  pos: LatLng;
+};
+
+const CAMBODIA_VIEWBOX = "102.333828,10.400000,107.627724,14.690422";
+
+const SEARCH_ALIASES: Record<string, string> = {
+  rupp: "Royal University of Phnom Penh",
+  "royal university phnom penh": "Royal University of Phnom Penh",
 };
  
 // ─── Custom marker icons ───────────────────────────────────────────────────────
@@ -133,15 +162,49 @@ async function fetchRoute(from: LatLng, to: LatLng): Promise<RouteInfo | null> {
  
 // ─── Nominatim search ─────────────────────────────────────────────────────────
  
-async function geocode(query: string): Promise<LatLng | null> {
+function normalizeSearchQuery(query: string) {
+  const normalized = query.trim().toLowerCase();
+  return SEARCH_ALIASES[normalized] ?? query.trim();
+}
+
+function formatSuggestion(result: SearchResult): SearchSuggestion {
+  const parts = result.display_name.split(",").map((part) => part.trim());
+  const label = parts[0] || result.display_name;
+  const city =
+    result.address?.city ||
+    result.address?.town ||
+    result.address?.village ||
+    result.address?.suburb;
+  const detail = [city, result.address?.country || "Cambodia"]
+    .filter(Boolean)
+    .join(", ");
+
+  return {
+    id: result.place_id,
+    label,
+    detail: detail || parts.slice(1, 4).join(", "),
+    pos: [parseFloat(result.lat), parseFloat(result.lon)],
+  };
+}
+
+async function geocodeSuggestions(query: string): Promise<SearchSuggestion[]> {
   try {
-    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1`;
+    const focusedQuery = normalizeSearchQuery(query);
+    const params = new URLSearchParams({
+      q: focusedQuery,
+      format: "json",
+      limit: "5",
+      addressdetails: "1",
+      countrycodes: "kh",
+      viewbox: CAMBODIA_VIEWBOX,
+      bounded: "1",
+    });
+    const url = `https://nominatim.openstreetmap.org/search?${params.toString()}`;
     const res = await fetch(url, { headers: { "Accept-Language": "en" } });
-    const json = await res.json();
-    if (!json[0]) return null;
-    return [parseFloat(json[0].lat), parseFloat(json[0].lon)];
+    const json: SearchResult[] = await res.json();
+    return json.map(formatSuggestion);
   } catch {
-    return null;
+    return [];
   }
 }
  
@@ -153,10 +216,13 @@ export default function SharedTaskMap({ lat, lng }: Props) {
   const [userPos, setUserPos]         = useState<LatLng | null>(null);
   const [searchPos, setSearchPos]     = useState<LatLng | null>(null);
   const [searchInput, setSearchInput] = useState("");
+  const [searchSuggestions, setSearchSuggestions] = useState<SearchSuggestion[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState("");
   const [route, setRoute]             = useState<RouteInfo | null>(null);
   const [routeLoading, setRouteLoading] = useState(false);
+  const [searchRoute, setSearchRoute] = useState<RouteInfo | null>(null);
+  const [searchRouteLoading, setSearchRouteLoading] = useState(false);
   const [geoLoading, setGeoLoading]   = useState(false);
   const [flyTarget, setFlyTarget]     = useState<LatLng | null>(taskPos);
   const [fitPositions, setFitPositions] = useState<LatLng[]>([]);
@@ -201,6 +267,26 @@ export default function SharedTaskMap({ lat, lng }: Props) {
       setFlyTarget(null); // let FitBounds take over
     });
   }, [userPos, lat, lng]);
+
+  // Fetch route from searched place to task location
+  useEffect(() => {
+    const origin = searchPos;
+    const dest = taskPos;
+    if (!origin || !dest) {
+      setSearchRoute(null);
+      setSearchRouteLoading(false);
+      return;
+    }
+
+    setSearchRouteLoading(true);
+    fetchRoute(origin, dest).then((r) => {
+      setSearchRoute(r);
+      setSearchRouteLoading(false);
+      const pts: LatLng[] = r ? r.polyline : [origin, dest];
+      setFitPositions(pts);
+      setFlyTarget(null);
+    });
+  }, [searchPos, lat, lng]);
  
   // Handle search submit
   const handleSearch = useCallback(async () => {
@@ -208,16 +294,32 @@ export default function SharedTaskMap({ lat, lng }: Props) {
     if (!q) return;
     setIsSearching(true);
     setSearchError("");
-    const pos = await geocode(q);
+    setSearchSuggestions([]);
+    const suggestions = await geocodeSuggestions(q);
     setIsSearching(false);
-    if (!pos) {
-      setSearchError("Location not found. Try a different query.");
+    if (suggestions.length === 0) {
+      setSearchError("No Cambodia results found. Try the full place name or nearby area.");
       return;
     }
-    setSearchPos(pos);
-    setFlyTarget(pos);
-    setFitPositions([]);
-  }, [searchInput]);
+    setSearchSuggestions(suggestions);
+    if (suggestions.length === 1) {
+      const [suggestion] = suggestions;
+      setSearchInput(suggestion.label);
+      setSearchPos(suggestion.pos);
+      setFlyTarget(suggestion.pos);
+      setFitPositions(taskPos ? [suggestion.pos, taskPos] : []);
+      setSearchSuggestions([]);
+    }
+  }, [searchInput, taskPos]);
+
+  const selectSuggestion = (suggestion: SearchSuggestion) => {
+    setSearchInput(suggestion.label);
+    setSearchPos(suggestion.pos);
+    setFlyTarget(suggestion.pos);
+    setFitPositions(taskPos ? [suggestion.pos, taskPos] : []);
+    setSearchError("");
+    setSearchSuggestions([]);
+  };
  
   const handleSearchKey = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") handleSearch();
@@ -228,6 +330,12 @@ export default function SharedTaskMap({ lat, lng }: Props) {
     ? route.distanceKm
     : userPos && taskPos
     ? haversineKm(userPos, taskPos)
+    : null;
+
+  const searchDistanceKm = searchRoute
+    ? searchRoute.distanceKm
+    : searchPos && taskPos
+    ? haversineKm(searchPos, taskPos)
     : null;
  
   return (
@@ -303,6 +411,39 @@ export default function SharedTaskMap({ lat, lng }: Props) {
             }}
           />
         )}
+
+        {/* Search-to-task route */}
+        {searchRoute && (
+          <>
+            <Polyline
+              positions={searchRoute.polyline}
+              pathOptions={{ color: "#0f172a", weight: 8, opacity: 0.16 }}
+            />
+            <Polyline
+              positions={searchRoute.polyline}
+              pathOptions={{
+                color: "#d946ef",
+                weight: 5,
+                opacity: 0.95,
+                dashArray: "10 8",
+                lineCap: "round",
+                lineJoin: "round",
+              }}
+            />
+          </>
+        )}
+
+        {!searchRoute && searchPos && taskPos && (
+          <Polyline
+            positions={[searchPos, taskPos]}
+            pathOptions={{
+              color: "#d946ef",
+              weight: 3,
+              opacity: 0.8,
+              dashArray: "6 6",
+            }}
+          />
+        )}
       </MapContainer>
  
       {/* ── SEARCH BAR (top overlay) ── */}
@@ -329,7 +470,13 @@ export default function SharedTaskMap({ lat, lng }: Props) {
           />
           {searchInput && (
             <button
-              onClick={() => { setSearchInput(""); setSearchPos(null); setSearchError(""); }}
+              onClick={() => {
+                setSearchInput("");
+                setSearchPos(null);
+                setSearchRoute(null);
+                setSearchError("");
+                setSearchSuggestions([]);
+              }}
               className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
             >
               <X size={14} />
@@ -345,6 +492,29 @@ export default function SharedTaskMap({ lat, lng }: Props) {
           {isSearching ? "…" : "Search"}
         </button>
         </div>
+
+        {searchSuggestions.length > 0 && (
+          <div className="mt-2 max-h-48 overflow-y-auto rounded-xl border border-sky-100 bg-white shadow-sm">
+            {searchSuggestions.map((suggestion) => (
+              <button
+                key={suggestion.id}
+                type="button"
+                onClick={() => selectSuggestion(suggestion)}
+                className="flex w-full items-start gap-2 border-b border-slate-100 px-3 py-2.5 text-left transition last:border-b-0 hover:bg-sky-50"
+              >
+                <MapPin size={15} className="mt-0.5 shrink-0 text-sky-500" />
+                <span className="min-w-0">
+                  <span className="block truncate text-xs font-black text-slate-800">
+                    {suggestion.label}
+                  </span>
+                  <span className="block truncate text-[11px] font-medium text-slate-500">
+                    {suggestion.detail}
+                  </span>
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
       </div>
  
       {/* Search error */}
@@ -363,6 +533,7 @@ export default function SharedTaskMap({ lat, lng }: Props) {
         {distanceKm !== null && (
           <div className="inline-flex w-fit max-w-full flex-wrap items-center gap-2 rounded-xl border border-sky-200 bg-white/95 px-3 py-2 shadow-[0_10px_28px_rgba(15,23,42,0.18)] backdrop-blur-sm">
             <span className="w-2.5 h-2.5 rounded-full bg-sky-500" />
+            <span className="text-xs font-bold text-slate-600">You to task</span>
             <span className="text-xs font-black text-slate-800">
               {distanceKm < 1
                 ? `${Math.round(distanceKm * 1000)} m`
@@ -375,6 +546,30 @@ export default function SharedTaskMap({ lat, lng }: Props) {
               </>
             )}
             {!route && userPos && taskPos && (
+              <>
+                <span className="text-slate-300">·</span>
+                <span className="text-xs font-semibold text-slate-500 italic">straight line</span>
+              </>
+            )}
+          </div>
+        )}
+
+        {searchDistanceKm !== null && (
+          <div className="inline-flex w-fit max-w-full flex-wrap items-center gap-2 rounded-xl border border-fuchsia-200 bg-white/95 px-3 py-2 shadow-[0_10px_28px_rgba(15,23,42,0.18)] backdrop-blur-sm">
+            <span className="w-2.5 h-2.5 rounded-full bg-fuchsia-500" />
+            <span className="text-xs font-bold text-slate-600">Search to task</span>
+            <span className="text-xs font-black text-slate-800">
+              {searchDistanceKm < 1
+                ? `${Math.round(searchDistanceKm * 1000)} m`
+                : `${searchDistanceKm.toFixed(1)} km`}
+            </span>
+            {searchRoute && (
+              <>
+                <span className="text-slate-300">·</span>
+                <span className="text-xs font-semibold text-slate-600">{searchRoute.durationMin} min by road</span>
+              </>
+            )}
+            {!searchRoute && searchPos && taskPos && (
               <>
                 <span className="text-slate-300">·</span>
                 <span className="text-xs font-semibold text-slate-500 italic">straight line</span>
@@ -399,7 +594,10 @@ export default function SharedTaskMap({ lat, lng }: Props) {
             </span>
           )}
           {routeLoading && (
-            <span className="text-xs font-semibold text-slate-500 italic">routing…</span>
+            <span className="text-xs font-semibold text-slate-500 italic">routing you…</span>
+          )}
+          {searchRouteLoading && (
+            <span className="text-xs font-semibold text-slate-500 italic">routing search…</span>
           )}
           {geoLoading && (
             <span className="text-xs font-semibold text-slate-500 italic">locating you…</span>

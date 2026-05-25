@@ -10,9 +10,10 @@ type Props = {
   task: Task;
   onOpen: (task: Task) => void;
   onApply: (task: Task) => void;
+  isSelected?: boolean;
 };
  
-export default function DetailTaskCard({ task, onOpen, onApply }: Props) {
+export default function DetailTaskCard({ task, onOpen, onApply, isSelected = false }: Props) {
   const router = useRouter();
  
   const formatDate = (date?: string) => {
@@ -45,10 +46,13 @@ export default function DetailTaskCard({ task, onOpen, onApply }: Props) {
   return (
     <article
       onClick={() => onOpen(task)}
-      className="group relative cursor-pointer overflow-hidden rounded-2xl border border-sky-100 bg-white shadow-[0_8px_28px_rgba(14,165,233,0.08)] transition-all duration-300 hover:-translate-y-0.5 hover:border-sky-300 hover:shadow-[0_18px_40px_rgba(14,165,233,0.18)]"
+      className={`group relative cursor-pointer overflow-hidden rounded-2xl border transition-all duration-300 hover:-translate-y-0.5 ${
+        isSelected
+          ? "border-sky-400 bg-sky-50 shadow-[0_18px_44px_rgba(14,165,233,0.24)] ring-2 ring-sky-300/70"
+          : "border-sky-100 bg-white shadow-[0_8px_28px_rgba(14,165,233,0.08)] hover:border-sky-300 hover:shadow-[0_18px_40px_rgba(14,165,233,0.18)]"
+      }`}
     >
-      {/* Accent top bar */}
-      <div className="h-0.5 w-full bg-gradient-to-r from-sky-400 via-cyan-400 to-emerald-400 opacity-80 transition-opacity duration-300 group-hover:opacity-100" />
+			
  
       <div className="p-6 space-y-5">
  

@@ -298,7 +298,7 @@ export default function DashboardPage() {
  
         {/* ── MAIN CONTENT ── */}
         <div className="flex-1 min-h-0 grid grid-cols-1 xl:grid-cols-[1fr_700px] gap-5">
-          {/* RIGHT — Map */}
+          {/* Map */}
           <div className="sticky top-0 h-full min-h-[320px] overflow-hidden rounded-2xl border border-sky-200 bg-white shadow-[0_18px_45px_rgba(14,165,233,0.18)]">
             {filteredTasks.length > 0 ? (
               <SharedTaskMap lat={selectedTask?.latitude} lng={selectedTask?.longitude} />
@@ -310,7 +310,7 @@ export default function DashboardPage() {
             )}
           </div> 
 
-          {/* LEFT — Task list */}
+          {/* Task list */}
           <div className="flex flex-col min-h-0 gap-4 overflow-hidden">
 
             <div className="flex-1 overflow-y-auto space-y-4 pr-1">
@@ -319,6 +319,7 @@ export default function DashboardPage() {
                   <DetailTaskCard
                     key={task.id}
                     task={task}
+                    isSelected={selectedTask?.id === task.id}
                     onOpen={(t) => { setSelectedTask(t); }}
                     onApply={setSelectedApplyTask}
                   />
