@@ -67,8 +67,8 @@ export default function ProfileHeader({
     />
 
     {/* Header */}
-    <div className="flex items-center justify-between border-b pb-6 border-slate-100">
-      <h2 className="text-xl font-bold text-slate-900">
+    <div className="flex items-center justify-between">
+      <h2 className="text-2xl font-bold text-slate-900">
         Profile Information
       </h2>
 
@@ -158,8 +158,8 @@ export default function ProfileHeader({
 
         {/* Email */}
         <div className="flex items-center gap-2 text-sm text-slate-500 justify-center md:justify-start">
-          <Mail className="w-4 h-4 text-slate-400" />
-          <span>{email}</span>
+          <Mail className="w-4 h-4 text-blue-400" />
+          <span className="text-blue-500">{email}</span>
         </div>
 
         {/* Change photo */}
@@ -184,7 +184,7 @@ export default function ProfileHeader({
             field === "bio" ? "md:col-span-2" : ""
           }`}
         >
-          <label className="text-xs font-bold text-blue-500 uppercase tracking-wider">  
+          <label className="text-xs font-bold text-blue-400 uppercase tracking-wider">  
             {field === "fullName"
               ? "Full Display Name"
               : field === "phone"

@@ -1,27 +1,63 @@
+// "use client";
+
+// import { useEffect, useState, ChangeEvent } from "react";
+// import { useRouter, useSearchParams } from "next/navigation";
+// import axios from "axios";
+
+// import StatsManagement from "@/components/setting/StatsManagement";
+// import Specializations from "@/components/setting/Specializations";
+// import WorkHistory from "@/components/setting/WorkHistory";
+// import ProfileHeader from "@/components/setting/ProfileHeader";
+
+// import { useAuthStore } from "@/store/authStore";
+// import { em } from "motion/react-client";
+
+
 "use client";
 
 import { useEffect, useState, ChangeEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import api from "@/lib/axios";
 
 import StatsManagement from "@/components/setting/StatsManagement";
 import Specializations from "@/components/setting/Specializations";
 import WorkHistory from "@/components/setting/WorkHistory";
 import ProfileHeader from "@/components/setting/ProfileHeader";
-
 import { useAuthStore } from "@/store/authStore";
+import api from "@/lib/axios";
+
+// Match the WorkItem interface exactly as expected by WorkHistory component
+// The WorkHistory component expects id to be number, not string | number
+interface WorkItem {
+  id: number;  // Changed from number | string to number
+  title: string;
+  description: string;
+  tag: string;
+  image?: string;
+}
+
+type FormDataType = {
+  id: number | null;
+  fullName: string;
+  phone: string;
+  city: string;
+  currentRole: string;
+  bio: string;
+  profileImage: string;
+};
 
 export default function SettingPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const {
-    user,
-    accessToken,
-  } = useAuthStore();
+  const { user, setUser } = useAuthStore();
+
+  // const {
+  //   user,
+  //   accessToken,
+  // } = useAuthStore();
   
   // const updateUser = useAuthStore((state) => state.updateUser) || ((userData) => useAuthStore.setState({ user: userData }));
-  const setUser = useAuthStore((state) => state.setUser);
+  // const setUser = useAuthStore((state) => state.setUser);
   
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -63,55 +99,57 @@ export default function SettingPage() {
   // OPTIONAL: fallback fetch
   // -------------------------
   useEffect(() => {
-  const fetchUser = async () => {
-    if (user) return;
+    const fetchUser = async () => {
+      if (user) return;
 
-    try {
-      const token = localStorage.getItem("access_token");
+      try {
+        const token = tokenFromUrl || localStorage.getItem("access_token");
 
-      if (!token) {
-        router.push("/auth/signin");
-        return;
+        if (!token) {
+          router.push("/auth/signin");
+          return;
+        }
+
+        const res = await api.get("/users/me");
+
+        const fetchedUser = res.data;
+
+        // NORMALIZE: Ensure frontend always safely tracks identity status across case types
+        const normalizedUser = {
+          ...fetchedUser,
+          isIdentityVerified:
+            fetchedUser.isIdentityVerified ??
+            fetchedUser.is_identity_verified ??
+            false,
+        };
+
+        setUser(normalizedUser);
+        setRawData(normalizedUser);
+        setFormData({
+          id: normalizedUser.id || null,
+          fullName: normalizedUser.fullName || "",
+          phone: normalizedUser.phone || "",
+          city:
+            normalizedUser.locationText ||
+            (normalizedUser.city && normalizedUser.country
+              ? `${normalizedUser.city}, ${normalizedUser.country}`
+              : normalizedUser.city || normalizedUser.country || ""),
+          currentRole: normalizedUser.currentRole || normalizedUser.role || "",
+          bio: normalizedUser.bio || "",
+          profileImage: normalizedUser.profileImage || normalizedUser.picture || "",
+        });
+      } catch (err: any) {
+        console.error(
+          "Failed to fetch user:",
+          err?.response?.data || err.message || err
+        );
+      } finally {
+        setLoading(false);
       }
+    };
 
-      const res = await api.get("/users/me");
-
-      const fetchedUser = res.data;
-
-      const normalizedUser = {
-        ...fetchedUser,
-        isIdentityVerified:
-          fetchedUser.isIdentityVerified ??
-          fetchedUser.is_identity_verified ??
-          false,
-      };
-
-      setUser(normalizedUser);
-      setRawData(normalizedUser);
-
-      setFormData({
-        id: normalizedUser.id || null,
-        fullName: normalizedUser.fullName || "",
-        phone: normalizedUser.phone || "",
-        city: normalizedUser.city || "",
-        currentRole: normalizedUser.currentRole || "",
-        bio: normalizedUser.bio || "",
-        profileImage: normalizedUser.profileImage || "",
-      });
-    } catch (err: any) {
-      console.error("Failed to fetch user:", err);
-
-      if (err.response?.status === 401) {
-        localStorage.removeItem("access_token");
-        router.push("/auth/signin");
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  fetchUser();
-}, [user, router, setUser]);
+    fetchUser();
+  }, [user, tokenFromUrl, router, setUser]);
 
   // -------------------------
   // INPUT CHANGE
@@ -166,7 +204,8 @@ export default function SettingPage() {
   // -------------------------
   // PROJECTS
   // -------------------------
-  const [projects, setProjects] = useState ([
+  // Fix: Use number for id, not Date.now() which returns number but ensure it's within number range
+  const [projects, setProjects] = useState<WorkItem[]>([
     {
       id: 1,
       title: "Luxury Penthouse Furniture Setup",
@@ -178,8 +217,8 @@ export default function SettingPage() {
   ]);
 
   const addNewProject = () => {
-    const newProj: any= {
-      id: Date.now(),
+    const newProj: WorkItem = {
+      id: Date.now(), // Date.now() returns number, which is fine
       title: "New Project Title",
       description: "Enter description",
       tag: "General",
@@ -190,7 +229,7 @@ export default function SettingPage() {
   };
 
   // -------------------------
-  // LOADING
+  // LOADING STATE
   // -------------------------
   if (loading || !user) {
     return (
@@ -200,125 +239,118 @@ export default function SettingPage() {
     );
   }
 
+
 return (
-  <div className="min-h-screen from-slate-50 to-slate-100 text-slate-800 antialiased">
-    <div className="max-w-7xl mx-auto p-8 lg:p-12 bg-white rounded-3xl shadow-sm border border-slate-200 space-y-12">
+  <div className="h-full min-h-0 overflow-auto">
+    <div className="mx-auto max-w-[1500px] px-4 py-4 md:px-8">
 
-      {/* Profile Header */}
-      <div>
-        <ProfileHeader
-          data={formData}
-          email={user.email}
-          onInputChange={handleInputChange}
-          onSave={handleSave}
-          isIdentityVerified={rawData?.isIdentityVerified}
-        />
-      </div>
+      {/* Single Card */}
+      <div className="rounded-2xl border border-sky-200 bg-white/90 shadow-[0_14px_40px_rgba(14,165,233,0.12)] backdrop-blur overflow-hidden">
 
-      {/* IDENTITY VERIFICATION BOX (ADDED HERE 👇) */}
-      <section className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        {/* Profile Header */}
+        <div className="p-8 border-b border-sky-100">
+          <ProfileHeader
+            data={formData}
+            onInputChange={handleInputChange}
+            email={rawData?.email || user?.email}
+            onSave={handleSave}
+            isIdentityVerified={rawData?.isIdentityVerified}
+          />
+        </div>
 
-          <div className="flex items-start gap-4">
-
-            <div className={`p-4 rounded-2xl ${
-              rawData?.isIdentityVerified
-                ? "bg-green-50 text-green-600"
-                : "bg-amber-50 text-amber-600"
-            }`}>
-
-              {rawData?.isIdentityVerified ? (
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none"
-                  viewBox="0 0 24 24" strokeWidth={2.5}
-                  stroke="currentColor" className="w-6 h-6">
-                  <path strokeLinecap="round" strokeLinejoin="round"
-                    d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z" />
-                </svg>
-              ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none"
-                  viewBox="0 0 24 24" strokeWidth={2}
-                  stroke="currentColor" className="w-6 h-6">
-                  <path strokeLinecap="round" strokeLinejoin="round"
-                    d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
-                </svg>
-              )}
-            </div>
-
-            <div>
-              <h3 className="font-bold text-xl text-slate-800 flex items-center gap-2">
-                Identity Verification Status
-
-                {rawData?.isIdentityVerified && (
-                  <span className="bg-green-100 text-green-700 text-xs px-2.5 py-0.5 rounded-full font-black tracking-wide">
-                    VERIFIED
-                  </span>
+        {/* Identity Verification */}
+        <div className="p-8 border-b border-sky-100">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="flex items-start gap-4">
+              <div className={`p-4 rounded-2xl ${rawData?.isIdentityVerified ? 'bg-green-50 text-green-600' : 'bg-amber-50 text-amber-600'}`}>
+                {rawData?.isIdentityVerified ? (
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-6 h-6">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z" />
+                  </svg>
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                  </svg>
                 )}
-              </h3>
-
-              <p className="text-xs text-slate-400 mt-1 max-w-xl">
-                {rawData?.isIdentityVerified
-                  ? "Your profile identity is fully verified. Your account exhibits trust badges across your listings."
-                  : "Verify your profile by providing identification credentials to unlock reliable task matching parameters and platform trust markers."}
-              </p>
+              </div>
+              <div>
+                <p className="text-xs font-bold uppercase tracking-widest text-sky-600 mb-1">Verification</p>
+                <h3 className="font-black text-xl text-slate-950 flex items-center gap-2">
+                  Identity Verification Status
+                  {rawData?.isIdentityVerified && (
+                    <span className="bg-green-100 text-green-700 text-xs px-2.5 py-0.5 rounded-full font-black tracking-wide">
+                      VERIFIED
+                    </span>
+                  )}
+                </h3>
+                <p className="text-xs text-slate-400 mt-1 max-w-xl">
+                  {rawData?.isIdentityVerified
+                    ? "Your profile identity is fully verified."
+                    : "Verify your profile to unlock trust badges across your listings."}
+                </p>
+              </div>
             </div>
-
+            {!rawData?.isIdentityVerified && (
+              <button
+                onClick={() => router.push("/setting/verify")}
+                className="bg-slate-900 hover:bg-slate-800 text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-all shadow-md shrink-0"
+              >
+                Verify Profile
+              </button>
+            )}
           </div>
+        </div>
 
-          {!rawData?.isIdentityVerified && (
+        {/* Performance Stats */}
+        <div className="p-8 border-b border-sky-100">
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-widest text-sky-600 mb-1">Stats</p>
+              <h3 className="font-black text-xl text-slate-950">Performance Statistics</h3>
+            </div>
+            <span className={`text-[10px] px-3 py-1 rounded-full font-black uppercase tracking-widest border ${
+              (rawData?.currentRole || rawData?.role) === "REQUESTER"
+                ? "bg-orange-50 text-orange-600 border-orange-100"
+                : "bg-sky-50 text-sky-600 border-sky-200"
+            }`}>
+              {rawData?.currentRole || rawData?.role} Mode
+            </span>
+          </div>
+          <StatsManagement data={rawData} />
+        </div>
+
+        {/* Work History */}
+        <div className="p-8 border-b border-sky-100">
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-widest text-sky-600 mb-1">Portfolio</p>
+              <h3 className="font-black text-xl text-slate-950">Work History & Portfolio</h3>
+            </div>
             <button
-              onClick={() => router.push("/setting/verify")}
-              className="bg-slate-900 hover:bg-slate-800 text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-all shadow-md shrink-0"
+              onClick={addNewProject}
+              className="text-sky-600 hover:text-white bg-sky-50 hover:bg-sky-500 px-5 py-2.5 rounded-xl text-sm font-bold tracking-wide transition-all flex items-center gap-2 border border-sky-200 hover:border-sky-500 shadow-sm"
             >
-              Verify Profile
+              <span className="text-lg leading-none">+</span> Add Case Study
             </button>
-          )}
-
+          </div>
+          <WorkHistory data={projects} setData={setProjects} />
         </div>
-      </section>
 
-      {/* Performance Stats */}
-      <div>
-        <h2 className="text-lg font-bold text-slate-900 mb-2">
-          Performance Statistics
-        </h2>
-        <StatsManagement data={user} />
+        {/* Specializations */}
+        {(rawData?.currentRole === "PERFORMER" || rawData?.role === "PERFORMER") && (
+          <div className="p-8">
+            <div className="mb-6">
+              <p className="text-xs font-bold uppercase tracking-widest text-sky-600 mb-1">Skills</p>
+              <h3 className="font-black text-xl text-slate-950">Expertise & Skills</h3>
+              <p className="text-xs text-slate-400 mt-1">These tags help you match with the right tasks.</p>
+            </div>
+            <Specializations data={rawData?.specializations || []} />
+          </div>
+        )}
+
       </div>
-
-      {/* Work History */}
-      <div>
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-bold text-slate-900">
-            Work History & Portfolio
-          </h2>
-          <button
-            onClick={addNewProject}
-            className="bg-blue-400 hover:bg-blue-500 text-white px-4 py-2 rounded-lg font-semibold shadow-sm transition-all"
-          >
-            + Add Case Study
-          </button>
-        </div>
-
-        <WorkHistory data={projects} setData={setProjects} />
-      </div>
-
-      {/* Skills */}
-      {user?.currentRole === "PERFORMER" && (
-        <div>
-          <h2 className="text-lg font-bold text-slate-900 mb-2">
-            Expertise & Skills
-          </h2>
-          <p className="text-xs text-slate-400 mb-4">
-            Core proficiencies matched with active requirements
-          </p>
-
-          <Specializations data={user.specializations} />
-        </div>
-      )}
-
     </div>
   </div>
 );
-
-
 
 }
