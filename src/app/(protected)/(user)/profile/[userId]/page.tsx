@@ -12,6 +12,7 @@ type User = {
   id: number;
   fullName: string;
   email: string;
+  phone?: string;
   profileImage?: string;
   city?: string;
   role?: string;
@@ -73,10 +74,10 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 px-4 py-10 relative overflow-hidden">
+    <div className="min-h-screen from-slate-50 to-slate-100 px-4 py-10 relative overflow-hidden">
 
 
-      <div className="max-w-5xl mx-auto bg-white rounded-[36px] shadow-lg border border-slate-200 overflow-hidden">
+      <div className="max-w-6xl mx-auto bg-white rounded-[36px] shadow-lg border border-slate-200 overflow-hidden">
 
         {/* Header */}
         <div className="relative p-5 md:p-6 bg-gradient-to-r from-blue-50 to-indigo-50">
@@ -111,13 +112,14 @@ export default function ProfilePage() {
                 {user.email}
               </p>
 
+               <p className="text-slate-400 text-xs mt-1">
+                {user.phone || "Phone not provided"}
+              </p>
+
               <p className="text-slate-400 text-xs mt-0.5">
                 📍 {user.city || "Location not set"}
               </p>
 
-              <span className="inline-block mt-2 px-2.5 py-1 rounded-lg bg-blue-100 text-blue-700 text-[10px] font-bold uppercase">
-                {user.role || "Member"}
-              </span>
             </div>
 
             {/* Message Button */}
@@ -128,6 +130,7 @@ export default function ProfilePage() {
                 </button>
               </Link>
             </div>
+
 
           </div>
         </div>
@@ -143,7 +146,7 @@ export default function ProfilePage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
 
             {/* Left */}
-            <div className="md:col-span-2 space-y-6">
+            <div className="md:col-span-4 space-y-6">
 
               {/* BIO */}
               <div className="bg-slate-50 border border-slate-100 rounded-2xl p-6 space-y-4">
