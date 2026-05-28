@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import api from '@/lib/axios';
 import axios from '@/lib/axios';
 
 interface Notification {
@@ -26,10 +27,10 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
   fetchNotifications: async () => {
     set({ isLoading: true });
     try {
-      // Using axios instance from @/lib/axios
+      // ✅ 1. Reverted to match your @Get() endpoint
       const res = await axios.get('/notifications');
       
-      // Safely extract data with fallbacks to avoid undefined errors
+      // ✅ 2. Read from res.data.data because your backend names the key "data"
       const parsedNotifications = res.data?.data || [];
       const parsedUnreadCount = res.data?.unread_count || 0;
 
