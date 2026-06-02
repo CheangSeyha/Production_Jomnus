@@ -10,6 +10,7 @@ import {
     Play
 } from 'lucide-react';
 import api from "@/lib/axios";
+import Link from "next/link";
 
 
 
@@ -304,16 +305,12 @@ export default function MyTaskPage() {
                                 <div className="p-5 flex-1 flex flex-col">
                                     <div className="flex items-start justify-between gap-3 mb-4">
                                         <div className="flex items-center gap-3">
-                                            <div
-
-                                            onClick={(e) => {
-                                            e.stopPropagation();
-                                            if (task.requester?.id) {
-                                                router.push(`/profile/${task.requester.id}`);
-                                            }
-                                            }}
-                                                className="w-12 h-12 rounded-full bg-slate-100 overflow-hidden cursor-pointer hover:opacity-80 transition"
-                                            >
+                                            <Link
+                                                href={task.requester?.id ? `/profile/${task.requester.id}` : "#"}
+                                                onClick={(e) => e.stopPropagation()}
+                                                className="flex items-center gap-3 group/req"
+                                                >  
+                                            <div className="w-12 h-12 rounded-full bg-slate-100 overflow-hidden cursor-pointer hover:opacity-80 transition">
                                                 <img
                                                     src={
                                                         task.requester?.profileImage ||
@@ -335,6 +332,7 @@ export default function MyTaskPage() {
                                                     Task #{task.taskId}
                                                 </p>
                                             </div>
+                                            </Link>
                                         </div>
                                         <div className="text-right">
                                             <div className="text-2xl font-black text-blue-600">${task.price}</div>

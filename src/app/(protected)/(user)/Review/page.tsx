@@ -10,10 +10,13 @@ import {
   Trophy,
 } from "lucide-react";
 import api from "@/lib/axios";
+import Link from "next/link";
 
 type Review = {
   id: number;
   reviewerName: string;
+    reviewer_id: number; // ← add this
+
   reviewerImage?: string | null;
   revieweeName?: string;
   rating: number;
@@ -286,6 +289,8 @@ function ReviewPage() {
                 >
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div className="flex min-w-0 gap-4">
+                      <Link href={`/profile/${review.reviewer_id}`} className="flex min-w-0 gap-4 group/avatar">
+
                       <img
                         src={
                           review.reviewerImage ||
@@ -301,6 +306,7 @@ function ReviewPage() {
                           Task #{review.assignment_id} • {formatDate(review.created_at)}
                         </p>
                       </div>
+                      </Link>
                     </div>
 
                     <div className="flex shrink-0 items-center gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2">
