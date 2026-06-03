@@ -66,14 +66,14 @@ export default function WorkHistory({ data, setData }: WorkHistoryProps) {
   }
 
   return (
-  <div className="space-y-8">
+  <div className="space-y-4">
     {data.map((item) => (
       <div
         key={item.id}
         className="group flex flex-col md:flex-row bg-white rounded-2xl border border-slate-100 overflow-hidden hover:shadow-lg transition-all duration-300"
       >
         {/* IMAGE SECTION */}
-        <div className="relative md:w-1/3 h-52 md:h-auto bg-slate-100 overflow-hidden">
+        <div className="relative md:w-1/4 h-62 md:h-auto bg-slate-100 overflow-hidden">
           <img
             src={
               item.image ||

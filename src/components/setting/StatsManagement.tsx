@@ -169,12 +169,12 @@ export default function StatsManagement({ data }: StatsProps) {
                   <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2">
                     {stat.label}
                   </p>
-                  <h3 className="text-4xl font-extrabold text-slate-900 tracking-tight">
+                  <h3 className="text-5xl font-extrabold text-slate-900 tracking-tight">
                     {stat.value}
                   </h3>
                 </div>
-                <div className="p-3 rounded-xl bg-slate-50 group-hover:scale-110 transition-transform shadow-sm">
-                  {Icon && <Icon className="w-7 h-7 text-slate-700" />}
+                <div className="p-3 rounded-xl group-hover:scale-110 transition-transform">
+                  {Icon && <Icon className="w-9 h-9 text-slate-700" />}
                 </div>
               </div>
             </div>

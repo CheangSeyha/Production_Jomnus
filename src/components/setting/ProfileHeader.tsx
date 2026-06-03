@@ -1,7 +1,7 @@
 
 "use client";
 
-import { MapPin, Camera, Mail, Edit2, Check, X, CheckCircle2 } from "lucide-react";
+import { MapPin, Camera, Mail, Edit2, Check, X, CheckCircle2, User, Phone, Briefcase, FileText } from "lucide-react";
 import { ChangeEvent, useRef, useState } from "react";
 
 interface ProfileHeaderProps {
@@ -54,6 +54,28 @@ export default function ProfileHeader({
     }
   };
 
+  const fieldConfig = {
+  fullName: {
+    label: "Full Name",
+    icon: User,
+  },
+  phone: {
+    label: "Phone Number",
+    icon: Phone,
+  },
+  city: {
+    label: "Location",
+    icon: MapPin,
+  },
+  currentRole: {
+    label: "Role",
+    icon: Briefcase,
+  },
+  bio: {
+    label: "About",
+    icon: FileText,
+  },
+};
   return (
   <div className="bg-white p-10 rounded-3xl space-y-12">
     
@@ -162,6 +184,12 @@ export default function ProfileHeader({
           <span className="text-blue-500">{email}</span>
         </div>
 
+        <div className="mt-4">
+          <span className="inline-flex items-center rounded-full bg-blue-50 text-blue-500 px-3 py-1 text-sm font-medium">
+            {data.currentRole}
+          </span>
+        </div>
+
         {/* Change photo */}
         {isEditing && (
           <button
@@ -173,59 +201,66 @@ export default function ProfileHeader({
           </button>
         )}
       </div>
+      
     </div>
 
-    {/* Fields Grid */}
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-10">
-      {["fullName", "phone", "city", "currentRole", "bio"].map((field) => (
-        <div
-          key={field}
-          className={`space-y-2 ${
-            field === "bio" ? "md:col-span-2" : ""
-          }`}
-        >
-          <label className="text-xs font-bold text-blue-400 uppercase tracking-wider">  
-            {field === "fullName"
-              ? "Full Display Name"
-              : field === "phone"
-              ? "Phone Number"
-              : field === "city"
-              ? "Primary Location"
-              : field === "currentRole"
-              ? "Current Role"
-              : "About / Bio"}
-          </label>
+{/* Fields Grid */}
+<div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-8">
 
-          {field === "bio" ? (
-            isEditing ? (
-              <textarea
-                name="bio"
-                value={data.bio}
-                onChange={onInputChange}
-                rows={5}
-                className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-200 outline-none"
-              />
-            ) : (
-              <p className="text-slate-700">{data.bio}</p>
-            )
-          ) : isEditing ? (
-            <input
-              type="text"
-              name={field}
-              value={(data as any)[field]}
+  {Object.entries(fieldConfig).map(([field, config]) => {
+    const Icon = config.icon;
+
+    return (
+      <div
+        key={field}
+        className={`space-y-2 ${
+          field === "bio" ? "md:col-span-2" : ""
+        }`}
+      >
+        {/* Label + Icon */}
+        <div className="flex items-center gap-2 text-slate-500">
+          <Icon className="w-4 h-4" />
+          <label className="text-sm font-medium">
+            {config.label}
+          </label>
+        </div>
+
+        {/* Field Content */}
+        {field === "bio" ? (
+          isEditing ? (
+            <textarea
+              name="bio"
+              value={data.bio}
               onChange={onInputChange}
-              className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-200 outline-none"
+              rows={5}
+              className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-blue-500"
             />
           ) : (
-            <p className="text-slate-700">
-              {(data as any)[field]}
+            <p className="text-slate-700 leading-relaxed">
+              {data.bio || "No bio added yet"}
             </p>
-          )}
-        </div>
-      ))}
-    </div>
+          )
+        ) : isEditing ? (
+          <input
+            type="text"
+            name={field}
+            value={(data as any)[field]}
+            onChange={onInputChange}
+            className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-blue-500"
+          />
+        ) : (
+          <p className="text-slate-900 font-medium">
+            {(data as any)[field] || "Not provided"}
+          </p>
+        )}
+      </div>
+    );
+  })}
+
+</div>
   </div>
 );
+
 }
 
          
