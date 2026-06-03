@@ -20,6 +20,18 @@ import WorkerTimelineCard from "@/components/myrequest/WorkerTimeLineCard";
 import TaskMapPreview from "@/components/map/TaskMapPreview";
 import EditTaskModal from "@/components/myrequest/EditTaskModel";
 import { useToast } from "@/components/providers/toast-provider";
+import { Check, X, Clock3, MessageCircle } from "lucide-react";
+
+
+type Props = {
+  performerName: string;
+  performerImage?: string;
+  offeredPrice: number;
+  status: string;
+  taskId: number; // ← add this
+  onAccept: () => void;
+  onReject: () => void;
+};
 
 type Application = {
   id: number;
@@ -602,15 +614,16 @@ export default function TaskApplicationsPage() {
             ) : (
               <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                 {applications.map((app) => (
-                  <ApplicationOfferCard
-                    key={app.id}
-                    performerName={app.performer.fullName}
-                    performerImage={app.performer.profileImage}
-                    offeredPrice={app.offered_price}
-                    status={app.status}
-                    onAccept={() => acceptApplication(app.id)}
-                    onReject={() => rejectApplication(app.id)}
-                  />
+                    <ApplicationOfferCard
+                        key={app.id}
+                        performerName={app.performer?.fullName ?? "Unknown"}
+                        performerImage={app.performer?.profileImage}
+                        offeredPrice={app.offered_price}
+                        status={app.status}
+                        taskId={task.id}
+                        onAccept={() => acceptApplication(app.id)}
+                        onReject={() => rejectApplication(app.id)}
+                    />
                 ))}
               </div>
             )}

@@ -1,4 +1,4 @@
-import { MoreVertical, Phone, Video } from "lucide-react";
+
 import { Conversation } from "@/types/message";
 
 type MessageHeaderProps = {

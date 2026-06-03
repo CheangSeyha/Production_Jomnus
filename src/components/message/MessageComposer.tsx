@@ -27,6 +27,7 @@ export default function MessageComposer({
     const pickerRef = useRef<HTMLDivElement>(null);
     const fileRef = useRef<HTMLInputElement>(null);
 
+
     // Generate preview URL when image selected
     useEffect(() => {
         if (!image) { setPreview(null); return; }
