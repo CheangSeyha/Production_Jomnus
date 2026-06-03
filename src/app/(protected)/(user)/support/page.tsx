@@ -47,7 +47,7 @@ export default function SupportPage() {
   return (
     <div className="min-h-screen space-y-8 max-w-[1200px] mx-auto p-4 md:p-8">
       
-      <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-[2.5rem] p-10 md:p-16 text-center shadow-lg relative overflow-hidden">
+      <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-[2rem] p-6 md:p-10 text-center shadow relative overflow-hidden">
         <div className="absolute top-[-20%] left-[-10%] w-96 h-96 bg-white/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute bottom-[-20%] right-[-10%] w-96 h-96 bg-blue-400/20 rounded-full blur-3xl pointer-events-none" />
         
@@ -56,7 +56,7 @@ export default function SupportPage() {
             <LifeBuoy size={14} />
             Support Center
           </div>
-          <h1 className="text-4xl md:text-5xl font-extrabold text-white tracking-tight">
+          <h1 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight">
             How can we help you today?
           </h1>
           <p className="text-blue-100 text-lg font-medium">
@@ -100,9 +100,9 @@ export default function SupportPage() {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+      <div className="grid grid-cols-1 gap-8 items-start">
         
-        <div className="lg:col-span-2 space-y-6">
+        <div className="space-y-6">
           <div className="space-y-1">
             <h2 className="text-2xl font-extrabold text-slate-900 tracking-tight">
               Frequently Asked Questions
@@ -141,42 +141,7 @@ export default function SupportPage() {
           </div>
         </div>
 
-        <div className="bg-white rounded-[2rem] border border-slate-100 shadow-sm p-8 space-y-6 relative overflow-hidden">
-          <div className="absolute top-0 right-0 p-8 opacity-5">
-            <LifeBuoy size={120} />
-          </div>
-          
-          <div className="relative z-10 space-y-2">
-            <h2 className="text-xl font-extrabold text-slate-900 tracking-tight">
-              Still need help?
-            </h2>
-            <p className="text-sm font-medium text-slate-500 leading-relaxed">
-              If you couldn't find what you were looking for, our support team is ready to assist you.
-            </p>
-          </div>
-
-          <div className="relative z-10 space-y-3">
-            <button className="w-full flex items-center gap-3 p-4 rounded-2xl border-2 border-slate-100 hover:border-blue-600 hover:bg-blue-50 transition-all group text-left">
-              <div className="p-2 bg-slate-100 rounded-xl group-hover:bg-white text-slate-600 group-hover:text-blue-600 transition-colors">
-                <MessageSquare size={20} />
-              </div>
-              <div>
-                <p className="text-sm font-extrabold text-slate-900 group-hover:text-blue-700">Live Chat</p>
-                <p className="text-xs font-medium text-slate-500">Typically replies in minutes</p>
-              </div>
-            </button>
-            
-            <button className="w-full flex items-center gap-3 p-4 rounded-2xl border-2 border-slate-100 hover:border-blue-600 hover:bg-blue-50 transition-all group text-left">
-              <div className="p-2 bg-slate-100 rounded-xl group-hover:bg-white text-slate-600 group-hover:text-blue-600 transition-colors">
-                <Mail size={20} />
-              </div>
-              <div>
-                <p className="text-sm font-extrabold text-slate-900 group-hover:text-blue-700">Email Support</p>
-                <p className="text-xs font-medium text-slate-500">Expect a reply within 24 hours</p>
-              </div>
-            </button>
-          </div>
-        </div>
+        {/* Removed the 'Still need help?' card to simplify the Support page */}
 
       </div>
     </div>
