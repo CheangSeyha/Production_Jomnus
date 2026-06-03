@@ -4,6 +4,7 @@ import { useState, ChangeEvent, DragEvent, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import api from "@/lib/axios";
 import Webcam from "react-webcam";
+import { toast } from "sonner";
 
 export default function IdentityVerificationRequestPage() {
   const router = useRouter();
@@ -140,7 +141,11 @@ export default function IdentityVerificationRequestPage() {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
-      alert("Verification requested successfully! Admins are reviewing your data.");
+      // Replaced native alert window with a smooth sonner notification
+      toast.success("Verification requested successfully!", {
+        description: "Admins are currently reviewing your data.",
+      });
+
       router.push("/setting");
     } catch (err: any) {
       console.error(err);
