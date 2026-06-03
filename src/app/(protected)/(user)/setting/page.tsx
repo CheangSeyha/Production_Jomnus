@@ -242,7 +242,7 @@ export default function SettingPage() {
 
 return (
   <div className="h-full min-h-0 overflow-auto">
-    <div className="mx-auto max-w-[1500px] px-4 py-4 md:px-8">
+    <div className="mx-auto max-w-[1400px] px-4 py-4 md:px-8">
 
       {/* Single Card */}
       <div className="rounded-2xl border border-sky-200 bg-white/90 shadow-[0_14px_40px_rgba(14,165,233,0.12)] backdrop-blur overflow-hidden">
