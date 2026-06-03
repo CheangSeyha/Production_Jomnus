@@ -11,6 +11,7 @@ type Props = {
   deadline: string;
   status: string;
   location_text?: string;
+  locationText?: string;
 };
 
 export default function TaskCard({
@@ -21,8 +22,10 @@ export default function TaskCard({
   deadline,
   status,
   location_text,
+  locationText,
 }: Props) {
   const router = useRouter();
+  const displayLocation = location_text || locationText;
 
   const formatDeadline = (date: string) => {
     const d = new Date(date);
@@ -49,7 +52,7 @@ export default function TaskCard({
   return (
     <div
       onClick={() => router.push(`/myrequest/${id}/applications`)}
-      className="group relative overflow-hidden rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:border-sky-200 hover:shadow-md"
+      className="group relative overflow-hidden rounded-3xl border border-sky-300 bg-white p-5 shadow-[0_8px_28px_rgba(14,165,233,0.08)] transition hover:-translate-y-0.5 hover:border-sky-300 hover:shadow-[0_18px_42px_rgba(14,165,233,0.16)]"
       role="button"
       tabIndex={0}
       onKeyDown={(event) => {
@@ -58,14 +61,14 @@ export default function TaskCard({
         }
       }}
     >
-      <div className="absolute inset-y-0 left-0 w-1 bg-sky-600" />
+      <div className="absolute inset-x-0 top-0 h-1" />
 
-      <div className="mb-3 flex items-start justify-between gap-4">
+      <div className="mb-3 flex items-start justify-between gap-4 ">
         <div className="min-w-0">
-          <h3 className="truncate text-lg font-semibold text-slate-950 transition group-hover:text-sky-700">
+          <h3 className="truncate text-lg font-black text-slate-950 transition group-hover:text-sky-700">
             {title}
           </h3>
-          <p className="mt-1 line-clamp-2 text-sm leading-6 text-slate-500">
+          <p className="mt-1 line-clamp-2 text-sm font-medium leading-6 text-slate-500">
             {description || "No description provided"}
           </p>
         </div>
@@ -78,14 +81,14 @@ export default function TaskCard({
 
       <div className="flex flex-col gap-4 border-t border-slate-100 pt-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-wrap items-center gap-3 text-sm text-slate-500">
-          {location_text && (
-            <div className="flex items-center gap-1">
+          {displayLocation && (
+            <div className="flex items-center gap-1.5 rounded-xl border border-sky-100 bg-sky-50 px-3 py-1.5 font-semibold text-sky-800">
               <MapPin size={15} />
-              <span className="max-w-48 truncate">{location_text}</span>
+              <span className="max-w-48 truncate">{displayLocation}</span>
             </div>
           )}
 
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1.5 rounded-xl border border-indigo-100 bg-indigo-50 px-3 py-1.5 font-semibold text-indigo-700">
             <CalendarClock size={15} />
             {formatDeadline(deadline)}
           </div>
@@ -93,8 +96,8 @@ export default function TaskCard({
 
         <div className="flex items-center justify-between gap-4 sm:justify-end">
           <div className="text-right">
-            <p className="text-xs font-semibold uppercase text-slate-400">Budget</p>
-            <p className="text-lg font-bold text-slate-950">
+            <p className="text-xs font-black uppercase text-emerald-600">Budget</p>
+            <p className="text-lg font-black text-emerald-700">
               ${Number(price || 0).toFixed(2)}
             </p>
           </div>

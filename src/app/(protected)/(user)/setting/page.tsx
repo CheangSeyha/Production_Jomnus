@@ -1,14 +1,29 @@
+// "use client";
+
+// import { useEffect, useState, ChangeEvent } from "react";
+// import { useRouter, useSearchParams } from "next/navigation";
+// import axios from "axios";
+
+// import StatsManagement from "@/components/setting/StatsManagement";
+// import Specializations from "@/components/setting/Specializations";
+// import WorkHistory from "@/components/setting/WorkHistory";
+// import ProfileHeader from "@/components/setting/ProfileHeader";
+
+// import { useAuthStore } from "@/store/authStore";
+// import { em } from "motion/react-client";
+
+
 "use client";
 
 import { useEffect, useState, ChangeEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import axios from "axios";
 
 import StatsManagement from "@/components/setting/StatsManagement";
 import Specializations from "@/components/setting/Specializations";
 import WorkHistory from "@/components/setting/WorkHistory";
 import ProfileHeader from "@/components/setting/ProfileHeader";
 import { useAuthStore } from "@/store/authStore";
+import api from "@/lib/axios";
 
 // Match the WorkItem interface exactly as expected by WorkHistory component
 // The WorkHistory component expects id to be number, not string | number
@@ -36,6 +51,14 @@ export default function SettingPage() {
 
   const { user, setUser } = useAuthStore();
 
+  // const {
+  //   user,
+  //   accessToken,
+  // } = useAuthStore();
+  
+  // const updateUser = useAuthStore((state) => state.updateUser) || ((userData) => useAuthStore.setState({ user: userData }));
+  // const setUser = useAuthStore((state) => state.setUser);
+  
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -63,7 +86,7 @@ export default function SettingPage() {
         fullName: user.fullName || "",
         phone: user.phone || "",
         city: user.city || "",
-        currentRole: user.currentRole || user.role || "",
+        currentRole: user.currentRole || "",
         bio: user.bio || "",
         profileImage: user.profileImage || "",
       });
@@ -87,11 +110,7 @@ export default function SettingPage() {
           return;
         }
 
-        const res = await axios.get("http://localhost:3001/api/users/me", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        const res = await api.get("/users/me");
 
         const fetchedUser = res.data;
 
@@ -153,7 +172,7 @@ export default function SettingPage() {
     setIsSaving(true);
 
     try {
-      const token = localStorage.getItem("access_token");
+      // const token = localStorage.getItem("access_token");
 
       const payload = {
         fullName: formData.fullName,
@@ -163,15 +182,7 @@ export default function SettingPage() {
         profileImage: formData.profileImage,
       };
 
-      const res = await axios.patch(
-        "http://localhost:3001/api/users/me",
-        payload,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const res = await api.patch("/users/me", payload);
 
       // Update the user in store with the response
       setUser(res.data);
@@ -228,47 +239,27 @@ export default function SettingPage() {
     );
   }
 
-  return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="max-w-7xl mx-auto p-4 md:p-8 space-y-12">
-        {/* HEADER */}
-        <div className="flex justify-between items-center border-b pb-6 bg-white p-6 rounded-2xl shadow-sm">
-          <div>
-            <h1 className="text-3xl font-black text-slate-800">
-              Profile Settings
-            </h1>
-            <p className="text-sm text-slate-500 mt-1">
-              Update your information below
-            </p>
-          </div>
 
-          <div className="flex gap-4 items-center">
-            {saveSuccess && (
-              <span className="text-green-600 text-xs font-bold">
-                Saved!
-              </span>
-            )}
+return (
+  <div className="h-full min-h-0 overflow-auto">
+    <div className="mx-auto max-w-[1400px] px-4 py-4 md:px-8">
 
-            <button
-              onClick={handleSave}
-              disabled={isSaving}
-              className="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold disabled:opacity-50"
-            >
-              {isSaving ? "Saving..." : "Save Changes"}
-            </button>
-          </div>
+      {/* Single Card */}
+      <div className="rounded-2xl border border-sky-200 bg-white/90 shadow-[0_14px_40px_rgba(14,165,233,0.12)] backdrop-blur overflow-hidden">
+
+        {/* Profile Header */}
+        <div className="p-8 border-b border-sky-100">
+          <ProfileHeader
+            data={formData}
+            onInputChange={handleInputChange}
+            email={rawData?.email || user?.email}
+            onSave={handleSave}
+            isIdentityVerified={rawData?.isIdentityVerified}
+          />
         </div>
 
-        {/* Profile Details Header Component */}
-        <ProfileHeader
-          data={formData}
-          onInputChange={handleInputChange}
-          email={rawData?.email || user?.email}
-          isIdentityVerified={rawData?.isIdentityVerified}
-        />
-
-        {/* IDENTITY VERIFICATION BOX */}
-        <section className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100">
+        {/* Identity Verification */}
+        <div className="p-8 border-b border-sky-100">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div className="flex items-start gap-4">
               <div className={`p-4 rounded-2xl ${rawData?.isIdentityVerified ? 'bg-green-50 text-green-600' : 'bg-amber-50 text-amber-600'}`}>
@@ -283,7 +274,8 @@ export default function SettingPage() {
                 )}
               </div>
               <div>
-                <h3 className="font-bold text-xl text-slate-800 flex items-center gap-2">
+                <p className="text-xs font-bold uppercase tracking-widest text-sky-600 mb-1">Verification</p>
+                <h3 className="font-black text-xl text-slate-950 flex items-center gap-2">
                   Identity Verification Status
                   {rawData?.isIdentityVerified && (
                     <span className="bg-green-100 text-green-700 text-xs px-2.5 py-0.5 rounded-full font-black tracking-wide">
@@ -292,13 +284,12 @@ export default function SettingPage() {
                   )}
                 </h3>
                 <p className="text-xs text-slate-400 mt-1 max-w-xl">
-                  {rawData?.isIdentityVerified 
-                    ? "Your profile identity is fully verified. Your account exhibits trust badges across your listings." 
-                    : "Verify your profile by providing identification credentials to unlock reliable task matching parameters and platform trust markers."}
+                  {rawData?.isIdentityVerified
+                    ? "Your profile identity is fully verified."
+                    : "Verify your profile to unlock trust badges across your listings."}
                 </p>
               </div>
             </div>
-            
             {!rawData?.isIdentityVerified && (
               <button
                 onClick={() => router.push("/setting/verify")}
@@ -308,76 +299,58 @@ export default function SettingPage() {
               </button>
             )}
           </div>
-        </section>
+        </div>
 
-        {/* Stats Section */}
-        <section className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100">
+        {/* Performance Stats */}
+        <div className="p-8 border-b border-sky-100">
           <div className="flex justify-between items-center mb-6">
             <div>
-              <h3 className="font-bold text-xl text-slate-800">
-                Performance Statistics
-              </h3>
-              <p className="text-xs text-slate-400 mt-1">
-                {(rawData?.currentRole || rawData?.role) === "REQUESTER"
-                  ? "Viewing your activity as a task requester."
-                  : "Viewing your activity as a task performer."}
-              </p>
+              <p className="text-xs font-bold uppercase tracking-widest text-sky-600 mb-1">Stats</p>
+              <h3 className="font-black text-xl text-slate-950">Performance Statistics</h3>
             </div>
-            <div className="flex gap-2">
-              <span
-                className={`text-[10px] px-3 py-1 rounded-full font-black uppercase tracking-widest border ${
-                  (rawData?.currentRole || rawData?.role) === "REQUESTER"
-                    ? "bg-orange-50 text-orange-600 border-orange-100"
-                    : "bg-blue-50 text-blue-600 border-blue-100"
-                }`}
-              >
-                {rawData?.currentRole || rawData?.role} Mode
-              </span>
-            </div>
+            <span className={`text-[10px] px-3 py-1 rounded-full font-black uppercase tracking-widest border ${
+              (rawData?.currentRole || rawData?.role) === "REQUESTER"
+                ? "bg-orange-50 text-orange-600 border-orange-100"
+                : "bg-sky-50 text-sky-600 border-sky-200"
+            }`}>
+              {rawData?.currentRole || rawData?.role} Mode
+            </span>
           </div>
           <StatsManagement data={rawData} />
-        </section>
+        </div>
 
-        {/* Work History Section */}
-        <section className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100">
+        {/* Work History */}
+        <div className="p-8 border-b border-sky-100">
           <div className="flex justify-between items-center mb-6">
             <div>
-              <h3 className="font-bold text-xl text-slate-800">
-                Work History & Portfolio
-              </h3>
-              <p className="text-xs text-slate-400 mt-1">
-                Showcase your best completed tasks.
-              </p>
+              <p className="text-xs font-bold uppercase tracking-widest text-sky-600 mb-1">Portfolio</p>
+              <h3 className="font-black text-xl text-slate-950">Work History & Portfolio</h3>
             </div>
             <button
               onClick={addNewProject}
-              className="text-blue-600 font-bold"
+              className="text-sky-600 hover:text-white bg-sky-50 hover:bg-sky-500 px-5 py-2.5 rounded-xl text-sm font-bold tracking-wide transition-all flex items-center gap-2 border border-sky-200 hover:border-sky-500 shadow-sm"
             >
-              + Add Case Study
+              <span className="text-lg leading-none">+</span> Add Case Study
             </button>
           </div>
           <WorkHistory data={projects} setData={setProjects} />
-        </section>
+        </div>
 
-        {/* Specializations Skill Tags Section */}
+        {/* Specializations */}
         {(rawData?.currentRole === "PERFORMER" || rawData?.role === "PERFORMER") && (
-          <section className="animate-in fade-in duration-500">
-            <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100">
-              <div className="flex justify-between items-center mb-6">
-                <div>
-                  <h3 className="font-bold text-xl text-slate-800">
-                    Expertise & Skills
-                  </h3>
-                  <p className="text-xs text-slate-400 mt-1">
-                    These tags help you match with the right tasks.
-                  </p>
-                </div>
-              </div>
-              <Specializations data={rawData?.specializations || []} />
+          <div className="p-8">
+            <div className="mb-6">
+              <p className="text-xs font-bold uppercase tracking-widest text-sky-600 mb-1">Skills</p>
+              <h3 className="font-black text-xl text-slate-950">Expertise & Skills</h3>
+              <p className="text-xs text-slate-400 mt-1">These tags help you match with the right tasks.</p>
             </div>
-          </section>
+            <Specializations data={rawData?.specializations || []} />
+          </div>
         )}
+
       </div>
     </div>
-  );
+  </div>
+);
+
 }

@@ -66,82 +66,112 @@ export default function WorkHistory({ data, setData }: WorkHistoryProps) {
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-      {data.map((item) => (
-        <div key={item.id} className="group flex flex-col bg-white rounded-[2rem] border border-slate-100 overflow-hidden hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-300">
-          
-          {/* IMAGE SECTION */}
-          <div className="relative h-52 bg-slate-100 overflow-hidden">
-            <img 
-              src={item.image || "https://images.unsplash.com/photo-1581092160562-40aa08e78837?q=80&w=1000&auto=format&fit=crop"} 
-              className={`w-full h-full object-cover transition-transform duration-500 ${editingId === item.id ? 'scale-110 blur-sm' : 'group-hover:scale-105'}`}
-            />
-            
-            {editingId === item.id ? (
-              <div className="absolute inset-0 flex items-center justify-center bg-black/20">
-                <button 
-                  onClick={() => fileInputRef.current?.click()}
-                  className="bg-white/90 backdrop-blur px-4 py-2 rounded-full text-xs font-bold flex items-center gap-2 shadow-xl hover:bg-white transition-all"
-                >
-                  <Camera className="w-4 h-4" /> Change Photo
-                </button>
-                <input type="file" ref={fileInputRef} hidden accept="image/*" onChange={handleImageChange} />
-              </div>
-            ) : (
-              <div className="absolute top-4 right-4 flex gap-2 translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
-                <button onClick={() => startEditing(item)} className="p-2.5 bg-white/90 backdrop-blur rounded-xl shadow-lg text-slate-700 hover:text-blue-600 hover:bg-white">
-                  <Edit2 className="w-4 h-4" />
-                </button>
-                <button onClick={() => handleDelete(item.id)} className="p-2.5 bg-red-500/90 backdrop-blur rounded-xl shadow-lg text-white hover:bg-red-600">
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-            )}
-          </div>
+  <div className="space-y-4">
+    {data.map((item) => (
+      <div
+        key={item.id}
+        className="group flex flex-col md:flex-row bg-white rounded-2xl border border-slate-100 overflow-hidden hover:shadow-lg transition-all duration-300"
+      >
+        {/* IMAGE SECTION */}
+        <div className="relative md:w-1/4 h-62 md:h-auto bg-slate-100 overflow-hidden">
+          <img
+            src={
+              item.image ||
+              "https://images.unsplash.com/photo-1581092160562-40aa08e78837?q=80&w=1000&auto=format&fit=crop"
+            }
+            className={`w-full h-full object-cover transition-transform duration-500 ${
+              editingId === item.id ? "scale-110 blur-sm" : "group-hover:scale-105"
+            }`}
+          />
 
-          {/* CONTENT SECTION */}
-          <div className="p-6 flex-1 flex flex-col">
-            {editingId === item.id ? (
-              <div className="space-y-4">
-                <input 
-                  className="w-full bg-slate-50 border-none rounded-xl px-4 py-2.5 text-sm font-bold focus:ring-2 focus:ring-blue-100"
-                  value={editForm?.title}
-                  onChange={(e) => setEditForm({...editForm!, title: e.target.value})}
-                  placeholder="What did you do?"
-                />
-                <textarea 
-                  className="w-full bg-slate-50 border-none rounded-xl px-4 py-2.5 text-xs text-slate-600 h-24 resize-none focus:ring-2 focus:ring-blue-100"
-                  value={editForm?.description}
-                  onChange={(e) => setEditForm({...editForm!, description: e.target.value})}
-                  placeholder="Describe the results..."
-                />
-                <div className="flex gap-3 mt-2">
-                  <button onClick={saveEdit} className="flex-1 bg-blue-600 text-white py-2.5 rounded-xl text-xs font-bold shadow-lg shadow-blue-200">
-                    Done
-                  </button>
-                  <button onClick={() => setEditingId(null)} className="px-4 py-2.5 bg-slate-100 text-slate-500 rounded-xl text-xs font-bold">
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <>
-                <div className="mb-3">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-blue-600 bg-blue-50 px-2.5 py-1 rounded-lg">
-                    {item.tag}
-                  </span>
-                </div>
-                <h4 className="text-lg font-bold text-slate-800 mb-2 leading-tight group-hover:text-blue-600 transition-colors">
-                  {item.title}
-                </h4>
-                <p className="text-xs text-slate-500 leading-relaxed line-clamp-3">
-                  {item.description}
-                </p>
-              </>
-            )}
-          </div>
+          {editingId === item.id ? (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="bg-white/90 backdrop-blur px-4 py-2 rounded-full text-xs font-bold flex items-center gap-2 shadow-xl hover:bg-white transition-all"
+              >
+                <Camera className="w-4 h-4" /> Change Photo
+              </button>
+              <input
+                type="file"
+                ref={fileInputRef}
+                hidden
+                accept="image/*"
+                onChange={handleImageChange}
+              />
+            </div>
+          ) : (
+            <div className="absolute top-4 right-4 flex gap-2 translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
+              <button
+                onClick={() => startEditing(item)}
+                className="p-2.5 bg-white/90 backdrop-blur rounded-xl shadow-lg text-slate-700 hover:text-blue-600 hover:bg-white"
+              >
+                <Edit2 className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => handleDelete(item.id)}
+                className="p-2.5 bg-red-500/90 backdrop-blur rounded-xl shadow-lg text-white hover:bg-red-600"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
+          )}
         </div>
-      ))}
-    </div>
-  );
+
+        {/* CONTENT SECTION */}
+        <div className="p-6 flex-1 flex flex-col justify-center">
+          {editingId === item.id ? (
+            <div className="space-y-4">
+              <input
+                className="w-full bg-slate-50 border-none rounded-xl px-4 py-2.5 text-sm font-bold focus:ring-2 focus:ring-blue-100"
+                value={editForm?.title}
+                onChange={(e) =>
+                  setEditForm({ ...editForm!, title: e.target.value })
+                }
+                placeholder="What did you do?"
+              />
+              <textarea
+                className="w-full bg-slate-50 border-none rounded-xl px-4 py-2.5 text-xs text-slate-600 h-24 resize-none focus:ring-2 focus:ring-blue-100"
+                value={editForm?.description}
+                onChange={(e) =>
+                  setEditForm({ ...editForm!, description: e.target.value })
+                }
+                placeholder="Describe the results..."
+              />
+              <div className="flex gap-3 mt-2">
+                <button
+                  onClick={saveEdit}
+                  className="flex-1 bg-blue-600 text-white py-2.5 rounded-xl text-xs font-bold shadow-lg shadow-blue-200"
+                >
+                  Done
+                </button>
+                <button
+                  onClick={() => setEditingId(null)}
+                  className="px-4 py-2.5 bg-slate-100 text-slate-500 rounded-xl text-xs font-bold"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : (
+            <>
+              <div className="mb-3">
+                <span className="text-[10px] font-black uppercase tracking-widest text-blue-600 bg-blue-50 px-2.5 py-1 rounded-lg">
+                  {item.tag}
+                </span>
+              </div>
+              <h4 className="text-lg font-bold text-slate-800 mb-2 leading-tight group-hover:text-blue-600 transition-colors">
+                {item.title}
+              </h4>
+              <p className="text-sm text-slate-500 leading-relaxed">
+                {item.description}
+              </p>
+            </>
+          )}
+        </div>
+      </div>
+    ))}
+  </div>
+);
+
 }

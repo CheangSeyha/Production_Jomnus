@@ -3,7 +3,7 @@
 import { useState } from "react";
 import CategoryDropdown from "./CategoryDropdown";
 import FormSection from "./FormSection";
-import { FileText, LocateFixed, MapPin, Tag } from "lucide-react";
+import { FileText, LocateFixed, MapPin, Navigation, Tag, X } from "lucide-react";
 import dynamic from "next/dynamic";
 
 
@@ -21,8 +21,18 @@ type Props = {
 
 export default function TaskDetailsForm({ form, onChange }: Props) {
   const fieldClass =
-    "w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-sky-500 focus:ring-4 focus:ring-sky-100";
+    "w-full rounded-2xl border border-sky-200 bg-sky-50/60 px-4 py-3 text-sm font-semibold text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-sky-400 focus:bg-white focus:ring-4 focus:ring-sky-100";
   const [showMap, setShowMap] = useState(false);
+  const hasCoordinates = Boolean(form.latitude && form.longitude);
+
+  const updateManualLocation = (value: string) => {
+    onChange("locationText", value);
+  };
+
+  const clearCoordinates = () => {
+    onChange("latitude", undefined);
+    onChange("longitude", undefined);
+  };
 
   return (
     <div className="space-y-5">
@@ -45,9 +55,9 @@ export default function TaskDetailsForm({ form, onChange }: Props) {
         description="Help workers understand the type of work and where it happens."
         icon={<Tag size={18} />}
       >
-        <div className="grid md:grid-cols-2 gap-4">
+        <div className="grid gap-4 md:grid-cols-2">
           <div>
-            <label className="mb-2 block text-sm font-medium text-slate-700">
+            <label className="mb-2 block text-sm font-black text-slate-700">
               Category
             </label>
             <CategoryDropdown
@@ -57,55 +67,79 @@ export default function TaskDetailsForm({ form, onChange }: Props) {
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-medium text-slate-700">
+            <label className="mb-2 block text-sm font-black text-slate-700">
               Location
             </label>
 
             <div className="relative">
               <MapPin
                 size={16}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-sky-500"
               />
 
-            <input
-              type="text"
-              className={`${fieldClass} pl-10`}
-              placeholder="Example: Phnom Penh, BKK1"
-              value={form.locationText || ""}
-              onChange={(e) => onChange("locationText", e.target.value)}
-            />
+              <input
+                type="text"
+                className={`${fieldClass} pl-10`}
+                placeholder="Example: Phnom Penh, BKK1"
+                value={form.locationText || ""}
+                onChange={(e) => updateManualLocation(e.target.value)}
+              />
             </div>
 
-            <button
-              type="button"
-              className="mt-3 inline-flex items-center gap-2 text-sm font-medium text-sky-700 transition hover:text-sky-900"
-              onClick={() => setShowMap(true)}
-            >
-              {form.latitude && (
-                <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
-
-                  <p className="text-xs font-bold uppercase tracking-wide text-slate-400">
-                    Selected Coordinates
+            <div className="mt-3 rounded-2xl border border-sky-100 bg-white p-3">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
+                  <p className="text-xs font-black uppercase tracking-wide text-slate-400">
+                    Map Coordinates
                   </p>
-
-                  <p className="mt-1 text-sm font-semibold text-slate-700">
-                    {form.latitude.toFixed(5)},
-                    {" "}
-                    {form.longitude.toFixed(5)}
-                  </p>
-
                 </div>
-              )}
-              <LocateFixed size={15} />
-              Pick from map
-            </button>
+
+                <div className="flex flex-wrap gap-2">
+                  {hasCoordinates && (
+                    <button
+                      type="button"
+                      onClick={clearCoordinates}
+                      className="inline-flex h-10 items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-3 text-sm font-bold text-rose-700 transition hover:bg-rose-100"
+                    >
+                      <X size={14} />
+                      Clear pin
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    className="inline-flex h-10 items-center gap-2 rounded-xl border border-sky-200 bg-sky-50 px-3 text-sm font-bold text-sky-700 transition hover:bg-sky-100"
+                    onClick={() => setShowMap(true)}
+                  >
+                    <LocateFixed size={15} />
+                    Pick from map
+                  </button>
+                </div>
+              </div>
+            </div>
 
             {showMap && (
-              <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center">
-                <div className="bg-white p-4 rounded-xl w-[90%] max-w-2xl">
-                  <h3 className="text-lg font-semibold mb-3">
-                    Select Location
-                  </h3>
+              <div className="fixed inset-0 z-[1200] flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-md">
+                <div className="max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-3xl border border-sky-100 bg-white p-4 shadow-[0_30px_80px_rgba(15,23,42,0.35)]">
+                  <div className="mb-4 flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-xs font-black uppercase tracking-widest text-sky-600">
+                        Location Pin
+                      </p>
+                      <h3 className="mt-1 text-xl font-black text-slate-950">
+                        Select Location
+                      </h3>
+                      <p className="mt-1 text-sm font-medium text-slate-500">
+                        Click the map or use current location to update both coordinates and address text.
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => setShowMap(false)}
+                      className="rounded-xl border border-slate-200 p-2 text-slate-500 transition hover:bg-slate-50 hover:text-slate-800"
+                      aria-label="Close location picker"
+                    >
+                      <X size={18} />
+                    </button>
+                  </div>
 
                   <TaskLocationPicker
                     latitude={form.latitude}
@@ -117,6 +151,7 @@ export default function TaskDetailsForm({ form, onChange }: Props) {
                       try {
                         const res = await fetch(
                           `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`,
+                          { headers: { "Accept-Language": "en" } },
                         );
 
                         const data = await res.json();
@@ -136,9 +171,10 @@ export default function TaskDetailsForm({ form, onChange }: Props) {
 
                   <button
                     onClick={() => setShowMap(false)}
-                    className="mt-4 px-4 py-2 bg-gray-100 rounded-lg"
+                    className="mt-4 inline-flex h-11 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
                   >
-                    Cancel
+                    <Navigation size={15} />
+                    Done
                   </button>
                 </div>
               </div>

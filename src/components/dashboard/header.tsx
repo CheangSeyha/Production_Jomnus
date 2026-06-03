@@ -27,14 +27,9 @@ type Props = {
 };
 
 export default function Header({ role = "user", onMenuClick }: Props) {
-  // Use both stores for maximum compatibility
-  const authUser = useAuthStore((s) => s.user);
-  const storeUser = useUserStore((s) => s.user);
-  const setStoreUser = useUserStore((s) => s.setUser);
-  
-  // Prioritize authUser, fallback to storeUser
-  const user = authUser || storeUser;
-  
+  const user = useAuthStore((s) => s.user);
+  const setUser = useAuthStore((s) => s.setUser);
+  // const user = useUserStore((s) => s.user);
   const unreadCount = useNotificationStore((s) => s.unreadCount);
   const fetchNotifications = useNotificationStore((s) => s.fetchNotifications);
 
@@ -55,15 +50,15 @@ export default function Header({ role = "user", onMenuClick }: Props) {
       if (storedUser) {
         try {
           const parsed = JSON.parse(storedUser);
-          if (parsed?.state?.user && setStoreUser) {
-            setStoreUser(parsed.state.user);
+          if (parsed?.state?.user) {
+            setUser(parsed.state.user);
           }
         } catch (e) {
           console.error("Failed to parse user store back layer:", e);
         }
       }
     }
-  }, [user, setStoreUser]);
+  }, [user, setUser]);
 
   useEffect(() => {
     const handleClick = (e: any) => {
@@ -75,6 +70,10 @@ export default function Header({ role = "user", onMenuClick }: Props) {
     return () => document.removeEventListener("click", handleClick);
   }, []);
 
+  useEffect(() => {
+    fetchNotifications();
+  }, [fetchNotifications]);
+
   const handleLogout = async () => {
     localStorage.removeItem("access_token");
     if (typeof window !== "undefined") {
@@ -84,15 +83,11 @@ export default function Header({ role = "user", onMenuClick }: Props) {
 
   const is_admin = role === "admin";
   const avatarUrl = getAvatar(user);
-  const isGoogleUser = avatarUrl?.includes("googleusercontent.com") || avatarUrl?.includes("google");
-
-  // Get display name with proper fallbacks
-  // Fix: Use only fullName since AuthUser doesn't have 'name' property
-  const displayName = user?.fullName || "Guest User";
-  const firstName = displayName.split(" ")[0] || "Account";
+  const isGoogleUser =
+    avatarUrl.includes("googleusercontent.com") || avatarUrl.includes("google");
 
   return (
-    <header className="sticky top-0 z-[1000] bg-slate-200 backdrop-blur-md border-b border-slate-200/60">
+    <header className="sticky top-0 z-[1000]  backdrop-blur-md border-b border-slate-200/60">
       <div className="flex h-16 sm:h-20 items-center justify-between px-4 sm:px-6 md:px-8">
         <div className="flex items-center gap-3 min-w-0 shrink-0">
           <button
@@ -150,11 +145,11 @@ export default function Header({ role = "user", onMenuClick }: Props) {
                   }`}
                 >
                   <Image
-                    src={avatarUrl || "/images/default-avatar.png"}
+                    src={avatarUrl}
                     alt="Profile"
                     fill
                     className="object-cover"
-                    unoptimized={avatarUrl?.includes("dicebear") || isGoogleUser}
+                    unoptimized={avatarUrl.includes("dicebear") || isGoogleUser}
                   />
                 </div>
                 {isGoogleUser && (
@@ -181,18 +176,9 @@ export default function Header({ role = "user", onMenuClick }: Props) {
                 )}
               </div>
               <div className="hidden sm:block text-left">
-                <div className="flex items-center gap-1">
-                  <p className="text-[13px] font-bold text-slate-800 leading-none truncate max-w-[100px]">
-                    {firstName}
-                  </p>
-                  {isVerified && (
-                    <span className="text-blue-500 shrink-0" title="Identity Verified">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5">
-                        <path fillRule="evenodd" d="M8.603 3.799A4.49 4.49 0 0112 2.25c1.357 0 2.573.6 3.397 1.549a4.49 4.49 0 014.254 2.226 4.49 4.49 0 01-.093 4.793 4.49 4.49 0 012.226 4.254 4.49 4.49 0 01-1.549 3.397 4.49 4.49 0 01-2.226 4.254 4.49 4.49 0 01-4.793-.093 4.49 4.49 0 01-4.254 2.226 4.49 4.49 0 01-3.397-1.549 4.49 4.49 0 01-4.254-2.226 4.49 4.49 0 01.093-4.793 4.49 4.49 0 01-2.226-4.254 4.49 4.49 0 011.549-3.397 4.49 4.49 0 012.226-4.254zm5.418 7.301a.75.75 0 00-1.06-1.06l-3.5 3.5-1.5-1.5a.75.75 0 10-1.06 1.06l2 2a.75.75 0 001.06 0l4-4z" clipRule="evenodd" />
-                      </svg>
-                    </span>
-                  )}
-                </div>
+                <p className="text-[13px] font-bold text-slate-800 leading-none truncate max-w-[120px]">
+                  {user?.fullName || "Guest User"}
+                </p>
                 <p
                   className={`text-[10px] font-black uppercase tracking-wider mt-0.5 ${
                     is_admin ? "text-indigo-600" : "text-blue-600"
@@ -226,12 +212,12 @@ export default function Header({ role = "user", onMenuClick }: Props) {
                         }`}
                       >
                         <Image
-                          src={avatarUrl || "/images/default-avatar.png"}
+                          src={avatarUrl}
                           alt="Profile"
                           fill
                           className="object-cover"
                           unoptimized={
-                            avatarUrl?.includes("dicebear") || isGoogleUser
+                            avatarUrl.includes("dicebear") || isGoogleUser
                           }
                         />
                       </div>
@@ -242,22 +228,11 @@ export default function Header({ role = "user", onMenuClick }: Props) {
                       />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5 max-w-full">
-                        <p
-                          className={`text-base font-black truncate ${
-                            is_admin ? "text-white" : "text-slate-900"
-                          }`}
-                        >
-                          {displayName}
-                        </p>
-                        {isVerified && (
-                          <span className={`${is_admin ? "text-white" : "text-blue-500"} shrink-0`} title="Identity Verified">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
-                              <path fillRule="evenodd" d="M8.603 3.799A4.49 4.49 0 0112 2.25c1.357 0 2.573.6 3.397 1.549a4.49 4.49 0 014.254 2.226 4.49 4.49 0 01-.093 4.793 4.49 4.49 0 012.226 4.254 4.49 4.49 0 01-1.549 3.397 4.49 4.49 0 01-2.226 4.254 4.49 4.49 0 01-4.793-.093 4.49 4.49 0 01-4.254 2.226 4.49 4.49 0 01-3.397-1.549 4.49 4.49 0 01-4.254-2.226 4.49 4.49 0 01.093-4.793 4.49 4.49 0 01-2.226-4.254 4.49 4.49 0 011.549-3.397 4.49 4.49 0 012.226-4.254zm5.418 7.301a.75.75 0 00-1.06-1.06l-3.5 3.5-1.5-1.5a.75.75 0 10-1.06 1.06l2 2a.75.75 0 001.06 0l4-4z" clipRule="evenodd" />
-                            </svg>
-                          </span>
-                        )}
-                      </div>
+                      <p className={`text-base font-black truncate ${
+                        is_admin ? "text-white" : "text-slate-900"
+                      }`}>
+                        {user?.fullName || "Guest User"}
+                      </p>
                       <div className="flex items-center gap-1.5 mt-0.5">
                         <span
                           className={`text-[10px] px-2 py-0.5 rounded-full font-black uppercase tracking-widest ${
