@@ -64,7 +64,7 @@ export default function SettingPage() {
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [rawData, setRawData] = useState<any>(null);
 
-  const [formData, setFormData] = useState ({
+  const [formData, setFormData] = useState<FormDataType>({
     id: null,
     fullName: "",
     phone: "",

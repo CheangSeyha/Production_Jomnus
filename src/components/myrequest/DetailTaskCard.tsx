@@ -64,15 +64,22 @@ export default function DetailTaskCard({ task, onOpen, onApply, isSelected = fal
             onClick={handleProfileClick}
             className="flex items-center gap-3 group/profile min-w-0"
           >
+
+
             <div className="relative shrink-0">
-              <img
-                src={
-                  (task as any)?.requester?.profile_image ||
-                  `https://api.dicebear.com/7.x/avataaars/svg?seed=${(task as any)?.requester?.fullName || "unknown"}`
-                }
-                alt={(task as any)?.requester?.fullName || "Unknown"}
-                className="w-10 h-10 rounded-xl object-cover ring-2 ring-sky-100"
-              />
+              {task.requester?.profileImage ? (
+                  <img
+                      src={task.requester.profileImage}
+                      alt={task.requester.fullName || "Unknown"}
+                      className="w-10 h-10 rounded-xl object-cover ring-2 ring-sky-100"
+                  />
+              ) : (
+                  <div className="w-10 h-10 rounded-xl bg-sky-100 border border-sky-200 ring-2 ring-sky-100 flex items-center justify-center text-sky-700 text-sm font-bold">
+                    {(task.requester?.fullName || task.requesterName || "?")
+                        .charAt(0)
+                        .toUpperCase()}
+                  </div>
+              )}
               <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-400 border-2 border-white rounded-full" />
             </div>
             <div className="text-left min-w-0">
