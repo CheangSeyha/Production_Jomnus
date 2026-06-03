@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { adminService } from "@/services/adminService";
+import { getSocket } from "@/lib/websoket";
 import {
   FileText,
   Eye,
@@ -13,7 +14,7 @@ import {
   Clock,
   Zap,
   DivideCircle,
-} from "lucide-react";
+} from "lucide-react"; 
 
 interface Application {
   id: number;
@@ -49,6 +50,8 @@ export default function AdminApplicationsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
+  const [realtimeTick, setRealtimeTick] = useState(0);
+  const [isRealtimeConnected, setIsRealtimeConnected] = useState(false);
   const LIMIT = 15;
 
   useEffect(() => {
@@ -69,7 +72,41 @@ export default function AdminApplicationsPage() {
       }
     };
     fetchApplications();
-  }, [page]);
+  }, [page, realtimeTick]);
+
+  useEffect(() => {
+    const socket = getSocket();
+
+    const handleApplicationsUpdated = () => {
+      setRealtimeTick((value) => value + 1);
+    };
+
+    const handleConnect = () => setIsRealtimeConnected(true);
+    const handleDisconnect = () => setIsRealtimeConnected(false);
+
+    setIsRealtimeConnected(socket.connected);
+    socket.on("applications:updated", handleApplicationsUpdated);
+    socket.on("connect", handleConnect);
+    socket.on("disconnect", handleDisconnect);
+
+    return () => {
+      socket.off("applications:updated", handleApplicationsUpdated);
+      socket.off("connect", handleConnect);
+      socket.off("disconnect", handleDisconnect);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!selectedApplication || !applications?.data?.length) return;
+
+    const updatedApplication = applications.data.find(
+      (item) => item.id === selectedApplication.id,
+    );
+
+    if (updatedApplication) {
+      setSelectedApplication(updatedApplication);
+    }
+  }, [applications, selectedApplication]);
 
   const getStatusStyle = (status?: string) => {
     switch (status) {
@@ -131,7 +168,9 @@ export default function AdminApplicationsPage() {
             </div>
           </div>
           <div>
-            <p className="text-sm font-extrabold text-blue-600 leading-none">Live Activity</p>
+            <p className="text-sm font-extrabold text-blue-600 leading-none">
+              {isRealtimeConnected ? "Live Activity" : "Syncing..."}
+            </p>
             <p className="text-xs text-slate-500 font-medium mt-0.5">
               {pendingCount} new today
             </p>
@@ -370,76 +409,86 @@ export default function AdminApplicationsPage() {
         </div>
       )}
       {/* ── Application Details Modal */}
-      {selectedApplication && (
-      <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50">
-
-      <div className="bg-white p-8 rounded-2xl w-full max-w-lg shadow-xl">
-
-      <h2 className="text-2xl font-bold mb-6">
-      Application Details
-      </h2>
-
-      <div className="space-y-4">
-
-      <div>
-        <h2 className="text-2xl font-bold">
+   {selectedApplication && (
+  <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-50 p-4">
+    <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl border border-gray-100 overflow-hidden transform transition-all">
+      
+      {/* Header */}
+      <div className="px-6 pt-6 pb-4 border-b border-gray-100">
+        <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+          Application Details
+        </span>
+        <h2 className="text-2xl font-bold text-gray-800 mt-1">
           {selectedApplication.task?.title}
         </h2>
-
-        <p>
-          {selectedApplication.task?.description}
-        </p>
-
-        <p>
-          <b>Budget:</b>{" "}
-          ${selectedApplication.offered_price}
-        </p>
-
-        <p>
-          <b>Requester:</b>{" "}
-          {selectedApplication.task?.requester?.fullName}
-        </p>
-
-        <p>
-          <b>Requester Email:</b>{" "}
-          {selectedApplication.task?.requester?.email}
-        </p>
-
-        <p>
-          <b>Performer:</b>{" "}
-          {selectedApplication.performer?.fullName}
-        </p>
-
-        <p>
-          <b>Performer Email:</b>{" "}
-          {selectedApplication.performer?.email}
-        </p>
-
-        <p>
-          <b>Status:</b>{" "}
-          {selectedApplication.status}
-        </p>
-     </div>
-
       </div>
 
-      <div className="mt-6 flex justify-end">
+      {/* Body Content */}
+      <div className="p-6 space-y-6 max-h-[75vh] overflow-y-auto">
+        
+        {/* Description */}
+        {selectedApplication.task?.description && (
+          <div className="space-y-1">
+            <h4 className="text-sm font-semibold text-gray-500">Description</h4>
+            <p className="text-gray-600 leading-relaxed text-sm">
+              {selectedApplication.task?.description}
+            </p>
+          </div>
+        )}
 
-      <button
-      onClick={() =>
-      setSelectedApplication(null)
-      }
-      className="bg-red-500 text-white px-5 py-2 rounded-lg"
-      >
-      Close
-      </button>
+        <hr className="border-gray-100" />
 
+        {/* Metadata Grid */}
+        <div className="grid grid-cols-2 gap-y-4 gap-x-6 text-sm">
+          <div>
+            <span className="block text-xs font-medium text-gray-400 uppercase">Budget</span>
+            <span className="font-semibold text-gray-900 text-base">
+              ${selectedApplication.offered_price}
+            </span>
+          </div>
+
+          <div>
+            <span className="block text-xs font-medium text-gray-400 uppercase">Status</span>
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 capitalize mt-1">
+              {selectedApplication.status}
+            </span>
+          </div>
+
+          <div className="col-span-2 sm:col-span-1">
+            <span className="block text-xs font-medium text-gray-400 uppercase">Requester</span>
+            <span className="font-medium text-gray-800 block">
+              {selectedApplication.task?.requester?.fullName}
+            </span>
+            <span className="text-xs text-gray-500 break-all">
+              {selectedApplication.task?.requester?.email}
+            </span>
+          </div>
+
+          <div className="col-span-2 sm:col-span-1">
+            <span className="block text-xs font-medium text-gray-400 uppercase">Performer</span>
+            <span className="font-medium text-gray-800 block">
+              {selectedApplication.performer?.fullName}
+            </span>
+            <span className="text-xs text-gray-500 break-all">
+              {selectedApplication.performer?.email}
+            </span>
+          </div>
+        </div>
       </div>
 
+      {/* Footer Actions */}
+      <div className="bg-gray-50 px-6 py-4 flex justify-end border-t border-gray-100">
+        <button
+          onClick={() => setSelectedApplication(null)}
+          className="bg-white hover:bg-gray-50 text-gray-700 font-medium px-5 py-2.5 rounded-xl border border-gray-300 shadow-sm transition-colors text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+        >
+          Close
+        </button>
       </div>
 
-      </div>
-      )}
+    </div>
+  </div>
+)}
       
     </div>
     

@@ -15,6 +15,13 @@ export const adminService = {
     return response.data;
   },
 
+  async getUserGrowth(period: "Daily" | "Weekly" | "Monthly" = "Daily") {
+    const response = await api.get("/admin/dashboard/user-growth", {
+      params: { period },
+    });
+    return response.data;
+  },
+
 
 
   // ============ USERS ============
@@ -64,6 +71,11 @@ export const adminService = {
   // ============ ASSIGNMENTS ============
   async getAssignments(params: PaginationParams = { page: 1, limit: 10 }) {
     const response = await api.get("/admin/assignments", { params });
+    return response.data;
+  },
+
+  async getAdminNotifications() {
+    const response = await api.get("/notifications/admin");
     return response.data;
   },
 
