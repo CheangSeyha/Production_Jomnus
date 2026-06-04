@@ -2,7 +2,6 @@
 
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { CirclePlus, Send, Smile, X, Image as ImageIcon } from "lucide-react";
-// @ts-ignore
 import Picker from "@emoji-mart/react";
 import data from "@emoji-mart/data";
 import api from "@/lib/axios";
@@ -11,15 +10,13 @@ type Props = {
     draftMessage: string;
     onChange: (v: string) => void;
     conversationId: number;
-    onMessageSent?: () => void; // ← to refetch messages after HTTP send
 };
 
 export default function MessageComposer({
-                                            draftMessage,
-                                            onChange,
-                                            conversationId,
-                                            onMessageSent,
-                                        }: Props) {
+    draftMessage,
+    onChange,
+    conversationId,
+}: Props) {
     const [image, setImage] = useState<File | null>(null);
     const [preview, setPreview] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
@@ -75,7 +72,7 @@ export default function MessageComposer({
             setImage(null);
             setPreview(null);
             if (fileRef.current) fileRef.current.value = "";
-            onMessageSent?.(); // trigger refetch in parent
+            // ← remove onMessageSent?.()
         } catch (err) {
             console.error("Send failed:", err);
         } finally {
