@@ -58,10 +58,10 @@ const BASE_URL = (process.env.NEXT_PUBLIC_API_URL ?? "").replace(/\/api$/, "");
 
 export function mapApiMessage(raw: any, currentUserId: number | null): ChatMessage {
   const imageUrl = raw.image_url
-      ? raw.image_url.startsWith("http")
-          ? raw.image_url
-          : `${BASE_URL}${raw.image_url}`  // ← uses BASE_URL without /api
-      : undefined;
+    ? raw.image_url.startsWith("http")
+      ? raw.image_url
+      : `${BASE_URL}${raw.image_url}`  // ← uses BASE_URL without /api
+    : undefined;
 
   return {
     id: raw.id,

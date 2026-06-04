@@ -75,20 +75,27 @@ export default function MessagePage() {
     const currentUserId = getCurrentUserId();
 
     socket.on("message:new", (rawMsg: any) => {
+      const currentUserId = getCurrentUserId();
       const mapped = mapApiMessage(rawMsg, currentUserId);
+
       setMessages((prev) => {
-        if (prev.some((m) => m.id === mapped.id)) return prev;
+        if (prev.some((m) => String(m.id) === String(mapped.id))) return prev;
         return [...prev, mapped];
       });
 
       setConversations((prev) =>
           prev.map((c) =>
               c.id === String(rawMsg.conversation_id)
-                  ? { ...c, lastMessage: rawMsg.message, lastMessageAt: "Just now" }
+                  ? {
+                    ...c,
+                    lastMessage: rawMsg.message || "📷 Image",
+                    lastMessageAt: "Just now",
+                  }
                   : c,
           ),
       );
     });
+
 
     socket.on("chat:error", (err: { message: string }) => {
       console.error("Chat error:", err.message);
@@ -143,14 +150,14 @@ export default function MessagePage() {
 
   // ── derived state ──────────────────────────────────────────────────────────
   const selectedConversation = useMemo(
-      () => conversations.find((item) => item.id === selectedConversationId),
-      [conversations, selectedConversationId],
+    () => conversations.find((item) => item.id === selectedConversationId),
+    [conversations, selectedConversationId],
   );
 
   const filteredConversations = useMemo(() => {
     if (!search.trim()) return conversations;
     return conversations.filter((item) =>
-        item.participantName.toLowerCase().includes(search.toLowerCase()),
+      item.participantName.toLowerCase().includes(search.toLowerCase()),
     );
   }, [conversations, search]);
 
@@ -166,68 +173,64 @@ export default function MessagePage() {
     setDraftMessage("");
 
     socket.emit(
-        "message:send",
-        { conversationId: Number(selectedConversationId), message: text },
-        (ack: any) => {
-          setIsSending(false);
-          if (ack?.event === "chat:error") {
-            console.error("Send failed:", ack.data?.message);
-            setDraftMessage(text);
-          }
-        },
+      "message:send",
+      { conversationId: Number(selectedConversationId), message: text },
+      (ack: any) => {
+        setIsSending(false);
+        if (ack?.event === "chat:error") {
+          console.error("Send failed:", ack.data?.message);
+          setDraftMessage(text);
+        }
+      },
     );
   };
 
   // ── render ─────────────────────────────────────────────────────────────────
   if (isLoading) {
     return (
-        <div className="flex h-[64vh] items-center justify-center text-slate-400">
-          Loading messages…
-        </div>
+      <div className="flex h-[64vh] items-center justify-center text-slate-400">
+        Loading messages…
+      </div>
     );
   }
 
   return (
-      <div className="h-full min-h-0 overflow-hidden">
-        <div className="mx-auto flex h-full max-w-[1800px] flex-col gap-5 overflow-hidden px-4 py-4 md:px-8">
-          <div className="flex-1 min-h-0 rounded-2xl border border-sky-200 overflow-hidden shadow-[0_14px_40px_rgba(14,165,233,0.10)]">
-            <div className="grid h-full min-h-0 grid-cols-1 lg:grid-cols-[300px_1fr]">
+    <div className="h-full min-h-0 overflow-hidden">
+      <div className="mx-auto flex h-full max-w-[1800px] flex-col gap-5 overflow-hidden px-4 py-4 md:px-8">
+        <div className="flex-1 min-h-0 rounded-2xl border border-sky-200 overflow-hidden shadow-[0_14px_40px_rgba(14,165,233,0.10)]">
+          <div className="grid h-full min-h-0 grid-cols-1 lg:grid-cols-[300px_1fr]">
 
-              <MessageSidebar
-                  conversations={filteredConversations}
-                  selectedConversationId={selectedConversationId}
-                  search={search}
-                  onSearchChange={setSearch}
-                  onSelectConversation={setSelectedConversationId}
-              />
+            <MessageSidebar
+              conversations={filteredConversations}
+              selectedConversationId={selectedConversationId}
+              search={search}
+              onSearchChange={setSearch}
+              onSelectConversation={setSelectedConversationId}
+            />
 
-              <section className="relative flex h-full min-h-0 flex-col overflow-hidden">
-                {selectedConversation ? (
-                    <>
-                      <MessageHeader conversation={selectedConversation} />
-                      <MessageList messages={messages} containerRef={messageListRef} />
-                      <MessageComposer
-                          draftMessage={draftMessage}
-                          onChange={setDraftMessage}
-                          conversationId={Number(selectedConversationId)}
-                          onMessageSent={async () => {
-                            const list = await messageService.getMessages(selectedConversationId);
-                            setMessages(list);
-                          }}
-                      />
-                    </>
-                ) : (
-                    <div className="grid h-full place-items-center text-slate-400">
-                      {conversations.length === 0
-                          ? "No conversations yet. Start one from a task page."
-                          : "Select a conversation"}
-                    </div>
-                )}
-              </section>
+            <section className="relative flex h-full min-h-0 flex-col overflow-hidden">
+              {selectedConversation ? (
+                <>
+                  <MessageHeader conversation={selectedConversation} />
+                  <MessageList messages={messages} containerRef={messageListRef} />
+                  <MessageComposer
+                    draftMessage={draftMessage}
+                    onChange={setDraftMessage}
+                    conversationId={Number(selectedConversationId)}
+                  />
+                </>
+              ) : (
+                <div className="grid h-full place-items-center text-slate-400">
+                  {conversations.length === 0
+                    ? "No conversations yet. Start one from a task page."
+                    : "Select a conversation"}
+                </div>
+              )}
+            </section>
 
-            </div>
           </div>
         </div>
       </div>
+    </div>
   );
 }
