@@ -7,6 +7,7 @@ import Link from "next/link";
 import { MapPin, Mail, Phone, ArrowLeft, MessageCircle, ShieldCheck, User, Calendar, CheckCircle2 } from "lucide-react";
 import api from "@/lib/axios";
 import StatsManagement from "@/components/setting/StatsManagement";
+import WorkHistory from "@/components/setting/WorkHistory";
 
 type User = {
   id: number;
@@ -62,6 +63,20 @@ export default function ProfilePage() {
     };
     fetchUserProfile();
   }, [userId]);
+
+const [projects, setProjects] = useState<WorkItem[]>([]);
+
+useEffect(() => {
+  const fetchWorkHistory = async () => {
+    try {
+      const res = await api.get(`/assignments/work-history/${userId}`);
+      setProjects(res.data);
+    } catch (err) {
+      console.error("Failed to fetch work history", err);
+    }
+  };
+  fetchWorkHistory();
+}, []);
 
   if (loading) {
     return (
@@ -178,11 +193,11 @@ export default function ProfilePage() {
             </div>
 
             {/* Message */}
-            <Link href={`/messages/${user.id}`} className="shrink-0">
+            {/* <Link href={`/messages/${user.id}`} className="shrink-0">
               <button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm px-5 py-2.5 rounded-xl transition-colors">
                 <MessageCircle className="w-4 h-4" /> Message
               </button>
-            </Link>
+            </Link> */}
           </div>
 
           {/* Body */}
@@ -259,6 +274,18 @@ export default function ProfilePage() {
               </div>
 
             </div>
+          </div>
+
+          {/* Work History — outside grid, full width */}
+          <div className="p-8 border-t border-sky-100">
+            <div className="flex justify-between items-center mb-6">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-widest text-sky-600 mb-1">History</p>
+                <h3 className="font-black text-xl text-slate-950">Work History</h3>
+                <p className="text-xs text-slate-400 mt-1">Completed tasks on Jomnus.</p>
+              </div>
+            </div>
+            <WorkHistory data={projects} setData={setProjects} />
           </div>
         </div>
       </div>

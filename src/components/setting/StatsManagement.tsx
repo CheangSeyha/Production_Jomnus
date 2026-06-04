@@ -2,17 +2,17 @@
 
 import { useState, useEffect, useCallback } from "react";
 import api from "@/lib/axios";
-import { CheckCircle2, ClipboardList, DollarSign, ShieldCheck, Star, Zap } from "lucide-react";
+import { ClipboardList, ShieldCheck, DollarSign, CheckCircle2, Star, Zap } from "lucide-react";
 
 interface StatsProps {
-  data: any; 
+  data: any;
 }
 
 export default function StatsManagement({ data }: StatsProps) {
   const [role, setRole] = useState(data?.currentRole || "REQUESTER");
   const [loading, setLoading] = useState(false);
-  const profileId = data?.id;  
-  
+  const profileId = data?.id;
+
   const [requester_stats, setRequesterStats] = useState({
     tasks_posted: 0,
     tasks_verified: 0,
@@ -25,54 +25,34 @@ export default function StatsManagement({ data }: StatsProps) {
     response_time: 0,
   });
 
-  // ✅ FIX: Create a single load handler to pull all data points together
   const loadAllMetrics = useCallback(async () => {
     if (!profileId) return;
-    
     try {
-      // ✅ Refresh stats first before fetching
-    await api.post('/stats/refresh');
-
+      await api.post("/stats/refresh");
       const [reqRes, perfRes] = await Promise.allSettled([
         api.get(`/stats/requester/${profileId}`),
-        api.get(`/stats/performer/${profileId}`)
+        api.get(`/stats/performer/${profileId}`),
       ]);
-
-      if (reqRes.status === "fulfilled") {
-        setRequesterStats(reqRes.value.data);
-      }
-      if (perfRes.status === "fulfilled") {
-        setPerformerStats(perfRes.value.data);
-      }
+      if (reqRes.status === "fulfilled") setRequesterStats(reqRes.value.data);
+      if (perfRes.status === "fulfilled") setPerformerStats(perfRes.value.data);
     } catch (error) {
       console.error("Error loading metrics:", error);
     }
   }, [profileId]);
 
-  // ✅ Fetch everything on mount instantly
   useEffect(() => {
     loadAllMetrics();
   }, [loadAllMetrics]);
 
-  const isRequester = role === "REQUESTER";
-
   const handleSwitchRole = async (newRole: "REQUESTER" | "PERFORMER") => {
     if (newRole === role) return;
-
     try {
       setLoading(true);
       const res = await api.patch("/users/me/switch-role", { role: newRole });
       const { access_token } = res.data;
-
-      if (access_token) {
-        localStorage.setItem("access_token", access_token);
-      }
-
+      if (access_token) localStorage.setItem("access_token", access_token);
       setRole(newRole);
-      
-      // ✅ Refresh the local values from the source after a successful role switch
       await loadAllMetrics();
-
     } catch (error: any) {
       console.error("Switch role failed:", error);
       alert(error.response?.data?.message || "Could not switch role.");
@@ -81,101 +61,121 @@ export default function StatsManagement({ data }: StatsProps) {
     }
   };
 
-  const statsToDisplay = isRequester
-    ? [
-        {
-          label: "Tasks Posted",
-          value: requester_stats?.tasks_posted ?? 0,
-          icon: ClipboardList,
-          color: "bg-orange-300",
-        },
-        {
-          label: "Verified Tasks",
-          value: requester_stats?.tasks_verified ?? 0,
-          icon: ShieldCheck,
-          color: "bg-green-300",
-        },
-        {
-          label: "Total Investment",
-          value: `$${(requester_stats?.total_spent ?? 0).toLocaleString()}`,
-          icon: DollarSign,
-          color: "bg-blue-300",
-        },
-      ]
-    : [
-        {
-          label: "Tasks Completed",
-          value: performer_stats?.completed_tasks ?? 0,
-          icon: CheckCircle2,
-          color: "bg-blue-300",
-        },
-        {
-          label: "Average Rating",
-          value: `${performer_stats?.avg_rating ?? 0}`,
-          icon: Star,
-          color: "bg-purple-300",
-        },
-        {
-          label: "Response Time",
-          value: `${performer_stats?.response_time ?? 0}m`,
-          icon: Zap,
-          color: "bg-yellow-300",
-        },
-      ];
+  const isRequester = role === "REQUESTER";
+
+  const requesterCards = [
+    {
+      label: "Tasks posted",
+      value: requester_stats?.tasks_posted ?? 0,
+      sub: "Total tasks created",
+      icon: ClipboardList,
+      iconBg: "bg-blue-50",
+      iconColor: "text-blue-600",
+      trend: "+3 this month",
+      trendColor: "bg-emerald-50 text-emerald-700",
+    },
+    {
+      label: "Verified tasks",
+      value: requester_stats?.tasks_verified ?? 0,
+      sub: "Successfully completed",
+      icon: ShieldCheck,
+      iconBg: "bg-emerald-50",
+      iconColor: "text-emerald-600",
+      trend: "All time",
+      trendColor: "bg-slate-100 text-slate-500",
+    },
+    {
+      label: "Total invested",
+      value: `$${(requester_stats?.total_spent ?? 0).toLocaleString()}`,
+      sub: "Across all tasks",
+      icon: DollarSign,
+      iconBg: "bg-amber-50",
+      iconColor: "text-amber-600",
+      trend: "All time",
+      trendColor: "bg-slate-100 text-slate-500",
+    },
+  ];
+
+  const performerCards = [
+    {
+      label: "Tasks completed",
+      value: performer_stats?.completed_tasks ?? 0,
+      sub: "Verified by requesters",
+      icon: CheckCircle2,
+      iconBg: "bg-emerald-50",
+      iconColor: "text-emerald-600",
+      trend: "All time",
+      trendColor: "bg-slate-100 text-slate-500",
+    },
+    {
+      label: "Average rating",
+      value: Number(performer_stats?.avg_rating ?? 0).toFixed(1),
+      sub: `From ${performer_stats?.completed_tasks ?? 0} reviews`,
+      icon: Star,
+      iconBg: "bg-amber-50",
+      iconColor: "text-amber-600",
+      trend: "Top performer",
+      trendColor: "bg-emerald-50 text-emerald-700",
+    },
+    {
+      label: "Response time",
+      value: `${performer_stats?.response_time ?? 0}m`,
+      sub: "Minutes to respond",
+      icon: Zap,
+      iconBg: "bg-violet-50",
+      iconColor: "text-violet-600",
+      trend: "Avg response",
+      trendColor: "bg-slate-100 text-slate-500",
+    },
+  ];
+
+  const cards = isRequester ? requesterCards : performerCards;
 
   return (
-    <div className="space-y-8">
-      {/* Role Switch */}
-      <div className="flex gap-4">
-        <button
-          onClick={() => handleSwitchRole("REQUESTER")}
-          disabled={loading}
-          className={`px-6 py-2.5 rounded-full font-semibold flex items-center gap-2 transition-all ${
-            isRequester
-              ? "bg-blue-600 text-white shadow-md shadow-blue-200"
-              : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-          }`}
-        >
-          {loading && !isRequester && <span className="animate-spin text-xs">🌀</span>}
-          Requester
-        </button>
+    <div className="space-y-6">
 
-        <button
-          onClick={() => handleSwitchRole("PERFORMER")}
-          disabled={loading}
-          className={`px-6 py-2.5 rounded-full font-semibold flex items-center gap-2 transition-all ${
-            !isRequester
-              ? "bg-blue-600 text-white shadow-md shadow-blue-200"
-              : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-          }`}
-        >
-          {loading && isRequester && <span className="animate-spin text-xs">🌀</span>}
-          Performer
-        </button>
+      {/* Role tabs */}
+      <div className="flex gap-2">
+        {(["REQUESTER", "PERFORMER"] as const).map((r) => (
+          <button
+            key={r}
+            onClick={() => handleSwitchRole(r)}
+            disabled={loading}
+            className={`px-5 py-2 rounded-full text-sm font-semibold transition-all ${
+              role === r
+                ? "bg-blue-600 text-white"
+                : "bg-slate-100 text-slate-500 hover:bg-slate-200"
+            }`}
+          >
+            {loading && role !== r && (
+              <span className="inline-block w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+            )}
+            {r.charAt(0) + r.slice(1).toLowerCase()}
+          </button>
+        ))}
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-        {statsToDisplay.map((stat) => {
+      {/* Stat cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        {cards.map((stat) => {
           const Icon = stat.icon;
           return (
             <div
               key={stat.label}
-              className="bg-white border border-slate-100 p-8 rounded-3xl shadow-sm relative overflow-hidden group hover:shadow-lg hover:border-slate-200 transition-all"
+              className="bg-white border border-sky-200 bg-border-blue-100 rounded-2xl p-5 flex flex-col gap-3"
             >
-              <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${stat.color} opacity-80`} />
-              <div className="flex justify-between items-center">
-                <div>
-                  <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2">
-                    {stat.label}
-                  </p>
-                  <h3 className="text-5xl font-extrabold text-slate-900 tracking-tight">
-                    {stat.value}
-                  </h3>
+              <div className="flex items-center justify-between">
+                <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${stat.iconBg}`}>
+                  <Icon className={`w-7 h-7 ${stat.iconColor}`} />
                 </div>
-                <div className="p-3 rounded-xl group-hover:scale-110 transition-transform">
-                  {Icon && <Icon className="w-9 h-9 text-slate-700" />}
-                </div>
+                <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${stat.trendColor}`}>
+                  {stat.trend}
+                </span>
+              </div>
+              <div>
+                <p className="text-1xl font-medium text-slate-400 mb-1">{stat.label}</p>
+                <p className="text-4xl font-black text-slate-900 leading-none">{stat.value}</p>
+                <p className="text-xs text-slate-400 mt-1">{stat.sub}</p>
               </div>
             </div>
           );

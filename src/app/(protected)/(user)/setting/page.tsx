@@ -1,25 +1,9 @@
-// "use client";
-
-// import { useEffect, useState, ChangeEvent } from "react";
-// import { useRouter, useSearchParams } from "next/navigation";
-// import axios from "axios";
-
-// import StatsManagement from "@/components/setting/StatsManagement";
-// import Specializations from "@/components/setting/Specializations";
-// import WorkHistory from "@/components/setting/WorkHistory";
-// import ProfileHeader from "@/components/setting/ProfileHeader";
-
-// import { useAuthStore } from "@/store/authStore";
-// import { em } from "motion/react-client";
-
-
 "use client";
 
 import { useEffect, useState, ChangeEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import StatsManagement from "@/components/setting/StatsManagement";
-import Specializations from "@/components/setting/Specializations";
 import WorkHistory from "@/components/setting/WorkHistory";
 import ProfileHeader from "@/components/setting/ProfileHeader";
 import { useAuthStore } from "@/store/authStore";
@@ -204,29 +188,20 @@ export default function SettingPage() {
   // -------------------------
   // PROJECTS
   // -------------------------
-  // Fix: Use number for id, not Date.now() which returns number but ensure it's within number range
-  const [projects, setProjects] = useState<WorkItem[]>([
-    {
-      id: 1,
-      title: "Luxury Penthouse Furniture Setup",
-      description:
-        "Full white-glove assembly for a 4-bedroom penthouse.",
-      tag: "Relocation Logistics",
-      image: "/images/jomnus.png",
-    },
-  ]);
+ // After — replace with this
+const [projects, setProjects] = useState<WorkItem[]>([]);
 
-  const addNewProject = () => {
-    const newProj: WorkItem = {
-      id: Date.now(), // Date.now() returns number, which is fine
-      title: "New Project Title",
-      description: "Enter description",
-      tag: "General",
-      image: "",
-    };
-
-    setProjects((prev) => [newProj, ...prev]);
+useEffect(() => {
+  const fetchWorkHistory = async () => {
+    try {
+      const res = await api.get("/assignments/work-history");
+      setProjects(res.data);
+    } catch (err) {
+      console.error("Failed to fetch work history", err);
+    }
   };
+  fetchWorkHistory();
+}, []);
 
   // -------------------------
   // LOADING STATE
@@ -323,31 +298,12 @@ return (
         <div className="p-8 border-b border-sky-100">
           <div className="flex justify-between items-center mb-6">
             <div>
-              <p className="text-xs font-bold uppercase tracking-widest text-sky-600 mb-1">Portfolio</p>
-              <h3 className="font-black text-xl text-slate-950">Work History & Portfolio</h3>
+              <p className="text-xs font-bold uppercase tracking-widest text-sky-600 mb-1">History</p>
+              <h3 className="font-black text-xl text-slate-950">Work History</h3>
             </div>
-            <button
-              onClick={addNewProject}
-              className="text-sky-600 hover:text-white bg-sky-50 hover:bg-sky-500 px-5 py-2.5 rounded-xl text-sm font-bold tracking-wide transition-all flex items-center gap-2 border border-sky-200 hover:border-sky-500 shadow-sm"
-            >
-              <span className="text-lg leading-none">+</span> Add Case Study
-            </button>
           </div>
           <WorkHistory data={projects} setData={setProjects} />
         </div>
-
-        {/* Specializations */}
-        {(rawData?.currentRole === "PERFORMER" || rawData?.role === "PERFORMER") && (
-          <div className="p-8">
-            <div className="mb-6">
-              <p className="text-xs font-bold uppercase tracking-widest text-sky-600 mb-1">Skills</p>
-              <h3 className="font-black text-xl text-slate-950">Expertise & Skills</h3>
-              <p className="text-xs text-slate-400 mt-1">These tags help you match with the right tasks.</p>
-            </div>
-            <Specializations data={rawData?.specializations || []} />
-          </div>
-        )}
-
       </div>
     </div>
   </div>
