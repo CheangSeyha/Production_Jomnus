@@ -64,19 +64,19 @@ export default function ProfilePage() {
     fetchUserProfile();
   }, [userId]);
 
-const [projects, setProjects] = useState<WorkItem[]>([]);
+  const [projects, setProjects] = useState<any[]>([]);
 
-useEffect(() => {
-  const fetchWorkHistory = async () => {
-    try {
-      const res = await api.get(`/assignments/work-history/${userId}`);
-      setProjects(res.data);
-    } catch (err) {
-      console.error("Failed to fetch work history", err);
-    }
-  };
-  fetchWorkHistory();
-}, []);
+  useEffect(() => {
+    const fetchWorkHistory = async () => {
+      try {
+        const res = await api.get(`/assignments/work-history/${userId}`);
+        setProjects(res.data);
+      } catch (err) {
+        console.error("Failed to fetch work history", err);
+      }
+    };
+    fetchWorkHistory();
+  }, []);
 
   if (loading) {
     return (

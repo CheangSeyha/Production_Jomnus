@@ -5,7 +5,7 @@ const SOCKET_URL =
   process.env.NEXT_PUBLIC_API_URL?.replace("/api", "") ||
   "http://localhost:3001";
 
-let socket: Socket | null = null;
+export let socket: Socket | null = null;
 
 export function getSocket(): Socket {
   if (socket && socket.connected) {

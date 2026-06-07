@@ -4,11 +4,13 @@ import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation"; // ← add useSearchParams
 import MessageComposer from "@/components/message/MessageComposer";
 import MessageHeader from "@/components/message/MessageHeader";
+import CallOverlay from "@/components/message/CallOverlay";
 import MessageList from "@/components/message/MessageList";
 import MessageSidebar from "@/components/message/MessageSidebar";
 import { messageService, mapApiMessage } from "@/services/messageService";
 import { ChatMessage, Conversation } from "@/types/message";
-import { getSocket } from "@/lib/websoket";
+import { useCallStore } from "@/store/callStore";
+import { getSocket } from "@/lib/websocket";
 import type { Socket } from "socket.io-client";
 
 function getCurrentUserId(): number | null {
@@ -101,6 +103,18 @@ export default function MessagePage() {
       console.error("Chat error:", err.message);
     });
 
+    socket.on("call:incoming", (data: any) => {
+      useCallStore.getState().receiveIncomingCall(data.conversationId, data.callerId, data.isVideo);
+    });
+
+    socket.on("call:signal", (data: any) => {
+      useCallStore.getState().handleSignal(data.signalData);
+    });
+
+    socket.on("call:ended", (data: any) => {
+      useCallStore.getState().endCall(true);
+    });
+
     socket.on("connect", () => {
       joinedRoomRef.current = "";
       const currentId = joinedRoomRef.current;
@@ -113,6 +127,9 @@ export default function MessagePage() {
     return () => {
       socket.off("message:new");
       socket.off("chat:error");
+      socket.off("call:incoming");
+      socket.off("call:signal");
+      socket.off("call:ended");
       socket.off("connect");
     };
   }, []);
@@ -196,6 +213,7 @@ export default function MessagePage() {
 
   return (
     <div className="h-full min-h-0 overflow-hidden">
+      <CallOverlay />
       <div className="mx-auto flex h-full max-w-[1800px] flex-col gap-5 overflow-hidden px-4 py-4 md:px-8">
         <div className="flex-1 min-h-0 rounded-2xl border border-sky-200 overflow-hidden shadow-[0_14px_40px_rgba(14,165,233,0.10)]">
           <div className="grid h-full min-h-0 grid-cols-1 lg:grid-cols-[300px_1fr]">
