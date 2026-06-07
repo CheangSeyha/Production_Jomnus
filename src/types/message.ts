@@ -4,6 +4,30 @@ export type PresenceStatus = "online" | "offline";
 
 export type MessageKind = "text" | "file";
 
+
+export enum MessageType {
+  TEXT = 'TEXT',
+  IMAGE = 'IMAGE',
+  CALL_LOG = 'CALL_LOG',
+}
+
+export interface Message {
+  id: number;
+  conversation_id: number;
+  sender_id: number;
+  type: MessageType;
+  message: string;
+  image_url?: string;
+  call_duration?: number;
+  created_at: string;
+  sender?: {
+    id: number;
+    fullName: string;
+    profileImage?: string;
+  };
+}
+
+
 export interface MessageFile {
   id: string;
   fileName: string;
@@ -21,6 +45,8 @@ export type ChatMessage = {
   sentAt: string;
   read?: boolean;
   kind?: "text" | "file";
+  type?: MessageType;
+  callDuration?: number;
   file?: {
     fileName: string;
     sizeLabel: string;
@@ -71,6 +97,8 @@ export interface ApiMessage {
   sender_id: number;
   message: string;
   image_url?: string; // ← add this
+  type?: MessageType;
+  call_duration?: number;
   created_at: string;
   sender: {
     id: number;

@@ -67,6 +67,8 @@ export function mapApiMessage(raw: any, currentUserId: number | null): ChatMessa
     id: raw.id,
     content: raw.message ?? "",
     imageUrl,
+    type: raw.type,
+    callDuration: raw.call_duration,
     isOwn: Number(raw.sender_id) === currentUserId,
     senderName: raw.sender?.fullName ?? "",
     senderAvatar: raw.sender?.profileImage ?? null,
