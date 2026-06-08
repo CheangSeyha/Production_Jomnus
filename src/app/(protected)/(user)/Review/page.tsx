@@ -15,18 +15,21 @@ import Link from "next/link";
 type Review = {
   id: number;
   reviewerName: string;
-    reviewer_id: number; // ← add this
-
+  reviewer_id: number;
   reviewerImage?: string | null;
   revieweeName?: string;
   rating: number;
   comment: string;
   created_at: string;
   assignment_id: number;
+  task_title: string;
   likesCount?: number;
   likedByMe?: boolean;
 };
 
+/* ============================= */
+/* RATING LABELS                */
+/* ============================= */
 const ratingLabels: Record<number, string> = {
   5: "Excellent",
   4: "Great",
@@ -35,6 +38,10 @@ const ratingLabels: Record<number, string> = {
   1: "Needs work",
 };
 
+
+/* ============================= */
+/* DATE FORMAT HELPER           */
+/* ============================= */
 function formatDate(date?: string) {
   if (!date) return "No date";
   const parsed = new Date(date);
@@ -46,6 +53,10 @@ function formatDate(date?: string) {
   });
 }
 
+
+/* ============================= */
+/* STAR RATING UI COMPONENT     */
+/* ============================= */
 function Stars({ rating, size = 18 }: { rating: number; size?: number }) {
   return (
     <div className="flex gap-0.5 text-amber-400">
@@ -65,21 +76,31 @@ function ReviewPage() {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [notification, setNotification] = useState<string | null>(null);
+  const [showStats, setShowStats] = useState(false);
 
+  /* ============================= */
+  /* FETCH REVIEWS                 */
+  /* ============================= */
   useEffect(() => {
+
+    // check auth token
     if (typeof window !== "undefined" && !localStorage.getItem("access_token")) {
       setLoading(false);
       return;
     }
 
+    // API call
     const loadReviews = async () => {
       try {
         const { data } = await api.get<Review[]>("/reviews/me");
-        const normalized = (data || []).map((review: Review) => ({
+
+        const normalized = (data || []).map((review: any) => ({
+          ...review,
           likesCount: review.likesCount ?? 0,
           likedByMe: review.likedByMe ?? false,
-          ...review,
+          task_title: review.task_title ?? "Unknown task", // 👈 safety fallback
         }));
+
         setReviews(normalized);
       } catch (err) {
         console.error("Error loading reviews:", err);
@@ -91,6 +112,10 @@ function ReviewPage() {
     loadReviews();
   }, []);
 
+
+  /* ============================= */
+  /* STATS CALCULATION (MEMOIZED) */
+  /* ============================= */
   const stats = useMemo(() => {
     const total = reviews.length;
     const totalRating = reviews.reduce((sum, review) => sum + Number(review.rating || 0), 0);
@@ -101,6 +126,7 @@ function ReviewPage() {
       .filter((time) => !Number.isNaN(time))
       .sort((a, b) => b - a)[0];
 
+    // rating distribution (5 → 1 stars)
     const distribution = [5, 4, 3, 2, 1].map((rating) => {
       const count = reviews.filter((review) => Math.round(review.rating) === rating).length;
       return {
@@ -120,6 +146,12 @@ function ReviewPage() {
     };
   }, [reviews]);
 
+
+
+
+  /* ============================= */
+  /* LIKE REVIEW HANDLER          */
+  /* ============================= */
   const handleLike = async (id?: number) => {
     if (!id && id !== 0) {
       setNotification("Unable to like this review.");
@@ -171,6 +203,10 @@ function ReviewPage() {
     }
   };
 
+
+  /* ============================= */
+  /* RATING BAR COMPONENT         */
+  /* ============================= */
   const RatingBar = ({ rating, count, percentage }: { rating: number; count: number; percentage: number }) => (
     <div className="space-y-1.5">
       <div className="flex items-center justify-between text-xs font-bold text-slate-600">
@@ -186,48 +222,69 @@ function ReviewPage() {
     </div>
   );
 
+
   return (
     <div className="min-h-full px-4 py-6 md:px-8">
+
       <div className="mx-auto max-w-7xl space-y-6">
+
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+
           <div>
-            <p className="mb-1 text-xs font-black uppercase tracking-widest text-sky-600">Reviews</p>
+            {/*<p className="mb-1 text-xs font-black uppercase tracking-widest text-sky-600">Reviews</p>*/}
             <h1 className="text-3xl font-black tracking-tight text-slate-950 md:text-4xl">
               Community Trust
             </h1>
+
             <p className="mt-2 max-w-2xl text-sm font-medium leading-6 text-slate-500">
               Real feedback from completed assignments, calculated from your latest reviews.
             </p>
+
           </div>
 
           <div className="inline-flex w-fit items-center gap-2 rounded-2xl border border-sky-200 bg-white/85 px-4 py-3 shadow-sm">
+
             <Sparkles size={18} className="text-sky-500" />
+
             <span className="text-sm font-black text-slate-800">
               {stats.total} {stats.total === 1 ? "review" : "reviews"}
             </span>
+
           </div>
+
         </div>
 
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-[360px_1fr]">
+
           <aside className="h-fit rounded-3xl border border-sky-200 bg-white/90 p-6 shadow-[0_18px_45px_rgba(14,165,233,0.14)]">
+
             <div className="rounded-3xl bg-gradient-to-br from-sky-600 to-cyan-500 p-6 text-white shadow-lg shadow-sky-200">
+
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="text-xs font-black uppercase tracking-widest text-sky-100">Overall rating</p>
+
                   <div className="mt-3 flex items-end gap-2">
+
                     <span className="text-6xl font-black leading-none">
                       {stats.average ? stats.average.toFixed(1) : "0.0"}
                     </span>
+
                     <span className="pb-1 text-xl font-black text-sky-100">/5</span>
                   </div>
+
                 </div>
+
                 <span className="rounded-2xl bg-white/20 p-3">
                   <Trophy size={24} />
                 </span>
+
               </div>
+
               <div className="mt-4">
                 <Stars rating={stats.average} size={20} />
               </div>
+
             </div>
 
             <div className="mt-6 grid grid-cols-2 gap-3">
@@ -248,15 +305,20 @@ function ReviewPage() {
             </div>
 
             <div className="mt-6 flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+
               <CalendarDays size={17} className="text-sky-500" />
+
               <div>
                 <p className="text-xs font-black uppercase tracking-wide text-slate-500">Latest review</p>
                 <p className="text-sm font-bold text-slate-800">{stats.latestDate}</p>
               </div>
+
             </div>
+
           </aside>
 
           <section className="space-y-4">
+
             {notification && (
               <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-bold text-amber-700">
                 {notification}
@@ -272,6 +334,7 @@ function ReviewPage() {
             )}
 
             {!loading && reviews.length === 0 && (
+
               <div className="flex min-h-[360px] flex-col items-center justify-center rounded-3xl border-2 border-dashed border-sky-200 bg-white/85 p-8 text-center">
                 <MessageSquareText size={42} className="text-sky-400" />
                 <h2 className="mt-4 text-xl font-black text-slate-900">No reviews yet</h2>
@@ -279,6 +342,7 @@ function ReviewPage() {
                   Once clients review your completed assignments, your rating and review history will appear here.
                 </p>
               </div>
+
             )}
 
             {!loading &&
@@ -291,30 +355,38 @@ function ReviewPage() {
                     <div className="flex min-w-0 gap-4">
                       <Link href={`/profile/${review.reviewer_id}`} className="flex min-w-0 gap-4 group/avatar">
 
-                      <img
-                        src={
-                          review.reviewerImage ||
-                          `https://api.dicebear.com/7.x/avataaars/svg?seed=${review.reviewerName}`
-                        }
-                        alt={review.reviewerName}
-                        className="h-14 w-14 shrink-0 rounded-2xl border border-sky-100 bg-sky-50 object-cover"
-                      />
+                        <img
+                          src={
+                            review.reviewerImage ||
+                            `https://api.dicebear.com/7.x/avataaars/svg?seed=${review.reviewerName}`
+                          }
+                          alt={review.reviewerName}
+                          className="h-14 w-14 shrink-0 rounded-2xl border border-sky-100 bg-sky-50 object-cover"
+                        />
 
-                      <div className="min-w-0">
-                        <h3 className="truncate text-lg font-black text-slate-950">{review.reviewerName}</h3>
-                        <p className="text-sm font-semibold text-slate-500">
-                          Task #{review.assignment_id} • {formatDate(review.created_at)}
-                        </p>
-                      </div>
+                        <div className="min-w-0">
+
+                          <h3 className="truncate text-lg font-black text-slate-950">{review.reviewerName}</h3>
+                          <p className="text-sm font-semibold text-slate-500">
+                            TASK: {review.task_title || "Loading..."} • {formatDate(review.created_at)}
+                          </p>
+
+                        </div>
+
                       </Link>
+
                     </div>
 
                     <div className="flex shrink-0 items-center gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2">
+
                       <Stars rating={review.rating} size={16} />
+
                       <span className="text-xs font-black text-amber-700">
                         {ratingLabels[Math.round(review.rating)] || `${review.rating}/5`}
                       </span>
+
                     </div>
+
                   </div>
 
                   <p className="mt-5 text-base font-medium leading-7 text-slate-600">

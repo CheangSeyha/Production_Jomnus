@@ -18,6 +18,12 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Jomnous",
   description: "App",
+  icons: {
+    icon: [
+      { url: "/images/jomnus.png", sizes: "512x512", type: "image/png" },
+    ],
+  },
+
 };
 
 export default function RootLayout({
