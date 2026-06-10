@@ -66,16 +66,10 @@ const SORT_OPTIONS = [
 
 export default function DashboardPage() {
 
-  // ─────────────────────────────────────────────
-  // NAVIGATION + URL STATE
-  // ─────────────────────────────────────────────
   const router = useRouter();
   const searchParams = useSearchParams();
 
 
-  // ─────────────────────────────────────────────
-  // MAIN STATE (UI + DATA)
-  // ─────────────────────────────────────────────
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoadingCategories, setIsLoadingCategories] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("");
@@ -99,10 +93,6 @@ export default function DashboardPage() {
     );
   };
 
-
-  // ─────────────────────────────────────────────
-  // FILTER + SEARCH + SORT LOGIC (VERY IMPORTANT)
-  // ─────────────────────────────────────────────
   const filteredTasks = useMemo(() => {
     const q = searchTerm.trim().toLowerCase();
     return [...tasks]
@@ -142,9 +132,6 @@ export default function DashboardPage() {
   }, [searchTerm, selectedCategory, selectedPrice, tasks, sortBy]);
 
 
-  // ─────────────────────────────────────────────
-  // PAGINATION
-  // ─────────────────────────────────────────────
   const totalPages = Math.max(1, Math.ceil(filteredTasks.length / TASKS_PER_PAGE));
   const paginatedTasks = filteredTasks.slice(
       (currentPage - 1) * TASKS_PER_PAGE,
@@ -154,10 +141,6 @@ export default function DashboardPage() {
   const activeFilterCount = [selectedCategory, selectedPrice, sortBy !== "newest" ? sortBy : ""]
       .filter(Boolean).length;
 
-
-  // ─────────────────────────────────────────────
-  // LOAD TASKS (API CALL)
-  // ─────────────────────────────────────────────
   useEffect(() => {
     const token = searchParams.get("token");
 
@@ -171,7 +154,6 @@ export default function DashboardPage() {
       router.replace("/auth/signin");
     }
 
-    // Fetch tasks
     const loadTasks = async () => {
       try {
         const res = await api.get<TaskApi[]>("/tasks");
@@ -208,9 +190,6 @@ export default function DashboardPage() {
   }, [router, searchParams]);
 
 
-  // ─────────────────────────────────────────────
-  // LOAD CATEGORIES
-  // ─────────────────────────────────────────────
   useEffect(() => {
     const controller = new AbortController();
     const loadCategories = async () => {
@@ -228,22 +207,11 @@ export default function DashboardPage() {
     return () => controller.abort();
   }, []);
 
-
-  // ─────────────────────────────────────────────
-  // RESET PAGE WHEN FILTER CHANGES
-  // ─────────────────────────────────────────────
   useEffect(() => { setCurrentPage(1); }, [searchTerm, selectedCategory, selectedPrice]);
 
-
-  // ─────────────────────────────────────────────
-  // FIX PAGE OUT OF RANGE
-  // ─────────────────────────────────────────────
   useEffect(() => { if (currentPage > totalPages) setCurrentPage(totalPages); }, [currentPage, totalPages]);
 
 
-  // ─────────────────────────────────────────────
-  // UI RENDER (JSX)
-  // ─────────────────────────────────────────────
   return (
       <div className="w-full">
         <div className="mx-auto flex w-full max-w-[1800px] flex-col gap-5 px-4 py-4 md:px-8">
@@ -262,7 +230,6 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* ── FILTER BAR ── */}
           <div className="relative z-0 shrink-0 rounded-2xl border border-sky-200 bg-white/90 p-4 shadow-[0_14px_40px_rgba(14,165,233,0.12)]">
             <div className="flex flex-col sm:flex-row gap-3">
 
@@ -286,7 +253,6 @@ export default function DashboardPage() {
                 )}
               </div>
 
-              {/* FIX 2: Use lg:flex-nowrap instead of sm:flex-nowrap to avoid overflow at mid-widths */}
               <div className="flex gap-2 flex-wrap lg:flex-nowrap">
                 <div className="relative min-w-[140px] flex-1 lg:flex-none">
                   <SlidersHorizontal size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-cyan-600" />
@@ -336,14 +302,8 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* ── MAIN CONTENT ── */}
-          {/*
-          FIX 3: On mobile, use flex-col so task list appears first (order-1) and map second (order-2).
-          On xl, switch to a side-by-side grid.
-        */}
           <div className="flex flex-col xl:grid xl:grid-cols-[1fr_700px] gap-5">
 
-            {/* Task list — order-1 so it appears FIRST on mobile */}
             <div className="order-1 xl:order-2 flex flex-col gap-4">
               <div className="space-y-4">
                 {paginatedTasks.length > 0 ? (
@@ -391,11 +351,6 @@ export default function DashboardPage() {
               )}
             </div>
 
-            {/*
-            FIX 4: Map — order-2 (appears below tasks on mobile).
-            FIX 5: Cap height on mobile (h-[260px]), full height on xl.
-            FIX 6: Remove sticky top-0 — not needed and misfires on mobile.
-          */}
             <div className="order-2 xl:order-1 h-[300px] xl:h-[calc(100vh-280px)] xl:sticky xl:top-4 overflow-hidden rounded-2xl border border-sky-200 bg-white shadow-[0_18px_45px_rgba(14,165,233,0.18)]">
               {filteredTasks.length > 0 ? (
                   <SharedTaskMap lat={selectedTask?.latitude} lng={selectedTask?.longitude} />
