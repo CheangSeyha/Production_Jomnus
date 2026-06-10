@@ -25,21 +25,55 @@ type MyTaskApi = {
 };
 
 type TaskCard = {
-    assignmentId: number;
-    status: string;
-    acceptedPrice: number;
-    taskId: number;
-    title: string;
-    description: string;
-    price: number;
-    deadline: string;
-    locationText: string;
-    requester: { id: number; fullName: string; profileImage?: string | null } | null;
+  assignmentId?: number;
+  applicationId?: number;
+
+  status: string;
+
+  acceptedPrice?: number;
+  offeredPrice?: number;
+
+  taskId: number;
+
+  title: string;
+  description: string;
+
+  price: number;
+  deadline: string;
+
+  locationText: string;
+
+  requester: {
+    id: number;
+    fullName: string;
+    profileImage?: string | null;
+  } | null;
 };
 
-/* ============================= */
-/* TAB CONFIG (FILTER LOGIC UI)  */
-/* ============================= */
+type MyApplicationApi = {
+  applicationId: number;
+  status: string;
+  offeredPrice: number;
+
+  task: {
+    id: number;
+    title: string;
+    description?: string | null;
+    deadline: string;
+    locationText?: string | null;
+    latitude?: number;
+    longitude?: number;
+  };
+
+  requester: {
+    id: number;
+    fullName: string;
+    profileImage?: string | null;
+  };
+
+  appliedAt: string;
+};
+
 const TAB_CONFIG = [
     { key: "ASSIGNED",    label: "Accepted",    statuses: ["ASSIGNED"] },
     { key: "IN_PROGRESS", label: "In Progress", statuses: ["IN_PROGRESS"] },
@@ -47,13 +81,9 @@ const TAB_CONFIG = [
     { key: "BIDDING",     label: "Bidding",     statuses: ["BIDDING", "PENDING"] },
 ];
 
-/* ============================= */
-/* REUSABLE UI COMPONENT: AVATAR */
-/* ============================= */
 function Avatar({ name, image, size = "md" }: { name?: string | null; image?: string | null; size?: "sm" | "md" }) {
     const dim = size === "sm" ? "w-8 h-8 text-xs" : "w-11 h-11 text-sm";
 
-    // If user has image → show avatar image
     if (image)
         return (
             <img
@@ -63,7 +93,6 @@ function Avatar({ name, image, size = "md" }: { name?: string | null; image?: st
             />
         );
 
-    // fallback: first letter avatar
     return (
         <div className={`${dim} rounded-xl bg-sky-100 border border-sky-200 flex items-center justify-center text-sky-700 font-bold`}>
             {(name ?? "?").charAt(0).toUpperCase()}
@@ -88,22 +117,12 @@ function StatusBadge({ status }: { status: string }) {
     );
 }
 
-
-/* ============================= */
-/* MAIN PAGE COMPONENT           */
-/* ============================= */
 export default function MyTaskPage() {
 
-    /* ----------------------------- */
-    /* ROUTER + URL PARAMS          */
-    /* ----------------------------- */
     const router = useRouter();
     const searchParams = useSearchParams();
 
 
-    /* ----------------------------- */
-    /* STATE MANAGEMENT             */
-    /* ----------------------------- */
     const [activeTab, setActiveTab] = useState("ASSIGNED");
     const [tasks, setTasks] = useState<TaskCard[]>([]);
     const [isLoading, setIsLoading] = useState(false);
@@ -113,62 +132,89 @@ export default function MyTaskPage() {
     const [proofFile, setProofFile] = useState<File | null>(null);
     const [proofSubmittingId, setProofSubmittingId] = useState<number | null>(null);
     const [proofError, setProofError] = useState<string | null>(null);
-    const [detailsTask, setDetailsTask] = useState<TaskCard | null>(null);
 
 
+    const load = async () => {
+    try {
+        setIsLoading(true);
 
-    /* ============================= */
-    /* FETCH DATA + AUTH CHECK       */
-    /* ============================= */
+        const [assignmentRes, applicationRes] =
+        await Promise.all([
+            api.get<MyTaskApi[]>("/assignments/my"),
+            api.get<MyApplicationApi[]>("/applications/me"),
+        ]);
+
+        const assignmentTasks: TaskCard[] =
+        assignmentRes.data
+            .filter((i) => i.task)
+            .map((i) => ({
+            assignmentId: i.assignmentId,
+
+            status: i.status,
+
+            acceptedPrice: i.acceptedPrice,
+
+            taskId: i.task?.id ?? 0,
+            title: i.task?.title ?? "",
+            description: i.task?.description ?? "",
+
+            price:
+                i.task?.price ?? i.acceptedPrice,
+
+            deadline:
+                i.task?.deadline ?? "",
+
+            locationText:
+                i.task?.locationText ?? "",
+
+            requester:
+                i.requester ?? null,
+            }));
+
+        const applicationTasks: TaskCard[] =
+        applicationRes.data
+            .filter((i) => i.task)
+            .map((i) => ({
+            applicationId: i.applicationId,
+
+            status: i.status,
+
+            offeredPrice: i.offeredPrice,
+
+            taskId: i.task.id,
+
+            title: i.task.title,
+            description:
+                i.task.description ?? "",
+
+            price: i.offeredPrice,
+
+            deadline:
+                i.task.deadline ?? "",
+
+            locationText:
+                i.task.locationText ?? "",
+
+            requester:
+                i.requester ?? null,
+            }));
+
+        setTasks([
+        ...assignmentTasks,
+        ...applicationTasks,
+        ]);
+
+    } catch (e) {
+        console.error(e);
+    } finally {
+        setIsLoading(false);
+    }
+    };
+
     useEffect(() => {
-
-        const token = searchParams.get("token");
-
-        // login via URL token
-        if (token) {
-            localStorage.setItem("access_token", token);
-            router.replace("/dashboard");
-            return;
-        }
-
-        // redirect if no login
-        if (!localStorage.getItem("access_token")) {
-            router.replace("/auth/signin");
-            return;
-        }
-
-
-        // fetch tasks
-        const load = async () => {
-            try {
-                setIsLoading(true);
-                const { data } = await api.get<MyTaskApi[]>("/assignments/my");
-
-                setTasks(
-                    data.filter((i) => i.task).map((i) => ({
-                        assignmentId: i.assignmentId,
-                        status: i.status,
-                        acceptedPrice: i.acceptedPrice,
-                        taskId: i.task?.id ?? 0,
-                        title: i.task?.title ?? "",
-                        description: i.task?.description ?? "",
-                        price: i.task?.price ?? i.acceptedPrice,
-                        deadline: i.task?.deadline ?? "",
-                        locationText: i.task?.locationText ?? "",
-                        requester: i.requester ?? null,
-                    }))
-                );
-
-            } catch (e) { console.error(e); }
-            finally { setIsLoading(false); }
-        };
         load();
-    }, [router, searchParams]);
+    }, []);
 
-
-    /* ============================= */
-    /* HELPER FUNCTIONS              */
-    /* ============================= */
     const normalizeStatus = (s: string) => s.trim().toUpperCase().replace(/\s+/g, "_");
 
     const filteredTasks = tasks.filter((t) => {
@@ -181,16 +227,11 @@ export default function MyTaskPage() {
         return tasks.filter((t) => tab?.statuses.includes(normalizeStatus(t.status))).length;
     };
 
-
-    /* ============================= */
-    /* ACTION: START WORK            */
-    /* ============================= */
     const startWork = async (assignmentId: number) => {
         try {
 
             await api.patch(`/assignments/${assignmentId}/start`);
 
-            // update UI instantly
             setTasks((prev) =>
                 prev.map((t) =>
                     t.assignmentId === assignmentId ? { ...t, status: "IN_PROGRESS" } : t
@@ -206,9 +247,6 @@ export default function MyTaskPage() {
     const closeProof = () => { setProofOpenId(null); setProofText(""); setProofFile(null); setProofError(null); };
 
 
-    /* ============================= */
-    /* ACTION: CONVERSATION          */
-    /* ============================= */
     const startConversation = async (e: React.MouseEvent, taskId: number) => {
         e.stopPropagation();
         try {
@@ -220,9 +258,6 @@ export default function MyTaskPage() {
     };
 
 
-    /* ============================= */
-    /* ACTION: SUBMIT PROOF          */
-    /* ============================= */
     const submitProof = async (assignmentId: number) => {
 
         if (
@@ -273,7 +308,6 @@ export default function MyTaskPage() {
 
             <div className="mx-auto flex h-full max-w-[1800px] flex-col gap-5 overflow-hidden px-4 py-4 md:px-8">
 
-                {/* ── PAGE HEADER ── */}
                 <div className="flex items-end justify-between gap-4 shrink-0">
 
                     <div>
@@ -292,7 +326,6 @@ export default function MyTaskPage() {
                 </div>
 
 
-                {/* ── TABS ── */}
                 <div className="shrink-0 flex gap-1 rounded-2xl border border-sky-200 bg-white/90 p-1.5 shadow-sm w-fit">
 
                     {TAB_CONFIG.map((tab) => {
@@ -324,8 +357,6 @@ export default function MyTaskPage() {
 
                 </div>
 
-
-                {/* ── TASK GRID ── */}
                 <div className="flex-1 min-h-0 overflow-y-auto">
 
                     {isLoading && (
@@ -344,129 +375,217 @@ export default function MyTaskPage() {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 pb-6">
 
-                        {!isLoading && filteredTasks.map((task) => {
+                    {!isLoading && filteredTasks.map((task) => {
 
-                            const ns = normalizeStatus(task.status);
-                            const deadlineDate = new Date(task.deadline);
-                            const daysLeft = Math.ceil((deadlineDate.getTime() - Date.now()) / 86400000);
-                            const isUrgent = daysLeft <= 3 && daysLeft >= 0;
+                        const ns = normalizeStatus(task.status);
+                        const deadlineDate = new Date(task.deadline);
+                        const daysLeft = Math.ceil(
+                            (deadlineDate.getTime() - Date.now()) / 86400000
+                        );
 
-                            return (
-                                <article
-                                    key={task.assignmentId}
-                                    onClick={() => router.push(`/mytask/${task.assignmentId}`)}
-                                    className="group cursor-pointer rounded-2xl border border-sky-100 bg-white shadow-[0_8px_28px_rgba(14,165,233,0.08)] transition-all hover:-translate-y-0.5 hover:border-sky-300 hover:shadow-[0_18px_40px_rgba(14,165,233,0.18)] flex flex-col overflow-hidden"
-                                >
-                                    <div className="p-5 flex flex-col flex-1 gap-4">
+                        const isUrgent =
+                            daysLeft <= 3 && daysLeft >= 0;
 
-                                        {/* Header */}
-                                        <div className="flex items-start justify-between gap-3">
-                                            <button
-                                                onClick={(e) => { e.stopPropagation(); if (task.requester?.id) router.push(`/profile/${task.requester.id}`); }}
-                                                className="flex items-center gap-3 min-w-0 group/profile"
-                                            >
-                                                <Avatar name={task.requester?.fullName} image={task.requester?.profileImage} />
+                        return (
+                            <article
+                                key={
+                                    task.assignmentId
+                                        ? `assignment-${task.assignmentId}`
+                                        : `application-${task.applicationId}`
+                                }
+                                onClick={() => {
+                                    if (!task.assignmentId) return;
 
-                                                <div className="text-left min-w-0">
-                                                    <p className="text-sm font-semibold text-slate-800 truncate group-hover/profile:text-sky-700 transition-colors">
-                                                        {task.requester?.fullName ?? "Unknown"}
-                                                    </p>
-                                                    <p className="text-xs text-slate-500">TASK: {task.title}</p>
-                                                </div>
+                                    router.push(
+                                        `/mytask/${task.assignmentId}`
+                                    );
+                                }}
+                                className="group cursor-pointer rounded-2xl border border-sky-100 bg-white shadow-[0_8px_28px_rgba(14,165,233,0.08)] transition-all hover:-translate-y-0.5 hover:border-sky-300 hover:shadow-[0_18px_40px_rgba(14,165,233,0.18)] flex flex-col overflow-hidden"
+                            >
+                                <div className="p-5 flex flex-col flex-1 gap-4">
 
-                                            </button>
+                                    {/* Header */}
+                                    <div className="flex items-start justify-between gap-3">
 
-                                            <div className="shrink-0 rounded-2xl border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-right">
-                                                <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-600">Budget</p>
-                                                <p className="text-xl font-black text-emerald-700 leading-none">${task.price}</p>
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+
+                                                if (task.requester?.id) {
+                                                    router.push(
+                                                        `/profile/${task.requester.id}`
+                                                    );
+                                                }
+                                            }}
+                                            className="flex items-center gap-3 min-w-0 group/profile"
+                                        >
+                                            <Avatar
+                                                name={task.requester?.fullName}
+                                                image={task.requester?.profileImage}
+                                            />
+
+                                            <div className="text-left min-w-0">
+                                                <p className="text-sm font-semibold text-slate-800 truncate group-hover/profile:text-sky-700 transition-colors">
+                                                    {task.requester?.fullName ??
+                                                        "Unknown"}
+                                                </p>
+
+                                                <p className="text-xs text-slate-500">
+                                                    TASK: {task.title}
+                                                </p>
                                             </div>
+                                        </button>
 
-                                        </div>
+                                        <div className="shrink-0 rounded-2xl border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-right">
+                                            <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-600">
+                                                Budget
+                                            </p>
 
-
-                                        {/* Title + description */}
-                                        <div>
-
-                                            <h3 className="font-bold text-slate-950 text-base leading-snug line-clamp-2 group-hover:text-sky-700 transition-colors">
-                                                {task.title}
-                                            </h3>
-                                            {task.description && (
-                                                <p className="text-sm text-slate-500 mt-1 line-clamp-2">{task.description}</p>
-                                            )}
-                                        </div>
-
-                                        {/* Meta */}
-                                        <div className="flex flex-wrap gap-2">
-
-                                            {task.locationText && (
-                                                <span className="inline-flex items-center gap-1.5 rounded-lg border border-sky-200 bg-sky-50 px-2.5 py-1 text-xs font-semibold text-sky-800">
-                                                    <MapPin size={11} className="text-sky-500 shrink-0" />
-                                                    <span className="truncate max-w-[140px]">{task.locationText}</span>
-                                                </span>
-                                            )}
-
-                                            <span className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-semibold ${
-                                                isUrgent ? "bg-rose-50 border-rose-200 text-rose-700" : "bg-indigo-50 border-indigo-200 text-indigo-700"
-                                            }`}>
-                                                <Clock size={11} className={isUrgent ? "text-rose-500" : "text-indigo-500"} />
-                                                {task.deadline ? (isUrgent ? `${daysLeft}d left!` : deadlineDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })) : "No deadline"}
-                                            </span>
-
-                                            <StatusBadge status={task.status} />
-                                        </div>
-
-
-                                        {/* Actions */}
-                                        <div className="mt-auto flex flex-col gap-2 pt-1">
-
-                                            {ns === "ASSIGNED" && (
-                                                <button
-                                                    onClick={(e) => { e.stopPropagation(); startWork(task.assignmentId); }}
-                                                    className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-sm font-bold transition-colors shadow-sm shadow-sky-200"
-                                                >
-                                                    <Play size={15} /> Start Working
-                                                </button>
-                                            )}
-
-                                            {ns === "IN_PROGRESS" && (
-                                                <button
-                                                    onClick={(e) => { e.stopPropagation(); openProof(task.assignmentId); }}
-                                                    className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-sm font-bold transition-colors shadow-sm shadow-sky-200"
-                                                >
-                                                    <Upload size={15} /> Upload Proof
-                                                </button>
-                                            )}
-
-                                            {/*{(ns === "COMPLETED" || ns === "VERIFIED") && (*/}
-                                            {/*    <div className="flex items-center justify-center gap-2 w-full py-2 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold">*/}
-                                            {/*        <CheckCircle2 size={14} /> Work Submitted*/}
-                                            {/*    </div>*/}
-                                            {/*)}*/}
-
-                                            {(ns === "ASSIGNED" || ns === "IN_PROGRESS" || ns === "COMPLETED" || ns === "VERIFIED") && (
-                                                <button
-                                                    onClick={(e) => startConversation(e, task.taskId)}
-                                                    className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl border border-sky-200 bg-sky-50 hover:bg-sky-100 text-sky-700 text-sm font-bold transition-colors"
-                                                >
-                                                    <MessageCircle size={15} /> Message Requester
-                                                </button>
-                                            )}
-
-                                            {/* View Details — shown for all statuses */}
-                                            <button
-                                                onClick={(e) => { e.stopPropagation(); setDetailsTask(task); }}
-                                                className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 text-sm font-bold transition-colors"
-                                            >
-                                                View Details
-                                            </button>
-
+                                            <p className="text-xl font-black text-emerald-700 leading-none">
+                                                ${task.price}
+                                            </p>
                                         </div>
 
                                     </div>
 
-                                </article>
-                            );
-                        })}
+                                    {/* Title */}
+                                    <div>
+
+                                        <h3 className="font-bold text-slate-950 text-base leading-snug line-clamp-2 group-hover:text-sky-700 transition-colors">
+                                            {task.title}
+                                        </h3>
+
+                                        {task.description && (
+                                            <p className="text-sm text-slate-500 mt-1 line-clamp-2">
+                                                {task.description}
+                                            </p>
+                                        )}
+
+                                    </div>
+
+                                    {/* Meta */}
+                                    <div className="flex flex-wrap gap-2">
+
+                                        {task.locationText && (
+                                            <span className="inline-flex items-center gap-1.5 rounded-lg border border-sky-200 bg-sky-50 px-2.5 py-1 text-xs font-semibold text-sky-800">
+                                                <MapPin
+                                                    size={11}
+                                                    className="text-sky-500 shrink-0"
+                                                />
+
+                                                <span className="truncate max-w-[140px]">
+                                                    {task.locationText}
+                                                </span>
+                                            </span>
+                                        )}
+
+                                        <span
+                                            className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-semibold ${
+                                                isUrgent
+                                                    ? "bg-rose-50 border-rose-200 text-rose-700"
+                                                    : "bg-indigo-50 border-indigo-200 text-indigo-700"
+                                            }`}
+                                        >
+                                            <Clock
+                                                size={11}
+                                                className={
+                                                    isUrgent
+                                                        ? "text-rose-500"
+                                                        : "text-indigo-500"
+                                                }
+                                            />
+
+                                            {task.deadline
+                                                ? isUrgent
+                                                    ? `${daysLeft}d left!`
+                                                    : deadlineDate.toLocaleDateString(
+                                                        "en-US",
+                                                        {
+                                                            month: "short",
+                                                            day: "numeric",
+                                                        }
+                                                    )
+                                                : "No deadline"}
+                                        </span>
+
+                                        <StatusBadge status={task.status} />
+
+                                    </div>
+
+                                    {/* Actions */}
+                                    <div className="mt-auto flex flex-col gap-2 pt-1">
+
+                                        {task.assignmentId &&
+                                            ns === "ASSIGNED" && (
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        startWork(
+                                                            task.assignmentId!
+                                                        );
+                                                    }}
+                                                    className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-sm font-bold transition-colors shadow-sm shadow-sky-200"
+                                                >
+                                                    Start Working
+                                                </button>
+                                            )}
+
+                                        {task.assignmentId &&
+                                            ns === "IN_PROGRESS" && (
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        openProof(
+                                                            task.assignmentId!
+                                                        );
+                                                    }}
+                                                    className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-sm font-bold transition-colors shadow-sm shadow-sky-200"
+                                                >
+                                                    Upload Proof
+                                                </button>
+                                            )}
+
+                                        {task.assignmentId &&
+                                            (
+                                                ns === "ASSIGNED" ||
+                                                ns === "IN_PROGRESS" ||
+                                                ns === "COMPLETED" ||
+                                                ns === "VERIFIED"
+                                            ) && (
+                                                <button
+                                                    onClick={(e) =>
+                                                        startConversation(
+                                                            e,
+                                                            task.taskId
+                                                        )
+                                                    }
+                                                    className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl border border-sky-200 bg-sky-50 hover:bg-sky-100 text-sky-700 text-sm font-bold transition-colors"
+                                                >
+                                                    <MessageCircle size={15} />
+                                                    Message Requester
+                                                </button>
+                                            )}
+
+                                            {task.assignmentId && (
+                                                <button
+                                                    onClick={() => {
+                                                        if (!task.assignmentId) return;
+
+                                                        router.push(
+                                                            `/mytask/${task.assignmentId}`
+                                                        );
+                                                    }}
+                                                    className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 text-sm font-bold transition-colors"
+                                                >
+                                                    View Details
+                                                </button>
+                                            )}
+                                    </div>
+
+                                </div>
+                            </article>
+                        );
+                    })}
 
                     </div>
 
@@ -605,98 +724,6 @@ export default function MyTaskPage() {
                                     {proofSubmittingId === proofOpenId ? "Submitting..." : "Submit"}
                                 </button>
                             </div>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-
-
-            {/* ── DETAILS MODAL (REDESIGNED) ── */}
-            {detailsTask && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
-
-                    <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl border border-slate-100 overflow-hidden animate-in fade-in zoom-in-95">
-
-                        {/* Header */}
-                        <div className="px-6 py-5 bg-gradient-to-r from-sky-50 to-white border-b border-slate-100">
-                            <p className="text-xs font-semibold tracking-widest text-sky-600 uppercase">
-                                Task Overview
-                            </p>
-
-                            <h2 className="text-lg font-bold text-slate-900 leading-tight">
-                                {detailsTask.title}
-                            </h2>
-
-                            <div className="mt-2 flex items-center gap-2">
-                                <span className="text-xs px-2 py-1 rounded-full bg-slate-100 text-slate-600 font-semibold">
-                                    {detailsTask.status.replace(/_/g, " ")}
-                                </span>
-
-                            </div>
-                        </div>
-
-                        {/* Body */}
-                        <div className="px-6 py-5 space-y-5 text-sm">
-
-                            {/* Key Info Grid */}
-                            <div className="grid grid-cols-2 gap-4">
-
-                                <div className="space-y-1">
-                                    <p className="text-xs text-slate-400 font-medium">Requester</p>
-                                    <p className="font-semibold text-slate-900">
-                                        {detailsTask.requester?.fullName ?? "Unknown"}
-                                    </p>
-                                </div>
-
-                                <div className="space-y-1">
-                                    <p className="text-xs text-slate-400 font-medium">Price</p>
-                                    <p className="font-bold text-sky-700">
-                                        ${detailsTask.price}
-                                    </p>
-                                </div>
-
-                                <div className="space-y-1">
-                                    <p className="text-xs text-slate-400 font-medium">Deadline</p>
-                                    <p className="font-semibold text-slate-900">
-                                        {detailsTask.deadline
-                                            ? new Date(detailsTask.deadline).toLocaleDateString()
-                                            : "No deadline"}
-                                    </p>
-                                </div>
-
-                                <div className="space-y-1">
-                                    <p className="text-xs text-slate-400 font-medium">Location</p>
-                                    <p className="font-semibold text-slate-900 truncate">
-                                        {detailsTask.locationText || "No location"}
-                                    </p>
-                                </div>
-                            </div>
-
-                            {/* Description */}
-                            {detailsTask.description && (
-                                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                                    <p className="text-xs font-semibold uppercase tracking-widest text-slate-500 mb-2">
-                                        Description
-                                    </p>
-
-                                    <p className="text-slate-700 leading-relaxed whitespace-pre-line">
-                                        {detailsTask.description}
-                                    </p>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Footer */}
-                        <div className="px-6 py-4 border-t border-slate-100 bg-slate-50">
-
-                            <button
-                                onClick={() => setDetailsTask(null)}
-                                className="w-full rounded-xl bg-sky-600 hover:bg-sky-700 py-2.5 text-sm font-semibold text-white transition"
-                            >
-                                Close
-                            </button>
-
                         </div>
                     </div>
                 </div>
