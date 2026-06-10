@@ -11,9 +11,7 @@ import {
   Popup,
 } from "react-leaflet";
 import L from "leaflet";
- 
-// ─── Types ────────────────────────────────────────────────────────────────────
- 
+
 type LatLng = [number, number];
  
 type Props = {
@@ -55,9 +53,7 @@ const SEARCH_ALIASES: Record<string, string> = {
   rupp: "Royal University of Phnom Penh",
   "royal university phnom penh": "Royal University of Phnom Penh",
 };
- 
-// ─── Custom marker icons ───────────────────────────────────────────────────────
- 
+
 const makeIcon = (color: string, label: string) =>
   L.divIcon({
     className: "",
@@ -99,9 +95,6 @@ const TASK_ICON   = makeIcon("#0ea5e9", "Task");   // sky
 const USER_ICON   = makeIcon("#10b981", "You");    // emerald
 const SEARCH_ICON = makeIcon("#d946ef", "Search"); // fuchsia
  
-// ─── Sub-components ───────────────────────────────────────────────────────────
- 
-/** Smoothly flies map to a location */
 function FlyTo({ pos, zoom = 14 }: { pos: LatLng; zoom?: number }) {
   const map = useMap();
   useEffect(() => {
@@ -109,8 +102,7 @@ function FlyTo({ pos, zoom = 14 }: { pos: LatLng; zoom?: number }) {
   }, [pos, zoom, map]);
   return null;
 }
- 
-/** Fits map to show all provided positions */
+
 function FitBounds({ positions }: { positions: LatLng[] }) {
   const map = useMap();
   useEffect(() => {
@@ -120,9 +112,7 @@ function FitBounds({ positions }: { positions: LatLng[] }) {
   }, [positions, map]);
   return null;
 }
- 
-// ─── Haversine distance (fallback) ───────────────────────────────────────────
- 
+
 function haversineKm([lat1, lon1]: LatLng, [lat2, lon2]: LatLng): number {
   const R = 6371;
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
@@ -134,9 +124,7 @@ function haversineKm([lat1, lon1]: LatLng, [lat2, lon2]: LatLng): number {
       Math.sin(dLon / 2) ** 2;
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
- 
-// ─── OSRM routing ─────────────────────────────────────────────────────────────
- 
+
 async function fetchRoute(from: LatLng, to: LatLng): Promise<RouteInfo | null> {
   try {
     const url =
@@ -159,9 +147,7 @@ async function fetchRoute(from: LatLng, to: LatLng): Promise<RouteInfo | null> {
     return null;
   }
 }
- 
-// ─── Nominatim search ─────────────────────────────────────────────────────────
- 
+
 function normalizeSearchQuery(query: string) {
   const normalized = query.trim().toLowerCase();
   return SEARCH_ALIASES[normalized] ?? query.trim();
@@ -207,9 +193,7 @@ async function geocodeSuggestions(query: string): Promise<SearchSuggestion[]> {
     return [];
   }
 }
- 
-// ─── Main component ───────────────────────────────────────────────────────────
- 
+
 export default function SharedTaskMap({ lat, lng }: Props) {
   const taskPos: LatLng | null = lat && lng ? [lat, lng] : null;
  
@@ -226,8 +210,7 @@ export default function SharedTaskMap({ lat, lng }: Props) {
   const [geoLoading, setGeoLoading]   = useState(false);
   const [flyTarget, setFlyTarget]     = useState<LatLng | null>(taskPos);
   const [fitPositions, setFitPositions] = useState<LatLng[]>([]);
- 
-  // Patch default icons once
+
   useEffect(() => {
     delete (L.Icon.Default.prototype as any)._getIconUrl;
     L.Icon.Default.mergeOptions({
@@ -236,8 +219,7 @@ export default function SharedTaskMap({ lat, lng }: Props) {
       shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
     });
   }, []);
- 
-  // Auto-fetch user location on mount
+
   useEffect(() => {
     setGeoLoading(true);
     navigator.geolocation?.getCurrentPosition(
@@ -250,8 +232,7 @@ export default function SharedTaskMap({ lat, lng }: Props) {
       { enableHighAccuracy: true, timeout: 8000 }
     );
   }, []);
- 
-  // Fetch route whenever user+task positions are available
+
   useEffect(() => {
     const origin = userPos;
     const dest   = taskPos;
@@ -264,11 +245,10 @@ export default function SharedTaskMap({ lat, lng }: Props) {
       // Fit map to show both markers + route
       const pts: LatLng[] = r ? r.polyline : [origin, dest];
       setFitPositions(pts);
-      setFlyTarget(null); // let FitBounds take over
+      setFlyTarget(null);
     });
   }, [userPos, lat, lng]);
 
-  // Fetch route from searched place to task location
   useEffect(() => {
     const origin = searchPos;
     const dest = taskPos;
@@ -324,8 +304,7 @@ export default function SharedTaskMap({ lat, lng }: Props) {
   const handleSearchKey = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") handleSearch();
   };
- 
-  // Derived display data
+
   const distanceKm = route
     ? route.distanceKm
     : userPos && taskPos
@@ -340,8 +319,7 @@ export default function SharedTaskMap({ lat, lng }: Props) {
  
   return (
     <div className="relative h-full w-full rounded-2xl overflow-hidden bg-sky-50">
- 
-      {/* ── MAP ── */}
+
       <MapContainer
         center={taskPos ?? [11.5564, 104.9282]}
         zoom={12}
@@ -350,26 +328,22 @@ export default function SharedTaskMap({ lat, lng }: Props) {
         zoomControl={false}
       >
         <TileLayer url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png" />
- 
-        {/* Fly / fit logic */}
+
         {flyTarget && <FlyTo pos={flyTarget} />}
         {fitPositions.length >= 2 && <FitBounds positions={fitPositions} />}
- 
-        {/* Task marker */}
+
         {taskPos && (
           <Marker position={taskPos} icon={TASK_ICON}>
             <Popup className="text-xs font-semibold">📍 Task Location</Popup>
           </Marker>
         )}
- 
-        {/* User marker */}
+
         {userPos && (
           <Marker position={userPos} icon={USER_ICON}>
             <Popup className="text-xs font-semibold">🧑 Your Location</Popup>
           </Marker>
         )}
- 
-        {/* Search marker */}
+
         {searchPos && (
           <Marker position={searchPos} icon={SEARCH_ICON}>
             <Popup className="text-xs font-semibold">🔍 {searchInput}</Popup>
@@ -379,12 +353,10 @@ export default function SharedTaskMap({ lat, lng }: Props) {
         {/* Route polyline */}
         {route && (
           <>
-            {/* Shadow */}
             <Polyline
               positions={route.polyline}
               pathOptions={{ color: "#0f172a", weight: 8, opacity: 0.18 }}
             />
-            {/* Main route */}
             <Polyline
               positions={route.polyline}
               pathOptions={{
@@ -398,8 +370,7 @@ export default function SharedTaskMap({ lat, lng }: Props) {
             />
           </>
         )}
- 
-        {/* Fallback straight line if no route yet but both points exist */}
+
         {!route && userPos && taskPos && (
           <Polyline
             positions={[userPos, taskPos]}
@@ -412,7 +383,6 @@ export default function SharedTaskMap({ lat, lng }: Props) {
           />
         )}
 
-        {/* Search-to-task route */}
         {searchRoute && (
           <>
             <Polyline
@@ -445,8 +415,7 @@ export default function SharedTaskMap({ lat, lng }: Props) {
           />
         )}
       </MapContainer>
- 
-      {/* ── SEARCH BAR (top overlay) ── */}
+
       <div className="absolute top-3 left-3 right-3 z-[1000] rounded-2xl border border-sky-200 bg-white/95 p-2 shadow-[0_16px_45px_rgba(15,23,42,0.22)] backdrop-blur-md">
         <div className="mb-2 flex items-center gap-2 px-1">
           <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-sky-100 text-sky-700">
@@ -517,7 +486,6 @@ export default function SharedTaskMap({ lat, lng }: Props) {
         )}
       </div>
  
-      {/* Search error */}
       {searchError && (
         <div className="absolute top-[118px] left-3 right-3 z-[1000]">
           <div className="bg-rose-50 border border-rose-200 rounded-xl px-3 py-2 text-xs text-rose-700 font-bold shadow-sm">
@@ -526,7 +494,6 @@ export default function SharedTaskMap({ lat, lng }: Props) {
         </div>
       )}
  
-      {/* ── INFO PILLS (bottom overlay) ── */}
       <div className="absolute bottom-3 left-3 right-3 z-[1000] flex flex-col gap-2 pointer-events-none sm:right-auto">
  
         {/* Distance + duration */}

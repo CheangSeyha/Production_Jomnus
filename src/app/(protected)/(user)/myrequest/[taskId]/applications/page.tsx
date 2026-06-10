@@ -6,10 +6,7 @@ import {
   ArrowLeft,
   BriefcaseBusiness,
   CalendarClock,
-  CheckCircle2,
-  ClipboardList,
   MapPin,
-  ShieldCheck,
   Users,
   Wallet,
 } from "lucide-react";
@@ -17,11 +14,9 @@ import api from "@/lib/axios";
 import { toDateTimeLocalValue, toDateTimeLocalISOString } from "@/utils/dateTime";
 import ApplicationOfferCard from "@/components/myrequest/ApplicationOfferCard";
 import WorkerTimelineCard from "@/components/myrequest/WorkerTimeLineCard";
-import TaskMapPreview from "@/components/map/TaskMapPreview";
 import EditTaskModal from "@/components/myrequest/EditTaskModel";
 import { useToast } from "@/components/providers/toast-provider";
-import { Check, X, Clock3, MessageCircle } from "lucide-react";
-
+import dynamic from "next/dynamic";
 
 type Props = {
   performerName: string;
@@ -132,6 +127,13 @@ export default function TaskApplicationsPage() {
   const [comment, setComment] = useState("");
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isUpdatingTask, setIsUpdatingTask] = useState(false);
+
+  const SharedTaskMap = dynamic(
+    () => import("@/components/map/SharedTaskMap"),
+    {
+      ssr: false,
+    }
+  );
 
   const [editForm, setEditForm] = useState<any>({
     title: "",
@@ -395,7 +397,7 @@ export default function TaskApplicationsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen">
       <div className="mx-auto max-w-6xl space-y-5 px-4 py-6 sm:px-6 lg:py-8">
         <button
           onClick={() => router.push("/myrequest")}
@@ -511,8 +513,8 @@ export default function TaskApplicationsPage() {
             </div>
 
             {/* MAP */}
-            <div className="h-auto w-full">
-              <TaskMapPreview
+            <div className="h-[500px] w-full">
+              <SharedTaskMap
                 lat={task.latitude}
                 lng={task.longitude}
               />
