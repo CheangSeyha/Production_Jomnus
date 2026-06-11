@@ -1,8 +1,12 @@
+"use client";
+
 import React from "react";
 import Image from "next/image";
+import {useRouter} from "next/navigation";
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
+  const router = useRouter();
 
   return (
     <footer className="w-full bg-slate-50 pt-20 pb-10 border-t border-slate-100 mt-auto">
@@ -26,38 +30,98 @@ export default function Footer() {
           </p>
         </div>
 
-        {/* Links Columns */}
+        {/* Company Columns */}
         <div>
           <h5 className="font-bold mb-4 text-slate-900">Company</h5>
+
           <ul className="text-slate-500 text-sm space-y-2">
-            <li className="hover:text-blue-600 cursor-pointer">Home</li>
-            <li className="hover:text-blue-600 cursor-pointer">About Us</li>
-            <li className="hover:text-blue-600 cursor-pointer">Contact Us</li>
-            <li className="hover:text-blue-600 cursor-pointer">Blog</li>
+            <li
+                className="hover:text-blue-600 cursor-pointer"
+                onClick={() => router.push("/")}
+            >
+              Home
+            </li>
+            <li
+                className="hover:text-blue-600 cursor-pointer"
+                onClick={() => router.push("/aboutUs")}
+            >
+              About Us
+            </li>
+            <li
+                className="hover:text-blue-600 cursor-pointer"
+                onClick={() => router.push("/contactUs")}
+            >
+              Contact Us
+            </li>
+            <li
+                className="hover:text-blue-600 cursor-pointer"
+                onClick={() => router.push("/blog")}
+            >
+              Blog
+            </li>
           </ul>
         </div>
+
+
+        {/* Product Section */}
         <div>
           <h5 className="font-bold mb-4 text-slate-900">Product</h5>
+
           <ul className="text-slate-500 text-sm space-y-2">
-            <li className="hover:text-blue-600 cursor-pointer">Browse Tasks</li>
-            <li className="hover:text-blue-600 cursor-pointer">
+
+            <li
+                className="hover:text-blue-600 cursor-pointer"
+                onClick={()=>router.push("/auth/register")}
+            >
+              Browse Tasks
+            </li>
+            <li
+                className="hover:text-blue-600 cursor-pointer"
+                onClick={()=>router.push("/auth/register")}
+
+            >
               Become a Performer
             </li>
-            <li className="hover:text-blue-600 cursor-pointer">Pricing</li>
-            <li className="hover:text-blue-600 cursor-pointer">Partner</li>
+            <li
+                className="hover:text-blue-600 cursor-pointer"
+                onClick={()=>router.push("/auth/register")}
+            >
+              Pricing
+            </li>
+            <li
+                className="hover:text-blue-600 cursor-pointer"
+                onClick={()=>router.push("/auth/register")}
+            >
+              Partner
+            </li>
           </ul>
         </div>
+
+        {/* Support Column */}
         <div>
           <h5 className="font-bold mb-4 text-slate-900">Support</h5>
+
           <ul className="text-slate-500 text-sm space-y-2">
-            <li className="hover:text-blue-600 cursor-pointer">Help Center</li>
-            <li className="hover:text-blue-600 cursor-pointer">Safety Tips</li>
-            <li className="hover:text-blue-600 cursor-pointer">
-              Terms of Service
+            <li
+                className="hover:text-blue-600 cursor-pointer"
+                onClick={()=>router.push("/contactUs")}
+            >
+              Help Center
             </li>
-            <li className="hover:text-blue-600 cursor-pointer">
-              Privacy Policy
+            <li
+                className="hover:text-blue-600 cursor-pointer"
+                onClick={()=>router.push("/contactUs")}
+            >
+              Safety Tips
             </li>
+
+            {/*<li className="hover:text-blue-600 cursor-pointer">*/}
+            {/*  Terms of Service*/}
+            {/*</li>*/}
+            {/*<li className="hover:text-blue-600 cursor-pointer">*/}
+            {/*  Privacy Policy*/}
+            {/*</li>*/}
+
           </ul>
         </div>
       </div>
@@ -86,7 +150,7 @@ export default function Footer() {
         </div>
 
         <p className="text-center text-slate-400 text-xs mt-12">
-          © {currentYear} TaskExchange Marketplace. All rights reserved. Trusted
+          © {currentYear} JOMNUS. All rights reserved. Trusted
           Curator for Every Task.
         </p>
       </div>

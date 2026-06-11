@@ -3,6 +3,8 @@
 import React from 'react';
 import { ChevronRight, Clock, ExternalLink } from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
+import Link from "next/link";
+import { posts } from "@/lib/post";
 
 
 export default function BlogBody() {
@@ -81,23 +83,25 @@ export default function BlogBody() {
                     </motion.h1>
                     <motion.div className="flex items-center gap-3" variants={staggerItem}>
                         <div className="w-10 h-10 rounded-full bg-slate-200 overflow-hidden border border-slate-100 flex items-center justify-center text-slate-500 font-bold text-xs">
-                            SJ
+                            SK
                         </div>
                         <div>
-                            <p className="text-sm font-bold text-slate-900">Sarah Jenkins</p>
-                            <p className="text-xs text-slate-400 font-medium">Community Strategist</p>
+                            <p className="text-sm font-bold text-slate-900">Sophea Kanha</p>
+                            <p className="text-xs text-slate-400 font-medium">First User</p>
                         </div>
                     </motion.div>
-                    <motion.button
-                        className="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold inline-flex items-center justify-center gap-2 hover:bg-blue-700 transition w-full sm:w-auto"
-                        variants={staggerItem}
-                        animate={shouldReduceMotion ? undefined : { scale: [1, 1.02, 1] }}
-                        transition={shouldReduceMotion ? undefined : { duration: 3.2, repeat: Infinity, ease: 'easeInOut' }}
-                        whileHover={shouldReduceMotion ? undefined : { scale: 1.05 }}
-                        whileTap={shouldReduceMotion ? undefined : { scale: 0.98 }}
-                    >
-                        Read Full Story <ChevronRight size={18} />
-                    </motion.button>
+                    <Link href="/blog/how-to-earn-first-500">
+                        <motion.button
+                            className="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold inline-flex items-center justify-center gap-2 hover:bg-blue-700 transition w-full sm:w-auto"
+                            variants={staggerItem}
+                            animate={shouldReduceMotion ? undefined : { scale: [1, 1.02, 1] }}
+                            transition={shouldReduceMotion ? undefined : { duration: 3.2, repeat: Infinity, ease: 'easeInOut' }}
+                            whileHover={shouldReduceMotion ? undefined : { scale: 1.05 }}
+                            whileTap={shouldReduceMotion ? undefined : { scale: 0.98 }}
+                        >
+                            Read Full Story <ChevronRight size={18} />
+                        </motion.button>
+                    </Link>
                 </motion.div>
             </motion.section>
 
@@ -144,46 +148,50 @@ export default function BlogBody() {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 lg:gap-x-8 gap-y-10 sm:gap-y-12">
                         {posts.map((post, i) => (
-                            <motion.div
-                                key={i}
-                                className="group cursor-pointer"
-                                variants={staggerItem}
-                                animate={float(3, 6 + (i % 2), i * 0.18)}
-                                whileHover={shouldReduceMotion ? undefined : { y: -4 }}
-                            >
-                                <div className="relative aspect-16/10 rounded-2xl overflow-hidden mb-5 bg-slate-100">
-                                    <span className="absolute top-4 left-4 z-10 bg-blue-500/90 text-white text-[10px] font-bold px-2 py-1 rounded tracking-widest uppercase">
-                                        {post.tag}
-                                    </span>
-                                    <img src={post.image} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition duration-500" />
-                                </div>
-                                <div className="flex items-center gap-2 text-slate-400 text-[10px] font-bold mb-3">
-                                    <Clock size={12} /> {post.readTime}
-                                </div>
-                                <h3 className="text-lg sm:text-xl font-bold text-slate-900 mb-3 leading-snug group-hover:text-blue-600 transition">
-                                    {post.title}
-                                </h3>
-                                <p className="text-sm text-slate-500 leading-relaxed line-clamp-3 mb-4">
-                                    {post.desc}
-                                </p>
-                                <div className="text-blue-600 text-xs font-black flex items-center gap-1">
-                                    Read More <ChevronRight size={14} />
-                                </div>
-                            </motion.div>
+                            <Link href={`/blog/${post.slug}`}
+                                  key={i}>
+                                <motion.div
+                                    key={i}
+                                    className="group cursor-pointer"
+                                    variants={staggerItem}
+                                    animate={float(3, 6 + (i % 2), i * 0.18)}
+                                    whileHover={shouldReduceMotion ? undefined : { y: -4 }}
+                                >
+                                    <div className="relative aspect-16/10 rounded-2xl overflow-hidden mb-5 bg-slate-100">
+                                        <span className="absolute top-4 left-4 z-10 bg-blue-500/90 text-white text-[10px] font-bold px-2 py-1 rounded tracking-widest uppercase">
+                                            {post.tag}
+                                        </span>
+                                        <img src={post.image} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition duration-500" />
+                                    </div>
+                                    {/*<div className="flex items-center gap-2 text-slate-400 text-[10px] font-bold mb-3">*/}
+                                    {/*    <Clock size={12} /> {post.readTime}*/}
+                                    {/*</div>*/}
+                                    <h3 className="text-lg sm:text-xl font-bold text-slate-900 mb-3 leading-snug group-hover:text-blue-600 transition">
+                                        {post.title}
+                                    </h3>
+                                    <p className="text-sm text-slate-500 leading-relaxed line-clamp-3 mb-4">
+                                        {post.desc}
+                                    </p>
+                                    <div className="text-blue-600 text-xs font-black flex items-center gap-1">
+                                        Read More <ChevronRight size={14} />
+                                    </div>
+                                </motion.div>
+
+                            </ Link>
                         ))}
                     </div>
 
-                    <motion.div className="mt-12 sm:mt-16 flex justify-center" {...fadeUp(0.1)}>
-                        <motion.button
-                            className="bg-slate-100 text-slate-900 px-10 py-3 rounded-xl font-bold hover:bg-slate-200 transition"
-                            animate={shouldReduceMotion ? undefined : { scale: [1, 1.02, 1] }}
-                            transition={shouldReduceMotion ? undefined : { duration: 3.8, repeat: Infinity, ease: 'easeInOut' }}
-                            whileHover={shouldReduceMotion ? undefined : { scale: 1.05 }}
-                            whileTap={shouldReduceMotion ? undefined : { scale: 0.98 }}
-                        >
-                            Load More Articles
-                        </motion.button>
-                    </motion.div>
+                    {/*<motion.div className="mt-12 sm:mt-16 flex justify-center" {...fadeUp(0.1)}>*/}
+                    {/*    <motion.button*/}
+                    {/*        className="bg-slate-100 text-slate-900 px-10 py-3 rounded-xl font-bold hover:bg-slate-200 transition"*/}
+                    {/*        animate={shouldReduceMotion ? undefined : { scale: [1, 1.02, 1] }}*/}
+                    {/*        transition={shouldReduceMotion ? undefined : { duration: 3.8, repeat: Infinity, ease: 'easeInOut' }}*/}
+                    {/*        whileHover={shouldReduceMotion ? undefined : { scale: 1.05 }}*/}
+                    {/*        whileTap={shouldReduceMotion ? undefined : { scale: 0.98 }}*/}
+                    {/*    >*/}
+                    {/*        Load More Articles*/}
+                    {/*    </motion.button>*/}
+                    {/*</motion.div>*/}
                 </motion.div>
 
 
@@ -270,34 +278,34 @@ export default function BlogBody() {
 }
 
 // const categories = ["All", "Success Stories", "Safety Tips", "Tasker Guides", "Marketplace News"];
-
-const posts = [
-    {
-        tag: "SUCCESS STORY",
-        title: "From Errands to Full-Time: Sok Dara's Journey",
-        desc: "Discover how Sok Dara turned a weekend side hustle of running small errands into a thriving full-time career on the TaskExchange platform.",
-        readTime: "6 MIN READ",
-        image: "/images/teams/blog1.png"
-    },
-    {
-        tag: "SAFETY TIPS",
-        title: "Securing Your Digital Identity on the Marketplace",
-        desc: "Our guide to keeping your account safe, identifying phishing attempts, and ensuring every transaction is secure.",
-        readTime: "4 MIN READ",
-        image: "/images/teams/blog2.png"
-    },
-    {
-        tag: "TASKER GUIDES",
-        title: "Mastering Your Profile for High-Value Clients",
-        desc: "How to structure your portfolio and biography to attract enterprise-level tasks and long-term community contracts.",
-        readTime: "8 MIN READ",
-        image: "/images/teams/blog3.png"
-    },
-    {
-        tag: "MARKETPLACE NEWS",
-        title: "Introducing TaskExchange Groups: Local Networking",
-        desc: "We're launching local hubs to help taskers connect, share equipment, and collaborate on large-scale community projects.",
-        readTime: "3 MIN READ",
-        image: "/images/teams/blog4.png"
-    }
-];
+//
+// const posts = [
+//     {
+//         tag: "SUCCESS STORY",
+//         title: "From Errands to Full-Time: Sok Dara's Journey",
+//         desc: "Discover how Sok Dara turned a weekend side hustle of running small errands into a thriving full-time career on the TaskExchange platform.",
+//         readTime: "6 MIN READ",
+//         image: "/images/teams/blog1.png"
+//     },
+//     {
+//         tag: "SAFETY TIPS",
+//         title: "Securing Your Digital Identity on the Marketplace",
+//         desc: "Our guide to keeping your account safe, identifying phishing attempts, and ensuring every transaction is secure.",
+//         readTime: "4 MIN READ",
+//         image: "/images/teams/blog2.png"
+//     },
+//     {
+//         tag: "TASKER GUIDES",
+//         title: "Mastering Your Profile for High-Value Clients",
+//         desc: "How to structure your portfolio and biography to attract enterprise-level tasks and long-term community contracts.",
+//         readTime: "8 MIN READ",
+//         image: "/images/teams/blog3.png"
+//     },
+//     {
+//         tag: "MARKETPLACE NEWS",
+//         title: "Introducing TaskExchange Groups: Local Networking",
+//         desc: "We're launching local hubs to help taskers connect, share equipment, and collaborate on large-scale community projects.",
+//         readTime: "3 MIN READ",
+//         image: "/images/teams/blog4.png"
+//     }
+// ];
