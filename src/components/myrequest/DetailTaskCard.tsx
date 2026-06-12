@@ -15,7 +15,6 @@ type Props = {
  
 export default function DetailTaskCard({ task, onOpen, onApply, isSelected = false }: Props) {
   const router = useRouter();
- 
   const formatDate = (date?: string) => {
     if (!date) return "No date";
     const d = new Date(date);
@@ -23,9 +22,6 @@ export default function DetailTaskCard({ task, onOpen, onApply, isSelected = fal
       ? "Invalid date"
       : d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
   };
- 
-  const badges = getTaskBadges(task);
-  const interest = getFakeInterest(task.id);
  
   const handleProfileClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -56,10 +52,8 @@ export default function DetailTaskCard({ task, onOpen, onApply, isSelected = fal
  
       <div className="p-6 space-y-5">
  
-        {/* HEADER ROW */}
         <div className="flex items-start justify-between gap-4">
  
-          {/* Requester info */}
           <button
             onClick={handleProfileClick}
             className="flex items-center gap-3 group/profile min-w-0"
@@ -83,9 +77,17 @@ export default function DetailTaskCard({ task, onOpen, onApply, isSelected = fal
               <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-400 border-2 border-white rounded-full" />
             </div>
             <div className="text-left min-w-0">
-              <p className="text-sm font-semibold text-slate-800 transition-colors truncate group-hover/profile:text-sky-700">
-                {(task as any)?.requester?.fullName || task.requesterName}
-              </p>
+              <div className="flex flex-row gap-3">
+                <p className="text-sm font-semibold text-slate-800 transition-colors truncate group-hover/profile:text-sky-700">
+                  {(task as any)?.requester?.fullName || task.requesterName}
+                </p>
+                {task.requester?.isIdentityVerified && (
+                  <span className="text-green-500 shrink-0" title="Verified">
+                    <CheckCircle2 className="w-4 h-4" />
+                  </span>
+                )}                
+              </div>
+
               <p className="text-xs text-slate-500">
                 {formatDate(task.startDate || task.createdAt)}
               </p>

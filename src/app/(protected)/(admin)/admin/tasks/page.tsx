@@ -55,7 +55,6 @@ export default function AdminTasksPage() {
   const [tab, setTab] = useState<"All Tasks" | "My Actions" | "Archived">("All Tasks");
   const [page, setPage] = useState(1);
 
-  // ── Fetch ──────────────────────────────────────────────────────────────────
   const fetchTasks = async () => {
     try {
       setLoading(true);
@@ -73,8 +72,6 @@ export default function AdminTasksPage() {
   useEffect(() => { fetchTasks(); }, []);
 
 
-
-  // ── Details modal ──────────────────────────────────────────────────────────
   const openDetails = async (taskId: number) => {
     setShowDetails(true);
     setSelectedTask(null);
@@ -91,7 +88,6 @@ export default function AdminTasksPage() {
     setSelectedTask(null);
   };
 
-  // ── Delete ─────────────────────────────────────────────────────────────────
   const promptDelete = (taskId: number) => {
     setDeleteTarget(taskId);
     setShowDeleteModal(true);
@@ -113,7 +109,6 @@ export default function AdminTasksPage() {
     }
   };
 
-  // ── Helpers ────────────────────────────────────────────────────────────────
   const getRequesterName = (task: Task) =>
       task.requester?.fullName || "—";
 
@@ -135,7 +130,6 @@ export default function AdminTasksPage() {
     }
   };
 
-  // ── Derived data ───────────────────────────────────────────────────────────
   const filteredTasks = tasks.filter((task) => {
     const matchesSearch =
         task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -181,8 +175,6 @@ export default function AdminTasksPage() {
   };
 
 
-
-  // ── Render ─────────────────────────────────────────────────────────────────
   return (
       <div className="min-h-screen space-y-8 max-w-[1400px] mx-auto">
 
@@ -261,7 +253,6 @@ export default function AdminTasksPage() {
           </div>
         </div>
 
-        {/* ── Error ── */}
         {error && (
             <div className="bg-red-50 border border-red-200 rounded-2xl p-4 text-red-700 text-sm font-medium flex items-center gap-3">
               <AlertCircle className="w-5 h-5 shrink-0" />
@@ -269,14 +260,12 @@ export default function AdminTasksPage() {
             </div>
         )}
 
-        {/* ── Loading ── */}
         {loading && (
             <div className="flex items-center justify-center h-72">
               <div className="animate-spin rounded-full h-14 w-14 border-4 border-blue-100 border-t-blue-600" />
             </div>
         )}
 
-        {/* ── Filters + Table ── */}
         {!loading && (
             <div className="bg-white rounded-4xl border border-slate-100 shadow-sm overflow-hidden">
 
@@ -474,7 +463,6 @@ export default function AdminTasksPage() {
             </div>
         )}
 
-        {/* ── Details Modal ── */}
         {showDetails && (
             <div className="fixed inset-0 z-50 flex items-center justify-center">
               <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={closeDetails} />
@@ -547,7 +535,6 @@ export default function AdminTasksPage() {
             </div>
         )}
 
-        {/* ── Delete Confirmation Modal ── */}
         {showDeleteModal && (
             <div className="fixed inset-0 z-50 flex items-center justify-center">
               <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowDeleteModal(false)} />

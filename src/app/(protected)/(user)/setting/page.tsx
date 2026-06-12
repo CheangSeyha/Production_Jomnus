@@ -8,11 +8,8 @@ import WorkHistory from "@/components/setting/WorkHistory";
 import ProfileHeader from "@/components/setting/ProfileHeader";
 import { useAuthStore } from "@/store/authStore";
 import api from "@/lib/axios";
-
-// Match the WorkItem interface exactly as expected by WorkHistory component
-// The WorkHistory component expects id to be number, not string | number
 interface WorkItem {
-  id: number;  // Changed from number | string to number
+  id: number;
   title: string;
   description: string;
   tag: string;
@@ -35,14 +32,6 @@ export default function SettingPage() {
 
   const { user, setUser } = useAuthStore();
 
-  // const {
-  //   user,
-  //   accessToken,
-  // } = useAuthStore();
-  
-  // const updateUser = useAuthStore((state) => state.updateUser) || ((userData) => useAuthStore.setState({ user: userData }));
-  // const setUser = useAuthStore((state) => state.setUser);
-  
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -60,9 +49,6 @@ export default function SettingPage() {
 
   const tokenFromUrl = searchParams.get("token");
 
-  // -------------------------
-  // INIT FORM FROM STORE USER
-  // -------------------------
   useEffect(() => {
     if (user) {
       setFormData({
@@ -79,9 +65,6 @@ export default function SettingPage() {
     }
   }, [user]);
 
-  // -------------------------
-  // OPTIONAL: fallback fetch
-  // -------------------------
   useEffect(() => {
     const fetchUser = async () => {
       if (user) return;
@@ -98,7 +81,6 @@ export default function SettingPage() {
 
         const fetchedUser = res.data;
 
-        // NORMALIZE: Ensure frontend always safely tracks identity status across case types
         const normalizedUser = {
           ...fetchedUser,
           isIdentityVerified:
@@ -135,10 +117,6 @@ export default function SettingPage() {
     fetchUser();
   }, [user, tokenFromUrl, router, setUser]);
 
-  // -------------------------
-  // INPUT CHANGE
-  // -------------------------
-  // Fix: Properly type the onChange handler to match ProfileHeader's expected type
   const handleInputChange = (
     e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | { target: { name: string; value: any } }
   ) => {
@@ -149,9 +127,6 @@ export default function SettingPage() {
     }));
   };
 
-  // -------------------------
-  // SAVE PROFILE
-  // -------------------------
   const handleSave = async () => {
     setIsSaving(true);
 
@@ -185,10 +160,6 @@ export default function SettingPage() {
     }
   };
 
-  // -------------------------
-  // PROJECTS
-  // -------------------------
- // After — replace with this
 const [projects, setProjects] = useState<WorkItem[]>([]);
 
 useEffect(() => {
@@ -203,9 +174,6 @@ useEffect(() => {
   fetchWorkHistory();
 }, []);
 
-  // -------------------------
-  // LOADING STATE
-  // -------------------------
   if (loading || !user) {
     return (
       <div className="flex justify-center items-center h-screen bg-slate-50 text-slate-400 font-medium">

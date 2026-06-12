@@ -141,8 +141,6 @@ export default function SupportPage() {
           </div>
         </div>
 
-        {/* Removed the 'Still need help?' card to simplify the Support page */}
-
       </div>
     </div>
   );

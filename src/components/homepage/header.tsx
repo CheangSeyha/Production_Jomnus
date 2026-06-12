@@ -9,12 +9,10 @@ export default function Navbar() {
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  // Close mobile menu after route changes.
   useEffect(() => {
     setIsMobileMenuOpen(false);
   }, [pathname]);
 
-  // Define your links
   const links = [
     { name: "Home", href: "/" },
     { name: "About Us", href: "/aboutUs" },

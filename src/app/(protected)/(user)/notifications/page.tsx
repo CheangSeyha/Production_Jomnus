@@ -6,12 +6,9 @@ import { formatDistanceToNow } from "date-fns";
 import { useNotificationStore } from "@/store/userNotificationStore";
 
 export default function NotificationsPage() {
-  // ✅ Added fetchNotifications from your Zustand store layer
   const { notifications, isLoading, markAsRead, markAllAsRead, fetchNotifications } = useNotificationStore();
-  
   const [activeTab, setActiveTab] = useState<"all" | "unread">("all");
 
-  // ✅ Automatically load database data on component mount
   useEffect(() => {
     const loadData = async () => {
       if (fetchNotifications) {
@@ -25,7 +22,6 @@ export default function NotificationsPage() {
     loadData();
   }, [fetchNotifications]);
 
-  // Filter the notifications based on the active tab
   const filteredNotifications = notifications?.filter((notif) => {
     if (activeTab === "unread") return !notif.is_read;
     return true; 
@@ -110,7 +106,6 @@ export default function NotificationsPage() {
                 </p>
                 <div className="flex items-center gap-1 mt-2 text-xs text-slate-400">
                   <Clock size={12} />
-                  {/* ✅ Clean timestamp fallback syntax to prevent crashes if date string parses out oddly */}
                   {notif.created_at ? formatDistanceToNow(new Date(notif.created_at), { addSuffix: true }) : "Recent"}
                 </div>
               </div>

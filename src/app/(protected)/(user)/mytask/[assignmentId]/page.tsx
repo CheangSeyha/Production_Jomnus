@@ -429,7 +429,6 @@ export default function PerformerWorkspacePage() {
                 Submit Proof
               </h2>
             </div>
-            {/* PROOF TYPE */}
             <div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-4">
 
               {["TEXT", "IMAGE", "FILE", "RECEIPT"].map((type) => (

@@ -49,11 +49,7 @@ export default function AdminVerificationsPage() {
   const [resetLoading, setResetLoading] = useState<number | null>(null);
   const [exportLoading, setExportLoading] = useState(false);
   const [page, setPage] = useState(1);
-
-  // ── Multi-Image Context State ──
   const [activeInspection, setActiveInspection] = useState<Verification | null>(null);
-
-  // Tracks which rows have their 3-dots actions menu visible
   const [activeMenuId, setActiveMenuId] = useState<number | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
 
@@ -78,7 +74,6 @@ export default function AdminVerificationsPage() {
     fetchVerifications();
   }, [page]);
 
-  // Handle click away and escape hotkey patterns
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
@@ -128,7 +123,6 @@ export default function AdminVerificationsPage() {
         };
       });
       
-      // Synchronize changes back to modal view if currently open
       if (activeInspection?.id === verificationId) {
         setActiveInspection(prev => prev ? { ...prev, status: "APPROVED" } : null);
       }
@@ -158,7 +152,7 @@ export default function AdminVerificationsPage() {
           ),
         };
       });
-      // Synchronize changes back to modal view if currently open
+
       if (activeInspection?.id === verificationId) {
         setActiveInspection(prev => prev ? { ...prev, status: "REJECTED", rejection_reason: reason } : null);
       }
@@ -643,7 +637,6 @@ export default function AdminVerificationsPage() {
             onClick={() => setActiveInspection(null)}
             className="fixed inset-0 bg-slate-950/95 backdrop-blur-md z-[100] flex flex-col items-center justify-between p-4 sm:p-6 md:p-8 overflow-y-auto animate-in fade-in duration-200"
           >
-            {/* Top Navbar Contextual Info */}
             <div className="w-full max-w-6xl flex items-center justify-between gap-4 text-white z-10 bg-slate-900/60 backdrop-blur-md px-4 py-3 rounded-2xl border border-white/10">
               <div className="min-w-0">
                 <h4 className="text-sm font-bold text-white truncate">
@@ -668,12 +661,10 @@ export default function AdminVerificationsPage() {
               </div>
             </div>
 
-            {/* Core Layout Area: Dual Image Comparison Workspace */}
             <div 
               onClick={(e) => e.stopPropagation()}
               className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 gap-6 my-auto items-center justify-center py-8"
             >
-              {/* Box 1: ID Card Document File */}
               <div className="flex flex-col gap-2">
                 <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 px-1">
                   Provided Identity Document
@@ -694,7 +685,6 @@ export default function AdminVerificationsPage() {
                 </div>
               </div>
 
-              {/* Box 2: Live Verification Selfie */}
               <div className="flex flex-col gap-2">
                 <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 px-1">
                   User Verification Selfie
@@ -716,7 +706,6 @@ export default function AdminVerificationsPage() {
               </div>
             </div>
 
-            {/* Bottom Actions Workspace Bar */}
             <div 
               onClick={(e) => e.stopPropagation()}
               className="w-full max-w-md bg-slate-900/90 border border-white/10 rounded-2xl p-4 flex items-center justify-between gap-4 shadow-2xl mb-2"

@@ -68,7 +68,6 @@ export default function AdminAssignmentsPage() {
     fetchAssignments();
   }, [page]);
 
-  // ── Helpers ──────────────────────────────────────────────────────────────
   const getTaskId = (a: Assignment) => a.task_id ?? a.taskId ?? a.id;
   const getPerformerId = (a: Assignment) => a.performer_id ?? a.performerId;
 
@@ -117,7 +116,6 @@ export default function AdminAssignmentsPage() {
     }
   };
 
-  // ── Pagination ────────────────────────────────────────────────────────────
   const totalPages = Math.max(1, Math.ceil((assignments?.total ?? 0) / LIMIT));
 
   // Shows up to 5 page buttons centred around the current page
@@ -128,13 +126,11 @@ export default function AdminAssignmentsPage() {
     return Array.from({ length: end - start + 1 }, (_, i) => start + i);
   };
 
-  // ── Stats ─────────────────────────────────────────────────────────────────
   const stats = {
     inProgress: data.filter((a) => a.status === "IN_PROGRESS").length,
     verified:   data.filter((a) => a.status === "VERIFIED").length,
   };
 
-  // ── Render ────────────────────────────────────────────────────────────────
   return (
       <div className="min-h-screen space-y-8 max-w-[1400px] mx-auto">
 

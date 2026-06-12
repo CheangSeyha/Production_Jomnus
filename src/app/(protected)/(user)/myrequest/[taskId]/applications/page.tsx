@@ -746,7 +746,6 @@ export default function TaskApplicationsPage() {
           onDelete={deleteTask}
           saving={isUpdatingTask}
           onFormChange={(name: string, value: any) => {
-            // Keep live preview in sync while editing
             setTask((prev: any) => {
               if (!prev) return prev;
               return {
