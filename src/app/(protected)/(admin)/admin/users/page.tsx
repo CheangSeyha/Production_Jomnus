@@ -20,7 +20,6 @@ import {
   Briefcase
 } from "lucide-react";
 
-// Matches NestJS user entity and identityVerifications relation structure
 interface IdentityVerification {
   id: number;
   status: "PENDING" | "APPROVED" | "REJECTED" | string;
@@ -38,11 +37,7 @@ interface User {
   city?: string;
   country?: string;
   phoneNumber?: string;
-  
-  // Relations mapped directly from NestJS leftJoinAndSelect
   identityVerifications?: IdentityVerification[];
-  
-  // Explicit transaction metrics mapped dynamically below
   requesterStats?: {
     tasks_posted: number;
     total_spent: number | string;
@@ -155,16 +150,11 @@ const toggleUserBanStatus = async (user: User) => {
     }
   };
 
-// Helper checking dynamic array structures or status flags returned from NestJS
   const checkVerificationState = (user: User) => {
     if (user.currentRole?.toUpperCase() === "ADMIN") return "INTERNAL";
-    
-    // ✅ PRIORITIZE THE DYNAMIC BACKEND VALUE FIRST:
     if (user.verificationStatus?.toUpperCase() === "APPROVED") return "VERIFIED";
     if (user.verificationStatus?.toUpperCase() === "PENDING") return "PENDING";
     if (user.verificationStatus?.toUpperCase() === "NONE") return "NONE";
-
-    // Fallback checking for relation array structures if loaded elsewhere
     const elements = user.identityVerifications || [];
     if (elements.some(v => v.status?.toUpperCase() === "APPROVED")) return "VERIFIED";
     if (elements.some(v => v.status?.toUpperCase() === "PENDING")) return "PENDING";

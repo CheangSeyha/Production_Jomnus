@@ -29,8 +29,6 @@ function getCurrentUserId(): number | null {
 export default function MessagePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-
-  // ───────────────── STATE ─────────────────
   const [isLoading, setIsLoading] = useState(true);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConversationId, setSelectedConversationId] = useState<string>("");
@@ -44,7 +42,6 @@ export default function MessagePage() {
   const [mobileView, setMobileView] = useState<"list" | "chat">("list");
   const { initiateCall } = useCallStore();
 
-  // ── auth guard + load conversations ───────────────────────────────────────
   useEffect(() => {
     const token = localStorage.getItem("access_token");
     if (!token) {
@@ -73,9 +70,8 @@ export default function MessagePage() {
     };
 
     load();
-  }, [router, searchParams]); // ← add searchParams
+  }, [router, searchParams]);
 
-  // ── socket lifecycle ───────────────────────────────────────────────────────
   useEffect(() => {
     const socket = getSocket();
     socketRef.current = socket;
@@ -140,7 +136,6 @@ export default function MessagePage() {
     };
   }, []);
 
-  // ── join room + load messages when conversation changes ────────────────────
   useEffect(() => {
     if (!selectedConversationId) return;
 
@@ -165,13 +160,11 @@ export default function MessagePage() {
     loadMessages();
   }, [selectedConversationId]);
 
-  // ── scroll to bottom ───────────────────────────────────────────────────────
   useEffect(() => {
     if (!messageListRef.current) return;
     messageListRef.current.scrollTop = messageListRef.current.scrollHeight;
   }, [messages, selectedConversationId]);
 
-  // ── derived state ──────────────────────────────────────────────────────────
   const selectedConversation = useMemo(
     () => conversations.find((item) => item.id === selectedConversationId),
     [conversations, selectedConversationId],
@@ -184,7 +177,6 @@ export default function MessagePage() {
     );
   }, [conversations, search]);
 
-  // ── send message ───────────────────────────────────────────────────────────
   const handleSendMessage = async (e: FormEvent) => {
     e.preventDefault();
     if (!selectedConversationId || !draftMessage.trim() || isSending) return;
@@ -208,7 +200,6 @@ export default function MessagePage() {
     );
   };
 
-  // ── render ─────────────────────────────────────────────────────────────────
   if (isLoading) {
     return (
       <div className="flex h-[64vh] items-center justify-center text-slate-400">
@@ -225,7 +216,6 @@ export default function MessagePage() {
 
           <div className="relative h-full min-h-0">
 
-            {/* ───────── MOBILE LIST ───────── */}
             <div
                 className={`absolute inset-0 bg-white z-10 transition-transform duration-300 ease-out lg:hidden
                 ${mobileView === "list" 
@@ -246,7 +236,6 @@ export default function MessagePage() {
 
             </div>
 
-            {/* ───────── MOBILE CHAT ───────── */}
             <div
                 className={`absolute inset-0 bg-white z-20 transition-transform duration-300 ease-out lg:hidden
                  ${mobileView === "chat"

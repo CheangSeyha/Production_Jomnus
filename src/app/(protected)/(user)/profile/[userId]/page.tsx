@@ -191,28 +191,15 @@ export default function ProfilePage() {
                 </span>
               )}
             </div>
-
-            {/* Message */}
-            {/* <Link href={`/messages/${user.id}`} className="shrink-0">
-              <button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm px-5 py-2.5 rounded-xl transition-colors">
-                <MessageCircle className="w-4 h-4" /> Message
-              </button>
-            </Link> */}
           </div>
 
           {/* Body */}
           <div className="grid grid-cols-1 md:grid-cols-[1fr_260px]">
-
-            {/* Left — stats + bio */}
             <div className="p-8 space-y-8 border-b md:border-b-0 md:border-r border-slate-100">
-
-              {/* Stats */}
               <div>
                 <p className="text-xs font-bold uppercase tracking-widest text-sky-600 mb-4">Performance</p>
                 <StatsManagement data={user} />
               </div>
-
-              {/* Bio */}
               <div>
                 <p className="text-xs font-bold uppercase tracking-widest text-sky-600 mb-2">About</p>
                 <h2 className="font-black text-lg text-slate-900 mb-3">Bio</h2>
@@ -222,7 +209,6 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            {/* Right — contact sidebar */}
             <div className="p-8 space-y-6">
 
               {/* Contact */}
@@ -276,7 +262,6 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          {/* Work History — outside grid, full width */}
           <div className="p-8 border-t border-sky-100">
             <div className="flex justify-between items-center mb-6">
               <div>

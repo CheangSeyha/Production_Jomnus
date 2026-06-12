@@ -21,15 +21,7 @@ const statusStyles: Record<string, string> = {
   CANCELLED: "bg-slate-100 text-slate-500 border-slate-200",
 };
 
-export default function ApplicationOfferCard({
-                                               performerName,
-                                               performerImage,
-                                               offeredPrice,
-                                               status,
-                                               taskId,
-                                               onAccept,
-                                               onReject,
-                                             }: Props) {
+export default function ApplicationOfferCard({performerName, performerImage, offeredPrice, status, taskId, onAccept, onReject}: Props) {
   const router = useRouter();
   const isPending = status === "PENDING";
   const isAccepted = status === "ACCEPTED";

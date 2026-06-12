@@ -76,7 +76,7 @@ export default function IdentityVerificationRequestPage() {
     }
   };
 
-  // Webcam Capture Handler (Converts base64 screenshot into standard File object)
+  // Webcam Capture Handler
   const captureWebcamPhoto = useCallback(() => {
     if (!webcamRef.current) return;
     
@@ -88,8 +88,6 @@ export default function IdentityVerificationRequestPage() {
 
     setError(null);
     setSelfiePreview(imageSrc);
-
-    // Convert Base64 Data URL to binary file structure
     try {
       const byteString = atob(imageSrc.split(",")[1]);
       const mimeString = imageSrc.split(",")[0].split(":")[1].split(";")[0];
@@ -141,7 +139,6 @@ export default function IdentityVerificationRequestPage() {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
-      // Replaced native alert window with a smooth sonner notification
       toast.success("Verification requested successfully!", {
         description: "Admins are currently reviewing your data.",
       });

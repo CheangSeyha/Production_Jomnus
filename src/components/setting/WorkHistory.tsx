@@ -10,8 +10,8 @@ interface WorkItem {
   price?: number;
   completedAt?: string;
   requesterName?: string;
-   rating?: number | null;     // ← add
-  comment?: string | null;    // ← add
+   rating?: number | null;
+  comment?: string | null;
 }
 
 interface WorkHistoryProps {

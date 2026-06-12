@@ -400,7 +400,7 @@ export default function MyTaskPage() {
                                         `/mytask/${task.assignmentId}`
                                     );
                                 }}
-                                className="group cursor-pointer rounded-2xl border border-sky-100 bg-white shadow-[0_8px_28px_rgba(14,165,233,0.08)] transition-all hover:-translate-y-0.5 hover:border-sky-300 hover:shadow-[0_18px_40px_rgba(14,165,233,0.18)] flex flex-col overflow-hidden"
+                                className="group rounded-2xl border border-sky-100 bg-white shadow-[0_8px_28px_rgba(14,165,233,0.08)] transition-all hover:-translate-y-0.5 hover:border-sky-300 hover:shadow-[0_18px_40px_rgba(14,165,233,0.18)] flex flex-col overflow-hidden"
                             >
                                 <div className="p-5 flex flex-col flex-1 gap-4">
 
@@ -673,7 +673,7 @@ export default function MyTaskPage() {
 
                             </div>
 
-                            {/* Text Area */}<div className="space-y-2">
+                            <div className="space-y-2">
 
                                 <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">
                                     Description
@@ -692,7 +692,6 @@ export default function MyTaskPage() {
                                 />
                             </div>
 
-                            {/* Error */}
                             {proofError && (
                                 <div className="text-sm text-red-600 font-medium bg-red-50 border border-red-100 px-3 py-2 rounded-lg">
                                     {proofError}

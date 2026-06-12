@@ -115,19 +115,6 @@ export default function BlogBody() {
                 variants={staggerContainer}
                 viewport={{ once: false, amount: 0.2 }}
             >
-                {/*{categories.map((cat, i) => (*/}
-                {/*    <motion.button*/}
-                {/*        key={i}*/}
-                {/*        className={`px-5 py-2 rounded-full text-xs font-bold transition ${*/}
-                {/*            i === 0 ? 'bg-blue-600 text-white shadow-md shadow-blue-100' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'*/}
-                {/*        }`}*/}
-                {/*        variants={staggerItem}*/}
-                {/*        whileHover={shouldReduceMotion ? undefined : { y: -2, scale: 1.03 }}*/}
-                {/*        whileTap={shouldReduceMotion ? undefined : { scale: 0.98 }}*/}
-                {/*    >*/}
-                {/*        {cat}*/}
-                {/*    </motion.button>*/}
-                {/*))}*/}
             </motion.section>
 
 
@@ -163,9 +150,6 @@ export default function BlogBody() {
                                         </span>
                                         <img src={post.image} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition duration-500" />
                                     </div>
-                                    {/*<div className="flex items-center gap-2 text-slate-400 text-[10px] font-bold mb-3">*/}
-                                    {/*    <Clock size={12} /> {post.readTime}*/}
-                                    {/*</div>*/}
                                     <h3 className="text-lg sm:text-xl font-bold text-slate-900 mb-3 leading-snug group-hover:text-blue-600 transition">
                                         {post.title}
                                     </h3>
@@ -180,18 +164,6 @@ export default function BlogBody() {
                             </ Link>
                         ))}
                     </div>
-
-                    {/*<motion.div className="mt-12 sm:mt-16 flex justify-center" {...fadeUp(0.1)}>*/}
-                    {/*    <motion.button*/}
-                    {/*        className="bg-slate-100 text-slate-900 px-10 py-3 rounded-xl font-bold hover:bg-slate-200 transition"*/}
-                    {/*        animate={shouldReduceMotion ? undefined : { scale: [1, 1.02, 1] }}*/}
-                    {/*        transition={shouldReduceMotion ? undefined : { duration: 3.8, repeat: Infinity, ease: 'easeInOut' }}*/}
-                    {/*        whileHover={shouldReduceMotion ? undefined : { scale: 1.05 }}*/}
-                    {/*        whileTap={shouldReduceMotion ? undefined : { scale: 0.98 }}*/}
-                    {/*    >*/}
-                    {/*        Load More Articles*/}
-                    {/*    </motion.button>*/}
-                    {/*</motion.div>*/}
                 </motion.div>
 
 
@@ -276,36 +248,3 @@ export default function BlogBody() {
         </div>
     );
 }
-
-// const categories = ["All", "Success Stories", "Safety Tips", "Tasker Guides", "Marketplace News"];
-//
-// const posts = [
-//     {
-//         tag: "SUCCESS STORY",
-//         title: "From Errands to Full-Time: Sok Dara's Journey",
-//         desc: "Discover how Sok Dara turned a weekend side hustle of running small errands into a thriving full-time career on the TaskExchange platform.",
-//         readTime: "6 MIN READ",
-//         image: "/images/teams/blog1.png"
-//     },
-//     {
-//         tag: "SAFETY TIPS",
-//         title: "Securing Your Digital Identity on the Marketplace",
-//         desc: "Our guide to keeping your account safe, identifying phishing attempts, and ensuring every transaction is secure.",
-//         readTime: "4 MIN READ",
-//         image: "/images/teams/blog2.png"
-//     },
-//     {
-//         tag: "TASKER GUIDES",
-//         title: "Mastering Your Profile for High-Value Clients",
-//         desc: "How to structure your portfolio and biography to attract enterprise-level tasks and long-term community contracts.",
-//         readTime: "8 MIN READ",
-//         image: "/images/teams/blog3.png"
-//     },
-//     {
-//         tag: "MARKETPLACE NEWS",
-//         title: "Introducing TaskExchange Groups: Local Networking",
-//         desc: "We're launching local hubs to help taskers connect, share equipment, and collaborate on large-scale community projects.",
-//         readTime: "3 MIN READ",
-//         image: "/images/teams/blog4.png"
-//     }
-// ];

@@ -18,8 +18,6 @@ export default function MyRequestPage() {
 
   const filteredTasks = useMemo(() => {
     let result = tasks;
-
-    // SEARCH
     const normalizedQuery = query.trim().toLowerCase();
 
     if (normalizedQuery) {
@@ -37,7 +35,6 @@ export default function MyRequestPage() {
       });
     }
 
-    // FILTER
     if (filter !== "ALL") {
       result = result.filter((task) => {
         return task.status === filter;
@@ -131,7 +128,6 @@ export default function MyRequestPage() {
             />
           </div>
 
-          {/* TOGGLES */}
           <div className="flex flex-wrap gap-2">
 
             {[

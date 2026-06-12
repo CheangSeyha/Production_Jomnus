@@ -115,13 +115,6 @@ export default function Footer() {
               Safety Tips
             </li>
 
-            {/*<li className="hover:text-blue-600 cursor-pointer">*/}
-            {/*  Terms of Service*/}
-            {/*</li>*/}
-            {/*<li className="hover:text-blue-600 cursor-pointer">*/}
-            {/*  Privacy Policy*/}
-            {/*</li>*/}
-
           </ul>
         </div>
       </div>

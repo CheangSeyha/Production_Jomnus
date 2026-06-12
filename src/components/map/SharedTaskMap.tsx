@@ -242,7 +242,6 @@ export default function SharedTaskMap({ lat, lng }: Props) {
     fetchRoute(origin, dest).then((r) => {
       setRoute(r);
       setRouteLoading(false);
-      // Fit map to show both markers + route
       const pts: LatLng[] = r ? r.polyline : [origin, dest];
       setFitPositions(pts);
       setFlyTarget(null);
@@ -267,8 +266,7 @@ export default function SharedTaskMap({ lat, lng }: Props) {
       setFlyTarget(null);
     });
   }, [searchPos, lat, lng]);
- 
-  // Handle search submit
+
   const handleSearch = useCallback(async () => {
     const q = searchInput.trim();
     if (!q) return;
@@ -496,7 +494,6 @@ export default function SharedTaskMap({ lat, lng }: Props) {
  
       <div className="absolute bottom-3 left-3 right-3 z-[1000] flex flex-col gap-2 pointer-events-none sm:right-auto">
  
-        {/* Distance + duration */}
         {distanceKm !== null && (
           <div className="inline-flex w-fit max-w-full flex-wrap items-center gap-2 rounded-xl border border-sky-200 bg-white/95 px-3 py-2 shadow-[0_10px_28px_rgba(15,23,42,0.18)] backdrop-blur-sm">
             <span className="w-2.5 h-2.5 rounded-full bg-sky-500" />

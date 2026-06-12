@@ -41,6 +41,7 @@ type TaskApi = {
     id: number;
     fullName: string;
     profileImage?: string | null;
+    isIdentityVerified?: boolean;
   } | null;
   hasApplied?: boolean;
 };

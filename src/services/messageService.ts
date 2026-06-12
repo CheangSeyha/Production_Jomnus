@@ -6,7 +6,6 @@ import {
   Conversation,
 } from "@/types/message";
 
-// ── helpers ───────────────────────────────────────────────────────────────────
 
 function getCurrentUserId(): number | null {
   if (typeof window === "undefined") return null;
@@ -46,7 +45,7 @@ export function mapApiConversation(api: ApiConversation): Conversation {
     participantId: String(api.participantId ?? ""),
     participantName: api.participantName,
     participantAvatar: api.participantAvatar || "",
-    participantStatus: "offline", // real-time presence can be added later
+    participantStatus: "offline",
     taskTitle: api.task_title,
     lastMessage: api.lastMessage || "",
     lastMessageAt: formatTime(api.lastMessageAt || api.created_at),
@@ -60,7 +59,7 @@ export function mapApiMessage(raw: any, currentUserId: number | null): ChatMessa
   const imageUrl = raw.image_url
     ? raw.image_url.startsWith("http")
       ? raw.image_url
-      : `${BASE_URL}${raw.image_url}`  // ← uses BASE_URL without /api
+      : `${BASE_URL}${raw.image_url}`
     : undefined;
 
   return {
@@ -79,8 +78,6 @@ export function mapApiMessage(raw: any, currentUserId: number | null): ChatMessa
     kind: "text",
   };
 }
-
-// ── service ───────────────────────────────────────────────────────────────────
 
 export const messageService = {
   async getConversations(): Promise<Conversation[]> {

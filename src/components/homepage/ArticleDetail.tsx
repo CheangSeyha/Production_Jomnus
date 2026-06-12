@@ -132,7 +132,6 @@ export default function ArticleDetail({ post }: { post: Post }) {
     return (
         <div className="w-full bg-white overflow-hidden">
 
-            {/* ── HERO ─────────────────────────────────── */}
             <motion.div
                 className="relative w-full h-[56vw] max-h-160 min-h-80 overflow-hidden"
                 initial={shouldReduceMotion ? false : { opacity: 0 }}
@@ -161,7 +160,6 @@ export default function ArticleDetail({ post }: { post: Post }) {
                     <ArrowLeft size={14} /> Back to Journal
                 </motion.button>
 
-                {/* Save / Share */}
                 <motion.div
                     className="absolute top-6 right-6 sm:top-8 sm:right-8 flex items-center gap-2"
                     initial={shouldReduceMotion ? {} : { opacity: 0, x: 16 }}
@@ -183,7 +181,6 @@ export default function ArticleDetail({ post }: { post: Post }) {
                     </button>
                 </motion.div>
 
-                {/* Hero metadata */}
                 <div className="absolute bottom-0 left-0 right-0 px-4 sm:px-8 pb-8 sm:pb-10 max-w-4xl mx-auto">
                     <motion.span
                         className="inline-flex bg-blue-600 text-white text-[10px] font-bold px-3 py-1 rounded tracking-widest uppercase mb-4"
@@ -210,21 +207,13 @@ export default function ArticleDetail({ post }: { post: Post }) {
                             <span>Community Editor</span>
                         </div>
 
-                        {/*<span className="text-white/40">·</span>*/}
-                        {/*/!*<span className="flex items-center gap-1">*!/*/}
-                        {/*/!*    <Clock size={12} /> {post.readTime}*!/*/}
-                        {/*/!*</span>*!/*/}
-                        {/*<span className="text-white/40">·</span>*/}
-
                         <span>June 8, 2026</span>
                     </motion.div>
                 </div>
             </motion.div>
 
-            {/* ── BODY ─────────────────────────────────── */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 grid lg:grid-cols-[1fr_320px] gap-12 lg:gap-16">
 
-                {/* Main prose column */}
                 <main>
                     <motion.p
                         className="text-lg sm:text-xl text-slate-500 leading-relaxed font-medium mb-10 border-l-4 border-blue-600 pl-5"
@@ -358,7 +347,6 @@ export default function ArticleDetail({ post }: { post: Post }) {
                     </motion.div>
                 </main>
 
-                {/* ── SIDEBAR ─────────────────────────────── */}
                 <aside className="space-y-10">
                     <motion.div className="sticky top-6 space-y-8" {...fadeUp(0.1)}>
 
@@ -421,7 +409,6 @@ export default function ArticleDetail({ post }: { post: Post }) {
                 </aside>
             </div>
 
-            {/* ── RELATED ARTICLES ─────────────────────── */}
             <motion.section
                 className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 border-t border-slate-100"
                 initial={shouldReduceMotion ? false : "hidden"}
