@@ -1,9 +1,6 @@
 "use client";
-
-import React from 'react';
 import { ShieldCheck, Users, Star, Eye } from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
-import {router} from "next/client";
 import {useRouter} from "next/navigation";
 
 

@@ -2,14 +2,7 @@
 
 import api from "@/lib/axios";
 import { useState } from "react";
-import {
-  Check,
-  X,
-  Clock3,
-  DollarSign,
-  Mail,
-  Loader2,
-} from "lucide-react";
+import { Check, X, Clock3, DollarSign, Mail, Loader2 } from "lucide-react";
 
 type Props = {
   application: {

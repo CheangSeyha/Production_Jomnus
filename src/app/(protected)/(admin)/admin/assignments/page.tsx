@@ -7,9 +7,7 @@ import {
   Clock,
   BadgeCheck,
   AlertCircle,
-  SlidersHorizontal,
   ArrowUpDown,
-  Plus,
   Eye,
   ChevronLeft,
   ChevronRight,
@@ -244,7 +242,7 @@ export default function AdminAssignmentsPage() {
                 <table className="w-full text-left border-collapse">
                   <thead>
                   <tr className="bg-slate-50/50 border-b border-slate-100">
-                    {["Task", "Task ID", "Performer", "Performer ID", "Status", "Verified", "Actions"].map((h) => (
+                    {["Task", "Task ID", "Performer", "Performer ID", "Status", "Verified"].map((h) => (
                         <th key={h} className="px-8 py-4 text-[11px] font-extrabold text-slate-400 uppercase tracking-[0.15em]">
                           {h}
                         </th>
@@ -319,13 +317,6 @@ export default function AdminAssignmentsPage() {
                                   <span className="text-sm font-bold">Pending</span>
                                 </div>
                             )}
-                          </td>
-
-                          {/* Actions */}
-                          <td className="px-8 py-6">
-                            <button className="p-2 rounded-xl text-blue-500 hover:bg-blue-50 transition-colors" title="View">
-                              <Eye className="w-4 h-4" />
-                            </button>
                           </td>
                         </tr>
                     );

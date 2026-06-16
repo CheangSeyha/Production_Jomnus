@@ -1,14 +1,10 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-
 import { ArrowLeft, Send } from "lucide-react";
-
 import StepIndicator from "@/components/myrequest/StepIndicator";
 import TaskOverview from "@/components/myrequest/TaskOverview";
-
 import { useTaskStore } from "@/store/taskStore";
-
 import api from "@/lib/axios";
 import { toDateTimeLocalISOString } from "@/utils/dateTime";
 
@@ -19,7 +15,6 @@ export default function Step2Page() {
 
   const handleSubmit = async () => {
     try {
-      // VALIDATION
       if (!form.categoryId) {
         alert("Category missing");
         return;

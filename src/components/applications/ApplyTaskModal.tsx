@@ -1,14 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import {
-  X,
-  DollarSign,
-  BriefcaseBusiness,
-  Loader2,
-  ShieldCheck,
-  Sparkles,
-} from "lucide-react";
+import { X, DollarSign, BriefcaseBusiness, Loader2, ShieldCheck, Sparkles} from "lucide-react";
 import api from "@/lib/axios";
 import { useToast } from "@/components/providers/toast-provider";
 

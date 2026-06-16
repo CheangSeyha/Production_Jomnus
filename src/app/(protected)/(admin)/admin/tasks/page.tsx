@@ -6,9 +6,7 @@ import {
   Trash2,
   FileText,
   Search,
-  Eye,
   Download,
-  TrendingUp,
   ChevronLeft,
   ChevronRight,
   AlertCircle,
@@ -71,18 +69,6 @@ export default function AdminTasksPage() {
 
   useEffect(() => { fetchTasks(); }, []);
 
-
-  const openDetails = async (taskId: number) => {
-    setShowDetails(true);
-    setSelectedTask(null);
-    try {
-      const data = await adminService.getTaskById(taskId);
-      setSelectedTask(data || tasks.find((t) => t.id === taskId) || null);
-    } catch {
-      setSelectedTask(tasks.find((t) => t.id === taskId) || null);
-    }
-  };
-
   const closeDetails = () => {
     setShowDetails(false);
     setSelectedTask(null);
@@ -144,7 +130,6 @@ export default function AdminTasksPage() {
   );
   const totalPages = Math.max(1, Math.ceil(filteredTasks.length / ITEMS_PER_PAGE));
 
-  const inProgressCount = tasks.filter((t) => t.status === "IN_PROGRESS").length;
   const completedCount  = tasks.filter((t) => t.status === "COMPLETED").length;
   const totalVolume     = tasks.reduce((sum, t) => sum + (getPrice(t) || 0), 0);
   const efficiencyRate  = tasks.length > 0
@@ -194,22 +179,6 @@ export default function AdminTasksPage() {
 
         {/* ── Stats Cards ── */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-
-          {/* Ongoing Impact */}
-          <div className="bg-[#0052CC] rounded-4xl p-8 text-white relative overflow-hidden shadow-xl">
-            <p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-blue-200 mb-3">
-              Ongoing Impact
-            </p>
-            <p className="text-5xl font-extrabold tracking-tighter">
-              {inProgressCount.toLocaleString()}
-            </p>
-            <p className="text-blue-100/80 text-sm font-medium mt-3 leading-relaxed">
-              Active tasks across {new Set(tasks.map((t) => t.status)).size} statuses this week.
-            </p>
-            <div className="absolute bottom-6 right-6 opacity-20">
-              <TrendingUp className="w-20 h-20 text-white" />
-            </div>
-          </div>
 
           {/* Efficiency Rate */}
           <div className="bg-white rounded-4xl border border-slate-100 shadow-sm p-8">
@@ -382,13 +351,6 @@ export default function AdminTasksPage() {
                             {/* Actions */}
                             <td className="px-8 py-5">
                               <div className="flex items-center gap-1.5">
-                                <button
-                                    onClick={() => openDetails(task.id)}
-                                    className="p-2 rounded-xl text-blue-500 hover:bg-blue-50 transition-colors"
-                                    title="View"
-                                >
-                                  <Eye className="w-4 h-4" />
-                                </button>
                                 <button
                                     onClick={() => promptDelete(task.id)}
                                     disabled={deleteLoading === task.id}

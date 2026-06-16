@@ -2,14 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import {
-  ArrowLeft,
-  BriefcaseBusiness,
-  CalendarClock,
-  MapPin,
-  Users,
-  Wallet,
-} from "lucide-react";
+import { ArrowLeft, BriefcaseBusiness, CalendarClock, MapPin, Users, Wallet } from "lucide-react";
 import api from "@/lib/axios";
 import { toDateTimeLocalValue, toDateTimeLocalISOString } from "@/utils/dateTime";
 import ApplicationOfferCard from "@/components/myrequest/ApplicationOfferCard";
@@ -17,16 +10,6 @@ import WorkerTimelineCard from "@/components/myrequest/WorkerTimeLineCard";
 import EditTaskModal from "@/components/myrequest/EditTaskModel";
 import { useToast } from "@/components/providers/toast-provider";
 import dynamic from "next/dynamic";
-
-type Props = {
-  performerName: string;
-  performerImage?: string;
-  offeredPrice: number;
-  status: string;
-  taskId: number; // ← add this
-  onAccept: () => void;
-  onReject: () => void;
-};
 
 type Application = {
   id: number;
@@ -153,10 +136,6 @@ export default function TaskApplicationsPage() {
   );
   const pendingCount = useMemo(
     () => applications.filter((app) => app.status === "PENDING").length,
-    [applications],
-  );
-  const rejectedCount = useMemo(
-    () => applications.filter((app) => app.status === "REJECTED").length,
     [applications],
   );
   const canCloseApplications =

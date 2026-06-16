@@ -1,5 +1,3 @@
-// ── UI types (used by components) ─────────────────────────────────────────────
-
 export type PresenceStatus = "online" | "offline";
 
 export type MessageKind = "text" | "file";
@@ -38,7 +36,7 @@ export interface MessageFile {
 export type ChatMessage = {
   id: string | number;
   content: string;
-  imageUrl?: string;       // ← add this
+  imageUrl?: string;
   isOwn: boolean;
   senderName?: string;
   senderAvatar?: string | null;
@@ -76,7 +74,6 @@ export interface SendMessagePayload {
   content: string;
 }
 
-// ── Backend API response types ─────────────────────────────────────────────────
 
 export interface ApiConversation {
   id: number;
@@ -96,7 +93,7 @@ export interface ApiMessage {
   conversation_id: number;
   sender_id: number;
   message: string;
-  image_url?: string; // ← add this
+  image_url?: string;
   type?: MessageType;
   call_duration?: number;
   created_at: string;
