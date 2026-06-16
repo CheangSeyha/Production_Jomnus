@@ -349,30 +349,24 @@ export default function PerformerWorkspacePage() {
               {
                 label: "In Progress",
                 active:
-                  assignment.status ===
-                    "IN_PROGRESS" ||
-                  assignment.status ===
-                    "COMPLETED" ||
-                  assignment.status ===
-                    "VERIFIED",
+                  assignment.status === "IN_PROGRESS" ||
+                  assignment.status === "COMPLETED" ||
+                  assignment.status === "VERIFIED",
                 icon: LoaderCircle,
               },
 
               {
                 label: "Completed",
                 active:
-                  assignment.status ===
-                    "COMPLETED" ||
-                  assignment.status ===
-                    "VERIFIED",
+                  assignment.status === "COMPLETED" ||
+                  assignment.status === "VERIFIED",
                 icon: CheckCircle2,
               },
 
               {
                 label: "Verified",
                 active:
-                  assignment.status ===
-                  "VERIFIED",
+                  assignment.status === "VERIFIED",
                 icon: ShieldCheck,
               },
             ].map((step, index) => {

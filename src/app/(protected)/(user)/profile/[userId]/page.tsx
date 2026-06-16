@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
-import Link from "next/link";
 import { MapPin, Mail, Phone, ArrowLeft, MessageCircle, ShieldCheck, User, Calendar, CheckCircle2 } from "lucide-react";
 import api from "@/lib/axios";
 import StatsManagement from "@/components/setting/StatsManagement";

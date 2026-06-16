@@ -1,8 +1,6 @@
 "use client";
  
 import { MapPin, Clock, ArrowUpRight, CheckCircle2 } from "lucide-react";
-import { getTaskBadges } from "../../utils/taskBadge";
-import { getFakeInterest } from "@/utils/random";
 import { Task } from "@/types/task";
 import { useRouter } from "next/navigation";
  

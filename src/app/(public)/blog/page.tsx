@@ -1,7 +1,6 @@
 "use client";
 
-import React from 'react';
-import { ChevronRight, Clock, ExternalLink } from 'lucide-react';
+import { ChevronRight, ExternalLink } from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
 import Link from "next/link";
 import { posts } from "@/lib/post";

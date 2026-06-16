@@ -3,10 +3,8 @@
 import { useEffect } from "react";
 import { useAuthStore } from "@/store/authStore";
 import { useUserStore } from "@/store/userStore"; 
-import { useCallStore } from "@/store/callStore"; // Import the call store
+import { useCallStore } from "@/store/callStore";
 import { socket } from "@/lib/websocket";
-// 1. Import your user store
-
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const initializeAuth = useAuthStore((s) => s.initializeAuth);
   const authUser = useAuthStore((s) => s.user);  
@@ -24,7 +22,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   
   useEffect(() => {
-  if (!socket) return; //
+  if (!socket) return;
 
   socket.on('call:incoming', (data: { conversationId: number; callerId: number; isVideo: boolean }) => {
     useCallStore.getState().receiveIncomingCall(data.conversationId, data.callerId, data.isVideo);

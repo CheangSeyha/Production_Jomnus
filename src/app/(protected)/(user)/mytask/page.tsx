@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import {Clock, Upload, Play, MapPin, X, CheckCircle2, MessageCircle} from "lucide-react";
+import { useRouter } from "next/navigation";
+import {Clock, Upload, MapPin, MessageCircle} from "lucide-react";
 import api from "@/lib/axios";
 
 type MyTaskApi = {
@@ -120,9 +120,6 @@ function StatusBadge({ status }: { status: string }) {
 export default function MyTaskPage() {
 
     const router = useRouter();
-    const searchParams = useSearchParams();
-
-
     const [activeTab, setActiveTab] = useState("ASSIGNED");
     const [tasks, setTasks] = useState<TaskCard[]>([]);
     const [isLoading, setIsLoading] = useState(false);

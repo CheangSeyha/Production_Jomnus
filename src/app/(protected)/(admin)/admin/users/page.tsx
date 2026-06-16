@@ -6,7 +6,6 @@ import {
   Users,
   Search,
   Eye,
-  ArrowLeftRight,
   Ban,
   History,
   AlertCircle,
@@ -374,13 +373,6 @@ const toggleUserBanStatus = async (user: User) => {
                               title="View details"
                             >
                               <Eye className="w-4 h-4" />
-                            </button>
-
-                            <button
-                              className="p-2 rounded-xl text-slate-500 hover:bg-slate-100 transition-colors"
-                              title="Change role"
-                            >
-                              <ArrowLeftRight className="w-4 h-4" />
                             </button>
 
                             <button

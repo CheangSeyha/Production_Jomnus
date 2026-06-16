@@ -3,16 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import {
-  Search,
-  Bell,
-  Settings,
-  LogOut,
-  Menu,
-  UserCircle,
-  ShieldCheck,
-  User,
-  ChevronRight,
-  CheckCircle2,
+  Bell, Settings, LogOut, Menu, ShieldCheck, User, ChevronRight,
 } from "lucide-react";
 
 import { useUserStore, getAvatar, isVerifiedUser } from "@/store/userStore";
@@ -29,7 +20,6 @@ type Props = {
 export default function Header({ role = "user", onMenuClick }: Props) {
   const user = useAuthStore((s) => s.user);
   const setUser = useAuthStore((s) => s.setUser);
-  // const user = useUserStore((s) => s.user);
   const unreadCount = useNotificationStore((s) => s.unreadCount);
   const fetchNotifications = useNotificationStore((s) => s.fetchNotifications);
 
@@ -38,12 +28,10 @@ export default function Header({ role = "user", onMenuClick }: Props) {
 
   const isVerified = isVerifiedUser(user);
 
-  // Sync notifications on header mount (solves the page refresh red dot lag)
   useEffect(() => {
     fetchNotifications();
   }, [fetchNotifications]);
 
-  // Sync user state loop from localStorage fallback
   useEffect(() => {
     if (!user && typeof window !== "undefined") {
       const storedUser = localStorage.getItem("user_store"); 
@@ -310,7 +298,7 @@ export default function Header({ role = "user", onMenuClick }: Props) {
                       </Link>
                     )}
 
-                    <Link
+                    {/* <Link
                       href={is_admin ? "/admin/setting" : "/setting"}
                       onClick={() => setOpen(false)}
                       className="flex items-center justify-between group p-3 rounded-2xl hover:bg-slate-50 transition-all duration-200"
@@ -327,7 +315,7 @@ export default function Header({ role = "user", onMenuClick }: Props) {
                         size={16}
                         className="text-slate-300 group-hover:text-slate-500 transition-colors"
                       />
-                    </Link>
+                    </Link> */}
                   </div>
 
                   <div className="mx-3 my-2 h-px bg-slate-100" />

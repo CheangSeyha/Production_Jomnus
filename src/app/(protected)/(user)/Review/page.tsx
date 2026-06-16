@@ -1,12 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import {
-  CalendarDays,
-  MessageSquareText,
-  Sparkles,
-  Star,
-} from "lucide-react";
+import { CalendarDays, MessageSquareText, Sparkles, Star } from "lucide-react";
 import api from "@/lib/axios";
 import Link from "next/link";
 

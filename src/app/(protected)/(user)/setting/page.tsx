@@ -131,7 +131,6 @@ export default function SettingPage() {
     setIsSaving(true);
 
     try {
-      // const token = localStorage.getItem("access_token");
 
       const payload = {
         fullName: formData.fullName,
