@@ -364,7 +364,6 @@ export default function MyTaskPage() {
 
                     {!isLoading && filteredTasks.length === 0 && (
                         <div className="flex flex-col items-center justify-center h-64 rounded-2xl border-2 border-dashed border-sky-200 bg-white/85 text-center">
-                            <div className="text-3xl mb-3">📋</div>
                             <p className="font-semibold text-slate-800">No tasks here</p>
                             <p className="text-sm text-slate-500 mt-1">Tasks in this status will appear here</p>
                         </div>
