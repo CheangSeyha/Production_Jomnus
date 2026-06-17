@@ -2,12 +2,12 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ChevronLeft, ChevronRight, SlidersHorizontal } from "lucide-react";
+import { ChevronLeft, ChevronRight, Search, SlidersHorizontal, X } from "lucide-react";
 import DetailTaskCard from "@/components/myrequest/DetailTaskCard";
-import TaskDetailModal from "@/components/myrequest/TaskDetailModal";
 import { Task } from "@/types/task";
 import ApplyTaskModal from "@/components/applications/ApplyTaskModal";
 import api from "@/lib/axios";
+import dynamic from "next/dynamic";
 
 type Category = {
   id: number;
@@ -17,102 +17,130 @@ type Category = {
 
 type TaskApi = {
   id: number;
-
   title: string;
-
   description?: string | null;
-
   location_text?: string | null;
-
   latitude?: number | null;
-
   longitude?: number | null;
-
   price: number;
-
   created_at: string;
-
   updated_at?: string;
-
   start_date?: string | null;
-
   deadline: string;
-
   required_workers?: number;
-
+  categories?: Category[];
   status:
-    | "POSTED"
-    | "ACCEPTED"
-    | "IN_PROGRESS"
-    | "PARTIAL_COMPLETED"
-    | "COMPLETED"
-    | "VERIFIED"
-    | "CANCELLED";
-
+      | "POSTED"
+      | "ACCEPTED"
+      | "IN_PROGRESS"
+      | "PARTIAL_COMPLETED"
+      | "COMPLETED"
+      | "VERIFIED"
+      | "CANCELLED";
   requester?: {
     id: number;
-
     fullName: string;
-
     profileImage?: string | null;
+    isIdentityVerified?: boolean;
   } | null;
-
   hasApplied?: boolean;
 };
 
 const TASKS_PER_PAGE = 6;
 
+const PRICE_OPTIONS = [
+  { value: "", label: "Any Price" },
+  { value: "0-5", label: "$0 – $5" },
+  { value: "5-20", label: "$5 – $20" },
+  { value: "20-50", label: "$20 – $50" },
+  { value: "50-100", label: "$50 – $100" },
+  { value: "100+", label: "$100+" },
+];
+
+const SORT_OPTIONS = [
+  { value: "newest", label: "Newest" },
+  { value: "oldest", label: "Oldest" },
+  { value: "highest-price", label: "Highest Price" },
+  { value: "lowest-price", label: "Lowest Price" },
+  { value: "deadline", label: "Deadline Soon" },
+];
+
 export default function DashboardPage() {
+
   const router = useRouter();
   const searchParams = useSearchParams();
+
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoadingCategories, setIsLoadingCategories] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-
+  const [sortBy, setSortBy] = useState("newest");
   const [tasks, setTasks] = useState<Task[]>([]);
-
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [selectedApplyTask, setSelectedApplyTask] = useState<Task | null>(null);
+  const [selectedPrice, setSelectedPrice] = useState("");
+  const [showMap, setShowMap] = useState(false);
 
-  const [selectedApplyTask, setSelectedApplyTask] = useState<Task | null>(null);  
+  const SharedTaskMap = dynamic(
+      () => import("@/components/map/SharedTaskMap"),
+      { ssr: false }
+  );
 
   const markTaskApplied = (taskId: number) => {
-    setTasks((currentTasks) =>
-      currentTasks.map((task) =>
-        task.id === taskId ? { ...task, hasApplied: true } : task,
-      ),
+    setTasks((prev) =>
+        prev.map((t) => (t.id === taskId ? { ...t, hasApplied: true } : t))
     );
   };
 
   const filteredTasks = useMemo(() => {
-    const normalizedSearch = searchTerm.trim().toLowerCase();
-
+    const q = searchTerm.trim().toLowerCase();
     return [...tasks]
-      .filter((task) => {
-        if (!normalizedSearch) return true;
+        .filter((task) => {
+          const matchesSearch =
+              !q ||
+              [task.title, task.description, task.locationText, task.requesterName]
+                  .filter(Boolean)
+                  .some((v) => String(v).toLowerCase().includes(q));
 
-        return [
-          task.title,
-          task.description,
-          task.locationText,
-          task.requesterName,
-        ]
-          .filter(Boolean)
-          .some((value) => String(value).toLowerCase().includes(normalizedSearch));
-      })
-      .sort(
-        (a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-      );
-  }, [searchTerm, tasks]);
+          const matchesCategory =
+              !selectedCategory ||
+              task.categoryIds?.includes(Number(selectedCategory));
+
+          let matchesPrice = true;
+          if (selectedPrice) {
+            const p = task.price;
+            switch (selectedPrice) {
+              case "0-5":    matchesPrice = p <= 5; break;
+              case "5-20":   matchesPrice = p > 5 && p <= 20; break;
+              case "20-50":  matchesPrice = p > 20 && p <= 50; break;
+              case "50-100": matchesPrice = p > 50 && p <= 100; break;
+              case "100+":   matchesPrice = p > 100; break;
+            }
+          }
+          return matchesSearch && matchesCategory && matchesPrice;
+        })
+        .sort((a, b) => {
+          switch (sortBy) {
+            case "oldest":        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+            case "highest-price": return b.price - a.price;
+            case "lowest-price":  return a.price - b.price;
+            case "deadline":      return new Date(a.deadline).getTime() - new Date(b.deadline).getTime();
+            default:              return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+          }
+        });
+  }, [searchTerm, selectedCategory, selectedPrice, tasks, sortBy]);
+
 
   const totalPages = Math.max(1, Math.ceil(filteredTasks.length / TASKS_PER_PAGE));
   const paginatedTasks = filteredTasks.slice(
-    (currentPage - 1) * TASKS_PER_PAGE,
-    currentPage * TASKS_PER_PAGE,
+      (currentPage - 1) * TASKS_PER_PAGE,
+      currentPage * TASKS_PER_PAGE
   );
+
+  const activeFilterCount = [selectedCategory, selectedPrice, sortBy !== "newest" ? sortBy : ""]
+      .filter(Boolean).length;
 
   useEffect(() => {
     const token = searchParams.get("token");
@@ -123,242 +151,230 @@ export default function DashboardPage() {
       return;
     }
 
-    const existingToken = localStorage.getItem("access_token");
-    if (!existingToken) {
+    if (!localStorage.getItem("access_token")) {
       router.replace("/auth/signin");
     }
 
     const loadTasks = async () => {
       try {
-        const token = localStorage.getItem("access_token");
-
-        const res = await api.get<TaskApi[]>("/tasks")
-
-        const data = res.data;
-
-
-        const mapped: Task[] = data.map((task) => ({
+        const res = await api.get<TaskApi[]>("/tasks");
+        const mapped: Task[] = res.data.map((task) => ({
           id: task.id,
-
+          categoryIds: Array.isArray(task.categories) ? task.categories.map((c) => c.id) : [],
           title: task.title,
-
           description: task.description || "",
-
           locationText: task.location_text || "",
-
           latitude: task.latitude ?? undefined,
-
           longitude: task.longitude ?? undefined,
-
           price: task.price,
-
           createdAt: task.created_at,
-
           updatedAt: task.updated_at,
-
           startDate: task.start_date || "",
-
           deadline: task.deadline,
-
           requester_id: task.requester?.id,
-
           requester: task.requester,
-          requiredWorkers:
-            task.required_workers || 1,
-
+          requiredWorkers: task.required_workers || 1,
           status: task.status,
-
-          requesterName:
-            task.requester?.fullName || "Unknown",
-
+          requesterName: task.requester?.fullName || "Unknown",
           hasApplied: task.hasApplied ?? false,
-
           priority: "Normal",
-
           requestCount: 0,
         }));
-
         setTasks(mapped);
-      } catch (error) {
-        console.error("Error loading tasks:", error);
+        if (mapped.length > 0) setSelectedTask(mapped[0]);
+      } catch (err) {
+        console.error("Error loading tasks:", err);
       }
     };
 
-    loadTasks().then((r) => console.log("Tasks loaded:", r));
+    loadTasks();
   }, [router, searchParams]);
+
 
   useEffect(() => {
     const controller = new AbortController();
-
     const loadCategories = async () => {
       try {
         setIsLoadingCategories(true);
-
-        const res = await api.get<Category[]>("/categories", {
-          signal: controller.signal,
-        });
-
+        const res = await api.get<Category[]>("/categories", { signal: controller.signal });
         setCategories(res.data);
-      } catch (error) {
-        if ((error as Error).name !== "CanceledError") {
-          console.error("Error loading categories:", error);
-        }
+      } catch (err) {
+        if ((err as Error).name !== "CanceledError") console.error(err);
       } finally {
         setIsLoadingCategories(false);
       }
     };
-
-    loadCategories().then((r) => console.log("Categories loaded:", r));
+    loadCategories();
     return () => controller.abort();
   }, []);
 
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm, selectedCategory]);
+  useEffect(() => { setCurrentPage(1); }, [searchTerm, selectedCategory, selectedPrice]);
 
-  useEffect(() => {
-    if (currentPage > totalPages) {
-      setCurrentPage(totalPages);
-    }
-  }, [currentPage, totalPages]);
+  useEffect(() => { if (currentPage > totalPages) setCurrentPage(totalPages); }, [currentPage, totalPages]);
+
 
   return (
-    <div className="min-h-screen bg-white p-4 md:p-8">
-      <div className="max-w-7xl mx-auto space-y-8">
-        {/* Filter Bar */}
-        <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-slate-100 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
-          <div className="flex-1 space-y-2 sm:col-span-2 lg:col-span-1">
-            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">
-              Search Keywords
-            </label>
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="e.g. 'Decor', 'Shopping'..."
-                value={searchTerm}
-                onChange={(event) => setSearchTerm(event.target.value)}
-                className="w-full bg-slate-50 border-none rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-blue-500"
-              />
-              <SlidersHorizontal
-                size={18}
-                className="absolute right-4 top-3 text-slate-400"
-              />
-            </div>
-          </div>
+      <div className="w-full">
+        <div className="mx-auto flex w-full max-w-[1800px] flex-col gap-5 px-4 py-4 md:px-8">
 
-          <div className="w-full space-y-2">
-            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">
-              Category
-            </label>
-
-            <select
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              disabled={isLoadingCategories}
-              className="w-full bg-slate-50 border-none rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-blue-500 appearance-none"
-            >
-              <option value="">
-                {isLoadingCategories
-                  ? "Loading categories..."
-                  : "All Categories"}
-              </option>
-
-              {categories.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="w-full space-y-2">
-            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">
-              Price Range
-            </label>
-            <select className="w-full bg-slate-50 border-none rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-blue-500 appearance-none">
-              <option>Any Price</option>
-            </select>
-          </div>
-
-          <button className="bg-[#0069d9] text-white px-8 py-3 rounded-xl font-bold hover:bg-blue-700 transition-colors h-12 w-full sm:col-span-2 lg:col-span-1">
-            Apply Filters
-          </button>
-        </div>
-
-        {/* Task Cards Container */}
-        <div className="space-y-6">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          {/* ── PAGE HEADER ── */}
+          <div className="flex items-end justify-between gap-4 shrink-0">
             <div>
-              <h2 className="text-xl font-bold text-slate-900">Available Tasks</h2>
-              <p className="text-sm text-slate-500">
-                Showing newest tasks first.
+              <p className="text-xs font-bold uppercase tracking-widest text-sky-600 mb-1">Marketplace</p>
+              <h1 className="text-2xl md:text-3xl font-black text-slate-950 tracking-tight">Available Tasks</h1>
+            </div>
+            <div className="rounded-2xl border border-sky-200 bg-white/85 px-4 py-2 text-right shadow-sm">
+              <p className="text-2xl font-black leading-none text-sky-600">{filteredTasks.length}</p>
+              <p className="text-xs font-bold uppercase tracking-wide text-slate-500">
+                {filteredTasks.length === 1 ? "task" : "tasks"}
               </p>
             </div>
-            <p className="text-sm font-semibold text-slate-500">
-              {filteredTasks.length} task{filteredTasks.length === 1 ? "" : "s"}
-            </p>
           </div>
 
-          {/* Task card*/}
-          <div className="space-y-6">
-            {paginatedTasks.map((task) => (
-              <DetailTaskCard key={task.id} task={task} onOpen={setSelectedTask} onApply={setSelectedApplyTask}/>
-            ))}
-          </div>
+          <div className="relative z-0 shrink-0 rounded-2xl border border-sky-200 bg-white/90 p-4 shadow-[0_14px_40px_rgba(14,165,233,0.12)]">
+            <div className="flex flex-col sm:flex-row gap-3">
 
-          {filteredTasks.length === 0 && (
-            <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center text-slate-500">
-              No tasks match your search.
-            </div>
-          )}
+              {/* Search */}
+              <div className="relative flex-1">
+                <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sky-500" />
+                <input
+                    type="text"
+                    placeholder="Search tasks, locations…"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full rounded-xl border border-sky-200 bg-sky-50/70 py-3 pl-10 pr-10 text-sm font-medium text-slate-800 placeholder-slate-500 shadow-inner shadow-sky-100/60 transition focus:border-sky-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-sky-200/80"
+                />
+                {searchTerm && (
+                    <button
+                        onClick={() => setSearchTerm("")}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                    >
+                      <X size={14} />
+                    </button>
+                )}
+              </div>
 
-          {filteredTasks.length > TASKS_PER_PAGE && (
-            <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-sm text-slate-500">
-                Page {currentPage} of {totalPages}
-              </p>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
-                  disabled={currentPage === 1}
-                  className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 px-3 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+              <div className="flex gap-2 flex-wrap lg:flex-nowrap">
+                <div className="relative min-w-[140px] flex-1 lg:flex-none">
+                  <SlidersHorizontal size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-cyan-600" />
+                  <select
+                      value={selectedCategory}
+                      onChange={(e) => setSelectedCategory(e.target.value)}
+                      disabled={isLoadingCategories}
+                      className="h-full w-full cursor-pointer appearance-none rounded-xl border border-cyan-200 bg-cyan-50/70 py-3 pl-9 pr-8 text-sm font-bold text-slate-700 transition focus:border-cyan-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-cyan-200/80 disabled:cursor-wait disabled:opacity-70"
+                  >
+                    <option value="">{isLoadingCategories ? "Loading…" : "All Categories"}</option>
+                    {categories.map((c) => (
+                        <option key={c.id} value={String(c.id)}>{c.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <select
+                    value={selectedPrice}
+                    onChange={(e) => setSelectedPrice(e.target.value)}
+                    className="min-w-[110px] flex-1 cursor-pointer appearance-none rounded-xl border border-emerald-200 bg-emerald-50/70 px-3 py-3 text-sm font-bold text-slate-700 transition focus:border-emerald-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-emerald-200/80 lg:flex-none"
                 >
-                  <ChevronLeft size={16} />
-                  Previous
-                </button>
-                <button
-                  onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
-                  disabled={currentPage === totalPages}
-                  className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 px-3 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                  {PRICE_OPTIONS.map((o) => (
+                      <option key={o.value} value={o.value}>{o.label}</option>
+                  ))}
+                </select>
+
+                <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className="min-w-[120px] flex-1 cursor-pointer appearance-none rounded-xl border border-indigo-200 bg-indigo-50/70 px-3 py-3 text-sm font-bold text-slate-700 transition focus:border-indigo-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-indigo-200/80 lg:flex-none"
                 >
-                  Next
-                  <ChevronRight size={16} />
-                </button>
+                  {SORT_OPTIONS.map((o) => (
+                      <option key={o.value} value={o.value}>{o.label}</option>
+                  ))}
+                </select>
+
+                {activeFilterCount > 0 && (
+                    <button
+                        onClick={() => { setSelectedCategory(""); setSelectedPrice(""); setSortBy("newest"); }}
+                        className="flex items-center gap-1.5 rounded-xl border border-rose-200 bg-rose-50 px-3 py-3 text-sm font-bold text-rose-700 transition hover:bg-rose-100 whitespace-nowrap"
+                    >
+                      <X size={13} />
+                      Clear ({activeFilterCount})
+                    </button>
+                )}
               </div>
             </div>
-          )}
+          </div>
 
-          {selectedTask && (
-            <TaskDetailModal
-              task={selectedTask}
-              onClose={() => setSelectedTask(null)}
-            />
-          )}
+          <div className="flex flex-col xl:grid xl:grid-cols-[1fr_700px] gap-5">
+
+            <div className="order-1 xl:order-2 flex flex-col gap-4">
+              <div className="space-y-4">
+                {paginatedTasks.length > 0 ? (
+                    paginatedTasks.map((task) => (
+                        <DetailTaskCard
+                            key={task.id}
+                            task={task}
+                            isSelected={selectedTask?.id === task.id}
+                            onOpen={(t) => { setSelectedTask(t); }}
+                            onApply={setSelectedApplyTask}
+                        />
+                    ))
+                ) : (
+                    <div className="flex flex-col items-center justify-center h-64 rounded-2xl border-2 border-dashed border-sky-200 bg-white/85 text-center">
+                      <div className="text-3xl mb-3">🔍</div>
+                      <p className="font-semibold text-slate-800">No tasks found</p>
+                      <p className="text-sm text-slate-500 mt-1">Try adjusting your filters</p>
+                    </div>
+                )}
+              </div>
+
+              {/* Pagination */}
+              {filteredTasks.length > TASKS_PER_PAGE && (
+                  <div className="shrink-0 flex items-center justify-between rounded-2xl border border-sky-200 bg-white/90 px-4 py-3 shadow-sm">
+                    <p className="text-sm text-slate-500">
+                      Page <span className="font-bold text-sky-700">{currentPage}</span> of {totalPages}
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <button
+                          onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                          disabled={currentPage === 1}
+                          className="inline-flex items-center gap-1.5 h-9 px-3 rounded-xl border border-sky-200 text-sm font-bold text-sky-700 transition hover:bg-sky-50 disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        <ChevronLeft size={15} /> Prev
+                      </button>
+                      <button
+                          onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                          disabled={currentPage === totalPages}
+                          className="inline-flex items-center gap-1.5 h-9 px-3 rounded-xl border border-sky-200 bg-sky-600 text-sm font-bold text-white transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500"
+                      >
+                        Next <ChevronRight size={15} />
+                      </button>
+                    </div>
+                  </div>
+              )}
+            </div>
+
+            <div className="order-2 xl:order-1 h-[300px] xl:h-[calc(100vh-280px)] xl:sticky xl:top-4 overflow-hidden rounded-2xl border border-sky-200 bg-white shadow-[0_18px_45px_rgba(14,165,233,0.18)]">
+              {filteredTasks.length > 0 ? (
+                  <SharedTaskMap lat={selectedTask?.latitude} lng={selectedTask?.longitude} />
+              ) : (
+                  <div className="h-full flex flex-col items-center justify-center gap-2 bg-sky-50 text-slate-500">
+                    <span className="text-2xl">📍</span>
+                    <p className="text-sm font-medium">No task location</p>
+                  </div>
+              )}
+            </div>
+
+          </div>
         </div>
+
+        {selectedApplyTask && (
+            <ApplyTaskModal
+                taskId={selectedApplyTask.id}
+                taskTitle={selectedApplyTask.title}
+                defaultPrice={selectedApplyTask.price}
+                onApplied={() => markTaskApplied(selectedApplyTask.id)}
+                onClose={() => setSelectedApplyTask(null)}
+            />
+        )}
       </div>
-
-      {
-        selectedApplyTask && (
-          <ApplyTaskModal
-            taskId={selectedApplyTask.id}
-            taskTitle={selectedApplyTask.title}
-            defaultPrice={selectedApplyTask.price}
-            onApplied={() => markTaskApplied(selectedApplyTask.id)}
-            onClose={() => setSelectedApplyTask(null)}
-          />
-        )
-      }
-
-    </div>
   );
 }

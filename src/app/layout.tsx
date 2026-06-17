@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import "leaflet/dist/leaflet.css";
 import { AuthProvider } from "@/components/providers/auth-provider";
+import { ToastProvider } from "@/components/providers/toast-provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -17,6 +18,12 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Jomnous",
   description: "App",
+  icons: {
+    icon: [
+      { url: "/images/jomnus.png", sizes: "512x512", type: "image/png" },
+    ],
+  },
+
 };
 
 export default function RootLayout({
@@ -27,7 +34,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
-        <AuthProvider>{children}</AuthProvider>
+        <ToastProvider>
+          <AuthProvider>{children}</AuthProvider>
+        </ToastProvider>
       </body>
     </html>
   );

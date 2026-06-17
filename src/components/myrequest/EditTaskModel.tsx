@@ -48,7 +48,7 @@ export default function EditTaskModal({
   };
 
   return (
-    <div className="fixed inset-0 z-1000 overflow-y-auto bg-slate-950/70 backdrop-blur-md">
+    <div className="fixed inset-0 z-[1000] overflow-y-auto bg-slate-950/60 backdrop-blur-md">
 
       <div className="mx-auto max-w-7xl px-4 py-10">
 
@@ -61,7 +61,7 @@ export default function EditTaskModal({
             <div className="flex items-start justify-between gap-4">
 
               <div>
-                <p className="text-sm font-bold uppercase tracking-[0.2em] text-blue-200">
+                <p className="text-sm font-black uppercase tracking-[0.2em] text-sky-200">
                   Task Workspace
                 </p>
 
@@ -69,7 +69,7 @@ export default function EditTaskModal({
                   Edit Task
                 </h1>
 
-                <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-300">
+                <p className="mt-3 max-w-2xl text-sm font-medium leading-7 text-slate-300">
                   Update task information, pricing, workers,
                   schedule, and location settings.
                 </p>
@@ -79,7 +79,7 @@ export default function EditTaskModal({
                 onClick={onClose}
                 className="
                   inline-flex h-11 items-center gap-2
-                  rounded-2xl border border-white/15
+                  rounded-2xl border border-white/20
                   bg-white/10 px-5
                   text-sm font-bold text-white
                   transition hover:bg-white/20
@@ -112,9 +112,9 @@ export default function EditTaskModal({
               <div
                 className="
                   flex flex-col gap-4
-                  rounded-3xl border border-white/10
+                  rounded-3xl border border-sky-100
                   bg-white/95 p-5
-                  shadow-2xl backdrop-blur
+                  shadow-[0_24px_70px_rgba(15,23,42,0.28)] backdrop-blur
                   sm:flex-row sm:items-center sm:justify-between
                 "
               >
@@ -149,10 +149,10 @@ export default function EditTaskModal({
                     onClick={onSave}
                     className="
                       inline-flex h-11 items-center gap-2
-                      rounded-2xl bg-blue-600
+                      rounded-2xl bg-sky-600
                       px-6 text-sm font-bold text-white
-                      shadow-lg shadow-blue-500/30
-                      transition hover:scale-[1.02] hover:bg-blue-700
+                      shadow-lg shadow-sky-500/30
+                      transition hover:-translate-y-0.5 hover:bg-cyan-500
                       disabled:cursor-not-allowed disabled:opacity-60
                     "
                   >
@@ -174,9 +174,12 @@ export default function EditTaskModal({
             <div className="space-y-4 lg:sticky lg:top-8">
 
               {/* LIVE PREVIEW */}
-              <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-xl">
+              <div className="overflow-hidden rounded-3xl border border-sky-100 bg-white p-5 shadow-[0_18px_45px_rgba(14,165,233,0.14)]">
 
-                <h3 className="text-base font-bold text-slate-950">
+                <p className="text-xs font-black uppercase tracking-widest text-sky-600">
+                  Preview
+                </p>
+                <h3 className="mt-1 text-base font-black text-slate-950">
                   Live Preview
                 </h3>
 
@@ -194,13 +197,13 @@ export default function EditTaskModal({
                   </div>
 
                   {/* PRICE */}
-                  <div className="rounded-2xl bg-slate-50 p-4">
+                  <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
 
-                    <p className="text-xs font-bold uppercase tracking-wide text-slate-400">
+                    <p className="text-xs font-black uppercase tracking-wide text-emerald-600">
                       Budget
                     </p>
 
-                    <p className="mt-2 text-3xl font-black text-slate-950">
+                    <p className="mt-2 text-3xl font-black text-emerald-700">
                       $
                       {Number(
                         form.price || 0,
@@ -209,34 +212,34 @@ export default function EditTaskModal({
                   </div>
 
                   {/* WORKERS */}
-                  <div className="rounded-2xl border border-slate-200 p-4">
+                  <div className="rounded-2xl border border-indigo-200 bg-indigo-50 p-4">
 
-                    <p className="text-xs font-bold uppercase tracking-wide text-slate-400">
+                    <p className="text-xs font-black uppercase tracking-wide text-indigo-600">
                       Workers Needed
                     </p>
 
-                    <p className="mt-2 text-2xl font-black text-slate-950">
+                    <p className="mt-2 text-2xl font-black text-indigo-700">
                       {form.requiredWorkers || 1}
                     </p>
 
                   </div>
 
                   {/* LOCATION */}
-                  <div className="rounded-2xl border border-slate-200 p-4">
+                  <div className="rounded-2xl border border-sky-200 bg-sky-50 p-4">
 
                     <div className="flex items-center gap-2">
 
                       <MapPin
                         size={15}
-                        className="text-blue-600"
+                        className="text-sky-600"
                       />
 
-                      <p className="text-xs font-bold uppercase tracking-wide text-slate-400">
+                      <p className="text-xs font-black uppercase tracking-wide text-sky-600">
                         Location
                       </p>
                     </div>
 
-                    <p className="mt-3 text-sm font-semibold leading-6 text-slate-800">
+                    <p className="mt-3 text-sm font-bold leading-6 text-slate-800">
 
                       {form.locationText ||
                         "Location selected from map"}
@@ -244,7 +247,7 @@ export default function EditTaskModal({
                     </p>
 
                     {form.latitude && (
-                      <p className="mt-2 text-xs text-slate-500">
+                      <p className="mt-2 text-xs font-semibold text-slate-500">
                         {form.latitude.toFixed(5)},
                         {" "}
                         {form.longitude.toFixed(5)}
@@ -253,9 +256,9 @@ export default function EditTaskModal({
                   </div>
 
                   {/* DEADLINE */}
-                  <div className="rounded-2xl border border-slate-200 p-4">
+                  <div className="rounded-2xl border border-slate-200 bg-white p-4">
 
-                    <p className="text-xs font-bold uppercase tracking-wide text-slate-400">
+                    <p className="text-xs font-black uppercase tracking-wide text-slate-400">
                       Deadline
                     </p>
 
@@ -273,7 +276,7 @@ export default function EditTaskModal({
               </div>
 
               {/* TIPS */}
-              <div className="rounded-3xl border border-emerald-200 bg-emerald-50 p-5">
+              <div className="rounded-3xl border border-emerald-200 bg-emerald-50 p-5 shadow-sm">
 
                 <h4 className="flex items-center gap-2 text-sm font-bold text-emerald-900">
                   <CheckCircle2 size={16} />
@@ -298,7 +301,7 @@ export default function EditTaskModal({
               </div>
 
               {/* DANGER ZONE */}
-              <div className="rounded-3xl border border-red-200 bg-red-50 p-5">
+              <div className="rounded-3xl border border-red-200 bg-red-50 p-5 shadow-sm">
 
                 <h4 className="text-sm font-bold uppercase tracking-wide text-red-700">
                   Danger Zone

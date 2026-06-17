@@ -1,12 +1,12 @@
 "use client";
-
-import React from 'react';
 import { ShieldCheck, Users, Star, Eye } from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
+import {useRouter} from "next/navigation";
 
 
 export default function AboutUsBody() {
     const shouldReduceMotion = useReducedMotion();
+    const router = useRouter();
 
     const fadeUp = (delay = 0): any => ({
         initial: shouldReduceMotion ? {} : { opacity: 0, y: 20 },
@@ -295,6 +295,7 @@ export default function AboutUsBody() {
                         transition={shouldReduceMotion ? undefined : { duration: 2.8, repeat: Infinity, ease: 'easeInOut' }}
                         whileHover={shouldReduceMotion ? undefined : { scale: 1.08 }}
                         whileTap={shouldReduceMotion ? undefined : { scale: 0.97 }}
+                        onClick={() => router.push("/auth/register")}
                     >
                         Join Us Now
                     </motion.button>
@@ -306,6 +307,7 @@ export default function AboutUsBody() {
         </div>
     );
 }
+
 
 const visionaries = [
 

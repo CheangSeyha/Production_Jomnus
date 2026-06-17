@@ -49,13 +49,13 @@ export default function AdminVerificationsPage() {
   const [resetLoading, setResetLoading] = useState<number | null>(null);
   const [exportLoading, setExportLoading] = useState(false);
   const [page, setPage] = useState(1);
-
-  // ── Multi-Image Context State ──
   const [activeInspection, setActiveInspection] = useState<Verification | null>(null);
-
-  // Tracks which rows have their 3-dots actions menu visible
   const [activeMenuId, setActiveMenuId] = useState<number | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
+
+  const [showReasonModal, setShowReasonModal] = useState(false);
+  const [reasonText, setReasonText] = useState("");
+  const [pendingAction, setPendingAction] = useState<{ type: 'reject' | 'reset'; id: number } | null>(null);
 
   const [brokenCardImages, setBrokenCardImages] = useState<Record<number, boolean>>({});
   const [brokenSelfieImages, setBrokenSelfieImages] = useState<Record<number, boolean>>({});
@@ -78,7 +78,6 @@ export default function AdminVerificationsPage() {
     fetchVerifications();
   }, [page]);
 
-  // Handle click away and escape hotkey patterns
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
@@ -86,10 +85,14 @@ export default function AdminVerificationsPage() {
       }
     }
     
-    // Listen globally for ESC key to dismiss inspection workflow panel
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
         setActiveInspection(null);
+        if (showReasonModal) {
+          setShowReasonModal(false);
+          setPendingAction(null);
+          setReasonText("");
+        }
       }
     }
 
@@ -99,7 +102,7 @@ export default function AdminVerificationsPage() {
       document.removeEventListener("mousedown", handleClickOutside);
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, []);
+  }, [showReasonModal]);
 
   const handleExportCSV = async () => {
     try {
@@ -128,7 +131,6 @@ export default function AdminVerificationsPage() {
         };
       });
       
-      // Synchronize changes back to modal view if currently open
       if (activeInspection?.id === verificationId) {
         setActiveInspection(prev => prev ? { ...prev, status: "APPROVED" } : null);
       }
@@ -142,10 +144,30 @@ export default function AdminVerificationsPage() {
     }
   };
 
-  const handleReject = async (verificationId: number) => {
-    const reason = prompt("Enter a reason for rejection (optional):");
-    if (reason === null) return;
+  const openReasonModal = (type: 'reject' | 'reset', id: number) => {
+    setPendingAction({ type, id });
+    setReasonText("");
+    setShowReasonModal(true);
+  };
+
+  const handleConfirmAction = async () => {
+    if (!pendingAction) return;
     
+    const { type, id } = pendingAction;
+    const reason = reasonText.trim();
+    
+    if (type === 'reject') {
+      await performReject(id, reason);
+    } else if (type === 'reset') {
+      await performReset(id, reason);
+    }
+    
+    setShowReasonModal(false);
+    setPendingAction(null);
+    setReasonText("");
+  };
+
+  const performReject = async (verificationId: number, reason: string) => {
     try {
       setRejectLoading(verificationId);
       await adminService.rejectVerification(verificationId, { reason });
@@ -154,13 +176,13 @@ export default function AdminVerificationsPage() {
         return {
           ...prev,
           data: prev.data.map((v) =>
-            v.id === verificationId ? { ...v, status: "REJECTED", rejection_reason: reason } : v
+            v.id === verificationId ? { ...v, status: "REJECTED", rejection_reason: reason || null } : v
           ),
         };
       });
-      // Synchronize changes back to modal view if currently open
+
       if (activeInspection?.id === verificationId) {
-        setActiveInspection(prev => prev ? { ...prev, status: "REJECTED", rejection_reason: reason } : null);
+        setActiveInspection(prev => prev ? { ...prev, status: "REJECTED", rejection_reason: reason || null } : null);
       }
       setError(null);
     } catch (err: any) {
@@ -172,19 +194,12 @@ export default function AdminVerificationsPage() {
     }
   };
 
-  const handleResetToPending = async (verificationId: number) => {
-    const reason = prompt("Enter a reason for resetting this status back to Pending (optional):");
-    if (reason === null) return;
-
+  const performReset = async (verificationId: number, reason: string) => {
     try {
       setResetLoading(verificationId);
       setActiveMenuId(null);
       
-      const cleanReason = reason.trim();
-
-      await adminService.resetVerificationToPending(verificationId, { 
-        reason: cleanReason 
-      });
+      await adminService.resetVerificationToPending(verificationId, { reason });
       
       setVerifications((prev) => {
         if (!prev) return null;
@@ -192,18 +207,14 @@ export default function AdminVerificationsPage() {
           ...prev,
           data: prev.data.map((v) =>
             v.id === verificationId 
-              ? { 
-                  ...v, 
-                  status: "PENDING", 
-                  rejection_reason: cleanReason || null
-                } 
+              ? { ...v, status: "PENDING", rejection_reason: reason || null } 
               : v
           ),
         };
       });
       
       if (activeInspection?.id === verificationId) {
-        setActiveInspection(prev => prev ? { ...prev, status: "PENDING", rejection_reason: cleanReason || null } : null);
+        setActiveInspection(prev => prev ? { ...prev, status: "PENDING", rejection_reason: reason || null } : null);
       }
       setError(null);
     } catch (err: any) {
@@ -262,502 +273,541 @@ export default function AdminVerificationsPage() {
   const pageNumbers = Array.from({ length: Math.max(1, totalPages) }, (_, i) => i + 1);
 
   return (
-    <div className="min-h-screen space-y-8 max-w-[1400px] mx-auto p-4 sm:p-6 lg:p-8">
-      {/* ── Header ── */}
-      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-        <div className="space-y-1">
-          <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight">
-            Identity Verifications
-          </h1>
-          <p className="text-slate-500 text-sm font-medium max-w-md leading-relaxed">
-            Review and manage community trust profiles. Click on any document image placeholder to inspect details closely.
-          </p>
-        </div>
-
-        {pendingPageCount > 0 && (
-          <div className="flex items-center gap-2 flex-shrink-0 self-start mt-1 bg-orange-50 border border-orange-100 px-3 py-1.5 rounded-xl">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-500" />
-            </span>
-            <span className="text-xs font-bold text-orange-800">
-              {pendingPageCount} Pending On This Page
-            </span>
-          </div>
-        )}
-      </div>
-
-      {/* ── Error Display ── */}
-      {error && (
-        <div className="bg-red-50 border border-red-200 rounded-2xl p-4 text-red-700 text-sm font-medium flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <AlertCircle className="w-5 h-5 flex-shrink-0" />
-            {error}
-          </div>
-          <button onClick={() => setError(null)} className="text-xs underline hover:text-red-900">Dismiss</button>
-        </div>
-      )}
-
-      {/* ── Loading Spinner ── */}
-      {loading && (
-        <div className="flex items-center justify-center h-80">
-          <div className="animate-spin rounded-full h-14 w-14 border-4 border-blue-100 border-t-blue-600" />
-        </div>
-      )}
-
-      {!loading && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* ── LEFT SIDE: Table Queue ── */}
-          <div className="lg:col-span-2 space-y-4">
-            <div className="bg-white rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden">
-              <div className="flex items-center justify-between px-6 py-5 sm:px-8 sm:py-6 border-b border-slate-100">
-                <h2 className="text-lg font-extrabold text-slate-900 tracking-tight">
-                  Verification Queue
-                </h2>
-                <div className="flex items-center gap-2">
-                  <button 
-                    onClick={fetchVerifications}
-                    className="px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-extrabold uppercase tracking-wider shadow-sm hover:bg-blue-700 transition-colors"
-                  >
-                    All Data
-                  </button>
-                  <button 
-                    onClick={handleExportCSV}
-                    disabled={exportLoading}
-                    className="px-4 py-2 rounded-xl bg-slate-100 text-slate-600 text-xs font-extrabold uppercase tracking-wider hover:bg-slate-200 transition-colors flex items-center gap-2 disabled:opacity-50"
-                  >
-                    <Download className="w-3.5 h-3.5" />
-                    {exportLoading ? "Exporting..." : "Export CSV"}
-                  </button>
-                </div>
-              </div>
-
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="bg-slate-50/50 border-b border-slate-100">
-                      {["User", "ID Card", "Selfie", "Status", "Actions"].map((h) => (
-                        <th
-                          key={h}
-                          className="px-6 py-4 sm:px-8 text-[11px] font-extrabold text-slate-400 uppercase tracking-[0.15em]"
-                        >
-                          {h}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-50">
-                    {verifications && verifications.data?.length > 0 ? (
-                      verifications.data.map((v, index) => {
-                        const isPending = v.status === "PENDING";
-                        const isFirst = index === 0;
-                        const uName = getUserName(v);
-                        
-                        const cardImgSrc = v.id_card_url 
-                          ? (v.id_card_url.startsWith('http') ? v.id_card_url : `http://localhost:3001/${v.id_card_url}`) 
-                          : null;
-
-                        const selfieImgSrc = v.selfie_url 
-                          ? (v.selfie_url.startsWith('http') ? v.selfie_url : `http://localhost:3001/${v.selfie_url}`) 
-                          : null;
-
-                        const isCardBroken = !cardImgSrc || brokenCardImages[v.id];
-                        const isSelfieBroken = !selfieImgSrc || brokenSelfieImages[v.id];
-
-                        return (
-                          <tr
-                            key={v.id}
-                            className={`hover:bg-slate-50/30 transition-colors ${isFirst && isPending ? "bg-blue-50/10" : ""}`}
-                          >
-                            <td className="px-6 py-4 sm:px-8">
-                              <div className="flex items-center gap-4">
-                                <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-blue-600 text-xs font-bold flex-shrink-0 shadow-sm border border-slate-200/40">
-                                  {getInitials(v)}
-                                </div>
-                                <div className="min-w-0 space-y-0.5">
-                                  <p className="text-sm font-bold text-slate-900 truncate max-w-[140px] sm:max-w-[200px]">
-                                    {uName}
-                                  </p>
-                                  <p className="text-xs text-slate-400 font-medium truncate max-w-[140px] sm:max-w-[200px]">
-                                    {getUserEmail(v)}
-                                  </p>
-                                </div>
-                              </div>
-                            </td>
-
-                            {/* ID CARD CELL */}
-                            <td className="px-6 py-4 sm:px-8">
-                              {!isCardBroken ? (
-                                <div 
-                                  onClick={() => setActiveInspection(v)}
-                                  className="w-20 h-12 rounded-xl bg-slate-100 border border-slate-200 overflow-hidden shadow-sm group relative flex items-center justify-center cursor-zoom-in"
-                                >
-                                  <img 
-                                    src={cardImgSrc!} 
-                                    alt="ID Front" 
-                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                                    onError={() => {
-                                      setBrokenCardImages(prev => ({ ...prev, [v.id]: true }));
-                                    }}
-                                  />
-                                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity duration-200">
-                                    <Maximize2 className="w-4 h-4 text-white" />
-                                  </div>
-                                </div>
-                              ) : (
-                                <div className="w-20 h-12 rounded-xl bg-slate-50 border border-slate-200/60 flex items-center justify-center cursor-zoom-in" onClick={() => setActiveInspection(v)} title="View context data details">
-                                  <ShieldCheck className="w-5 h-5 text-slate-300" />
-                                </div>
-                              )}
-                            </td>
-
-                            {/* SELFIE CELL */}
-                            <td className="px-6 py-4 sm:px-8">
-                              {!isSelfieBroken ? (
-                                <div 
-                                  onClick={() => setActiveInspection(v)}
-                                  className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 overflow-hidden shadow-sm group relative flex items-center justify-center cursor-zoom-in"
-                                >
-                                  <img 
-                                    src={selfieImgSrc!} 
-                                    alt="Selfie Check" 
-                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                                    onError={() => {
-                                      setBrokenSelfieImages(prev => ({ ...prev, [v.id]: true }));
-                                    }}
-                                  />
-                                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity duration-200 rounded-full">
-                                    <Eye className="w-3.5 h-3.5 text-white" />
-                                  </div>
-                                </div>
-                              ) : (
-                                <div className="w-10 h-10 rounded-full bg-slate-50 border border-slate-200/60 flex items-center justify-center cursor-zoom-in" onClick={() => setActiveInspection(v)} title="View context data details">
-                                  <span className="text-[10px] font-extrabold text-slate-400 select-none">N/A</span>
-                                </div>
-                              )}
-                            </td>
-
-                            <td className="px-6 py-4 sm:px-8">
-                              <span className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider ${getStatusStyle(v.status)}`}>
-                                {v.status === "APPROVED" ? "Approved" : v.status === "REJECTED" ? "Rejected" : "Pending"}
-                              </span>
-                            </td>
-
-                            <td className="px-6 py-4 sm:px-8">
-                              {isPending ? (
-                                <div className="flex items-center gap-2">
-                                  <button
-                                    onClick={() => handleApprove(v.id)}
-                                    disabled={approveLoading === v.id || rejectLoading === v.id}
-                                    className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700 transition-colors disabled:opacity-50 shadow-sm"
-                                    title="Approve"
-                                  >
-                                    {approveLoading === v.id ? (
-                                      <div className="animate-spin rounded-full h-3 w-3 border-2 border-white border-t-transparent" />
-                                    ) : (
-                                      <Check className="w-3.5 h-3.5" />
-                                    )}
-                                  </button>
-                                  <button
-                                    onClick={() => handleReject(v.id)}
-                                    disabled={approveLoading === v.id || rejectLoading === v.id}
-                                    className="w-8 h-8 rounded-xl bg-red-500 text-white flex items-center justify-center hover:bg-red-600 transition-colors disabled:opacity-50 shadow-sm"
-                                    title="Reject"
-                                  >
-                                    {rejectLoading === v.id ? (
-                                      <div className="animate-spin rounded-full h-3 w-3 border-2 border-white border-t-transparent" />
-                                    ) : (
-                                      <X className="w-3.5 h-3.5" />
-                                    )}
-                                  </button>
-                                </div>
-                              ) : (
-                                <div className="relative inline-block text-left">
-                                  <button 
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setActiveMenuId(activeMenuId === v.id ? null : v.id);
-                                    }}
-                                    disabled={resetLoading === v.id}
-                                    className="w-8 h-8 rounded-xl hover:bg-slate-100 flex items-center justify-center text-slate-400 transition-colors focus:bg-slate-100"
-                                  >
-                                    {resetLoading === v.id ? (
-                                      <div className="animate-spin rounded-full h-3 w-3 border-2 border-slate-400 border-t-transparent" />
-                                    ) : (
-                                      <MoreVertical className="w-4 h-4" />
-                                    )}
-                                  </button>
-                                  
-                                  {activeMenuId === v.id && (
-                                    <div 
-                                      ref={menuRef}
-                                      className="absolute right-0 mt-1 w-44 rounded-xl bg-white border border-slate-100 shadow-xl py-1.5 z-50 ring-1 ring-black ring-opacity-5 animate-in fade-in slide-in-from-top-1 duration-100"
-                                    >
-                                      <button
-                                        onClick={() => handleResetToPending(v.id)}
-                                        className="w-full text-left px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-2 transition-colors"
-                                      >
-                                        <RotateCcw className="w-3.5 h-3.5 text-slate-400" />
-                                        Reset to Pending
-                                      </button>
-                                    </div>
-                                  )}
-                                </div>
-                              )}
-                            </td>
-                          </tr>
-                        );
-                      })
-                    ) : (
-                      <tr>
-                        <td colSpan={5} className="px-8 py-16 text-center">
-                          <ShieldCheck className="w-12 h-12 text-slate-200 mx-auto mb-3" />
-                          <p className="text-slate-400 font-semibold text-sm">
-                            No verifications found
-                          </p>
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Pagination controls */}
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-4 sm:px-8 border-t border-slate-100 bg-slate-50/40">
-                <p className="text-xs text-slate-500 font-semibold order-2 sm:order-1">
-                  Showing {fromRange}-{toRange} of {totalItems} results
-                </p>
-                <div className="flex items-center gap-1 order-1 sm:order-2">
-                  <button
-                    onClick={() => setPage(Math.max(1, page - 1))}
-                    disabled={page === 1}
-                    className="w-8 h-8 rounded-xl border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-white disabled:opacity-40 transition-all"
-                  >
-                    <ChevronLeft className="w-4 h-4" />
-                  </button>
-                  {pageNumbers.map((p) => (
-                    <button
-                      key={p}
-                      onClick={() => setPage(p)}
-                      className={`w-8 h-8 rounded-xl text-xs font-extrabold transition-all ${
-                        page === p
-                          ? "bg-blue-600 text-white shadow-md"
-                          : "border border-slate-200 text-slate-600 hover:bg-white"
-                      }`}
-                    >
-                      {p}
-                    </button>
-                  ))}
-                  <button
-                    onClick={() => setPage(Math.min(totalPages, page + 1))}
-                    disabled={page === totalPages}
-                    className="w-8 h-8 rounded-xl border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-white disabled:opacity-40 transition-all"
-                  >
-                    <ChevronRight className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* ── RIGHT SIDE: Sidebar Widgets ── */}
-          <div className="space-y-5">
-            <div className="bg-white rounded-[2rem] border border-slate-100 shadow-sm p-6 sm:p-7">
-              <h3 className="text-[11px] font-extrabold text-slate-400 uppercase tracking-[0.2em] mb-6">
-                Activity On This Page
-              </h3>
-              <div className="space-y-5">
-                {approvedVerifications.slice(0, 5).map((v) => (
-                  <div key={v.id} className="flex items-start gap-3">
-                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-slate-200 to-slate-300 flex items-center justify-center text-[10px] font-extrabold text-slate-600 flex-shrink-0">
-                      {getInitials(v)}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-bold text-slate-900 leading-snug">
-                        <span className="font-extrabold">{getUserName(v)}</span> was approved by Admin
-                      </p>
-                      <div className="flex items-center gap-1.5 mt-1">
-                        <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
-                        <p className="text-[10px] text-slate-400 font-medium">
-                          {v.created_at ? new Date(v.created_at).toLocaleDateString() : "recently"}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-                {rejectedVerifications.slice(0, 5).map((v) => (
-                  <div key={v.id} className="flex items-start gap-3">
-                    <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center flex-shrink-0 text-[10px] text-slate-400 font-extrabold">
-                      {getInitials(v)}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-bold text-slate-900 leading-snug">
-                        <span className="font-extrabold">{getUserName(v)}</span> was rejected
-                      </p>
-                      <div className="flex items-center gap-1.5 mt-1">
-                        <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
-                        <p className="text-[10px] text-slate-400 font-medium">
-                          {v.created_at ? new Date(v.created_at).toLocaleDateString() : "recently"}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-                {approvedVerifications.length === 0 && rejectedVerifications.length === 0 && (
-                  <p className="text-xs text-slate-400 font-medium text-center py-4">
-                    No recent changes on this page
-                  </p>
-                )}
-              </div>
-            </div>
-
-            <div className="bg-[#0052CC] rounded-[2rem] p-6 sm:p-7 text-white shadow-xl">
-              <div className="w-10 h-10 rounded-2xl bg-white/10 flex items-center justify-center mb-5 border border-white/10">
-                <ShieldCheck className="w-5 h-5 text-white" />
-              </div>
-              <h3 className="text-xl font-extrabold tracking-tight mb-3">
-                Trust &amp; Safety Guidelines
-              </h3>
-              <p className="text-blue-100 text-xs font-medium leading-relaxed opacity-80 mb-6">
-                Ensure the document photo matches the live selfie. Check for valid expiration dates and clear text rendering.
-              </p>
-              <button className="w-full py-3 rounded-2xl bg-white/15 hover:bg-white/25 text-white text-xs font-extrabold uppercase tracking-widest border border-white/10 transition-colors">
-                Review Policy
+    <>
+      {showReasonModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 animate-in fade-in zoom-in duration-200">
+            <h3 className="text-lg font-bold text-slate-900 mb-2">
+              {pendingAction?.type === 'reject' ? 'Reject Verification' : 'Reset to Pending'}
+            </h3>
+            <p className="text-sm text-slate-500 mb-4">
+              {pendingAction?.type === 'reject' 
+                ? 'Please provide a reason for rejection (optional):'
+                : 'Please provide a reason for resetting this verification (optional):'}
+            </p>
+            <textarea
+              value={reasonText}
+              onChange={(e) => setReasonText(e.target.value)}
+              placeholder="Enter reason here..."
+              className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+              rows={4}
+              autoFocus
+            />
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => {
+                  setShowReasonModal(false);
+                  setPendingAction(null);
+                  setReasonText("");
+                }}
+                className="flex-1 px-4 py-2 rounded-xl border border-slate-200 text-slate-600 font-semibold text-sm hover:bg-slate-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmAction}
+                className={`flex-1 px-4 py-2 rounded-xl text-white font-semibold text-sm transition-colors ${
+                  pendingAction?.type === 'reject' 
+                    ? 'bg-red-500 hover:bg-red-600' 
+                    : 'bg-orange-500 hover:bg-orange-600'
+                }`}
+              >
+                Confirm
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* ── UPGRADED LIGHTBOX INSPECTION MODAL OVERLAY ── */}
-      {activeInspection && (() => {
-        const modalCardImg = activeInspection.id_card_url 
-          ? (activeInspection.id_card_url.startsWith('http') ? activeInspection.id_card_url : `http://localhost:3001/${activeInspection.id_card_url}`) 
-          : null;
-        const modalSelfieImg = activeInspection.selfie_url 
-          ? (activeInspection.selfie_url.startsWith('http') ? activeInspection.selfie_url : `http://localhost:3001/${activeInspection.selfie_url}`) 
-          : null;
+      <div className="min-h-screen space-y-8 max-w-[1400px] mx-auto p-4 sm:p-6 lg:p-8">
+        {/* ── Header ── */}
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+          <div className="space-y-1">
+            <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight">
+              Identity Verifications
+            </h1>
+            <p className="text-slate-500 text-sm font-medium max-w-md leading-relaxed">
+              Review and manage community trust profiles. Click on any document image placeholder to inspect details closely.
+            </p>
+          </div>
 
-        return (
-          <div 
-            onClick={() => setActiveInspection(null)}
-            className="fixed inset-0 bg-slate-950/95 backdrop-blur-md z-[100] flex flex-col items-center justify-between p-4 sm:p-6 md:p-8 overflow-y-auto animate-in fade-in duration-200"
-          >
-            {/* Top Navbar Contextual Info */}
-            <div className="w-full max-w-6xl flex items-center justify-between gap-4 text-white z-10 bg-slate-900/60 backdrop-blur-md px-4 py-3 rounded-2xl border border-white/10">
-              <div className="min-w-0">
-                <h4 className="text-sm font-bold text-white truncate">
-                  Inspecting: {getUserName(activeInspection)}
-                </h4>
-                <p className="text-[11px] text-slate-400 font-medium truncate mt-0.5">
-                  {getUserEmail(activeInspection)}
+          {pendingPageCount > 0 && (
+            <div className="flex items-center gap-2 flex-shrink-0 self-start mt-1 bg-orange-50 border border-orange-100 px-3 py-1.5 rounded-xl">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-500" />
+              </span>
+              <span className="text-xs font-bold text-orange-800">
+                {pendingPageCount} Pending On This Page
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* ── Error Display ── */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-2xl p-4 text-red-700 text-sm font-medium flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <AlertCircle className="w-5 h-5 flex-shrink-0" />
+              {error}
+            </div>
+            <button onClick={() => setError(null)} className="text-xs underline hover:text-red-900">Dismiss</button>
+          </div>
+        )}
+
+        {/* ── Loading Spinner ── */}
+        {loading && (
+          <div className="flex items-center justify-center h-80">
+            <div className="animate-spin rounded-full h-14 w-14 border-4 border-blue-100 border-t-blue-600" />
+          </div>
+        )}
+
+        {!loading && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* ── LEFT SIDE: Table Queue ── */}
+            <div className="lg:col-span-2 space-y-4">
+              <div className="bg-white rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden">
+                <div className="flex items-center justify-between px-6 py-5 sm:px-8 sm:py-6 border-b border-slate-100">
+                  <h2 className="text-lg font-extrabold text-slate-900 tracking-tight">
+                    Verification Queue
+                  </h2>
+                  <div className="flex items-center gap-2">
+                    <button 
+                      onClick={fetchVerifications}
+                      className="px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-extrabold uppercase tracking-wider shadow-sm hover:bg-blue-700 transition-colors"
+                    >
+                      All Data
+                    </button>
+                    <button 
+                      onClick={handleExportCSV}
+                      disabled={exportLoading}
+                      className="px-4 py-2 rounded-xl bg-slate-100 text-slate-600 text-xs font-extrabold uppercase tracking-wider hover:bg-slate-200 transition-colors flex items-center gap-2 disabled:opacity-50"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      {exportLoading ? "Exporting..." : "Export CSV"}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="bg-slate-50/50 border-b border-slate-100">
+                        {["User", "ID Card", "Selfie", "Status", "Actions"].map((h) => (
+                          <th
+                            key={h}
+                            className="px-6 py-4 sm:px-8 text-[11px] font-extrabold text-slate-400 uppercase tracking-[0.15em]"
+                          >
+                            {h}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-50">
+                      {verifications && verifications.data?.length > 0 ? (
+                        verifications.data.map((v, index) => {
+                          const isPending = v.status === "PENDING";
+                          const isFirst = index === 0;
+                          const uName = getUserName(v);
+                          
+                          const cardImgSrc = v.id_card_url 
+                            ? (v.id_card_url.startsWith('http') ? v.id_card_url : `http://localhost:3001/${v.id_card_url}`) 
+                            : null;
+
+                          const selfieImgSrc = v.selfie_url 
+                            ? (v.selfie_url.startsWith('http') ? v.selfie_url : `http://localhost:3001/${v.selfie_url}`) 
+                            : null;
+
+                          const isCardBroken = !cardImgSrc || brokenCardImages[v.id];
+                          const isSelfieBroken = !selfieImgSrc || brokenSelfieImages[v.id];
+
+                          return (
+                            <tr
+                              key={v.id}
+                              className={`hover:bg-slate-50/30 transition-colors ${isFirst && isPending ? "bg-blue-50/10" : ""}`}
+                            >
+                              <td className="px-6 py-4 sm:px-8">
+                                <div className="flex items-center gap-4">
+                                  <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-blue-600 text-xs font-bold flex-shrink-0 shadow-sm border border-slate-200/40">
+                                    {getInitials(v)}
+                                  </div>
+                                  <div className="min-w-0 space-y-0.5">
+                                    <p className="text-sm font-bold text-slate-900 truncate max-w-[140px] sm:max-w-[200px]">
+                                      {uName}
+                                    </p>
+                                    <p className="text-xs text-slate-400 font-medium truncate max-w-[140px] sm:max-w-[200px]">
+                                      {getUserEmail(v)}
+                                    </p>
+                                  </div>
+                                </div>
+                              </td>
+
+                              {/* ID CARD CELL */}
+                              <td className="px-6 py-4 sm:px-8">
+                                {!isCardBroken ? (
+                                  <div 
+                                    onClick={() => setActiveInspection(v)}
+                                    className="w-20 h-12 rounded-xl bg-slate-100 border border-slate-200 overflow-hidden shadow-sm group relative flex items-center justify-center cursor-zoom-in"
+                                  >
+                                    <img 
+                                      src={cardImgSrc!} 
+                                      alt="ID Front" 
+                                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                                      onError={() => {
+                                        setBrokenCardImages(prev => ({ ...prev, [v.id]: true }));
+                                      }}
+                                    />
+                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity duration-200">
+                                      <Maximize2 className="w-4 h-4 text-white" />
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div className="w-20 h-12 rounded-xl bg-slate-50 border border-slate-200/60 flex items-center justify-center cursor-zoom-in" onClick={() => setActiveInspection(v)} title="View context data details">
+                                    <ShieldCheck className="w-5 h-5 text-slate-300" />
+                                  </div>
+                                )}
+                              </td>
+
+                              {/* SELFIE CELL */}
+                              <td className="px-6 py-4 sm:px-8">
+                                {!isSelfieBroken ? (
+                                  <div 
+                                    onClick={() => setActiveInspection(v)}
+                                    className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 overflow-hidden shadow-sm group relative flex items-center justify-center cursor-zoom-in"
+                                  >
+                                    <img 
+                                      src={selfieImgSrc!} 
+                                      alt="Selfie Check" 
+                                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                                      onError={() => {
+                                        setBrokenSelfieImages(prev => ({ ...prev, [v.id]: true }));
+                                      }}
+                                    />
+                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity duration-200 rounded-full">
+                                      <Eye className="w-3.5 h-3.5 text-white" />
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div className="w-10 h-10 rounded-full bg-slate-50 border border-slate-200/60 flex items-center justify-center cursor-zoom-in" onClick={() => setActiveInspection(v)} title="View context data details">
+                                    <span className="text-[10px] font-extrabold text-slate-400 select-none">N/A</span>
+                                  </div>
+                                )}
+                              </td>
+
+                              <td className="px-6 py-4 sm:px-8">
+                                <span className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider ${getStatusStyle(v.status)}`}>
+                                  {v.status === "APPROVED" ? "Approved" : v.status === "REJECTED" ? "Rejected" : "Pending"}
+                                </span>
+                              </td>
+
+                              <td className="px-6 py-4 sm:px-8">
+                                {isPending ? (
+                                  <div className="flex items-center gap-2">
+                                    <button
+                                      onClick={() => handleApprove(v.id)}
+                                      disabled={approveLoading === v.id || rejectLoading === v.id}
+                                      className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700 transition-colors disabled:opacity-50 shadow-sm"
+                                      title="Approve"
+                                    >
+                                      {approveLoading === v.id ? (
+                                        <div className="animate-spin rounded-full h-3 w-3 border-2 border-white border-t-transparent" />
+                                      ) : (
+                                        <Check className="w-3.5 h-3.5" />
+                                      )}
+                                    </button>
+                                    <button
+                                      onClick={() => openReasonModal('reject', v.id)}
+                                      disabled={approveLoading === v.id || rejectLoading === v.id}
+                                      className="w-8 h-8 rounded-xl bg-red-500 text-white flex items-center justify-center hover:bg-red-600 transition-colors disabled:opacity-50 shadow-sm"
+                                      title="Reject"
+                                    >
+                                      {rejectLoading === v.id ? (
+                                        <div className="animate-spin rounded-full h-3 w-3 border-2 border-white border-t-transparent" />
+                                      ) : (
+                                        <X className="w-3.5 h-3.5" />
+                                      )}
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <div className="relative inline-block text-left">
+                                    <button 
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setActiveMenuId(activeMenuId === v.id ? null : v.id);
+                                      }}
+                                      disabled={resetLoading === v.id}
+                                      className="w-8 h-8 rounded-xl hover:bg-slate-100 flex items-center justify-center text-slate-400 transition-colors focus:bg-slate-100"
+                                    >
+                                      {resetLoading === v.id ? (
+                                        <div className="animate-spin rounded-full h-3 w-3 border-2 border-slate-400 border-t-transparent" />
+                                      ) : (
+                                        <MoreVertical className="w-4 h-4" />
+                                      )}
+                                    </button>
+                                    
+                                    {activeMenuId === v.id && (
+                                      <div 
+                                        ref={menuRef}
+                                        className="absolute right-0 mt-1 w-44 rounded-xl bg-white border border-slate-100 shadow-xl py-1.5 z-50 ring-1 ring-black ring-opacity-5 animate-in fade-in slide-in-from-top-1 duration-100"
+                                      >
+                                        <button
+                                          onClick={() => openReasonModal('reset', v.id)}
+                                          className="w-full text-left px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-2 transition-colors"
+                                        >
+                                          <RotateCcw className="w-3.5 h-3.5 text-slate-400" />
+                                          Reset to Pending
+                                        </button>
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })
+                      ) : (
+                        <tr>
+                          <td colSpan={5} className="px-8 py-16 text-center">
+                            <ShieldCheck className="w-12 h-12 text-slate-200 mx-auto mb-3" />
+                            <p className="text-slate-400 font-semibold text-sm">
+                              No verifications found
+                            </p>
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Pagination controls */}
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-4 sm:px-8 border-t border-slate-100 bg-slate-50/40">
+                  <p className="text-xs text-slate-500 font-semibold order-2 sm:order-1">
+                    Showing {fromRange}-{toRange} of {totalItems} results
+                  </p>
+                  <div className="flex items-center gap-1 order-1 sm:order-2">
+                    <button
+                      onClick={() => setPage(Math.max(1, page - 1))}
+                      disabled={page === 1}
+                      className="w-8 h-8 rounded-xl border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-white disabled:opacity-40 transition-all"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </button>
+                    {pageNumbers.map((p) => (
+                      <button
+                        key={p}
+                        onClick={() => setPage(p)}
+                        className={`w-8 h-8 rounded-xl text-xs font-extrabold transition-all ${
+                          page === p
+                            ? "bg-blue-600 text-white shadow-md"
+                            : "border border-slate-200 text-slate-600 hover:bg-white"
+                        }`}
+                      >
+                        {p}
+                      </button>
+                    ))}
+                    <button
+                      onClick={() => setPage(Math.min(totalPages, page + 1))}
+                      disabled={page === totalPages}
+                      className="w-8 h-8 rounded-xl border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-white disabled:opacity-40 transition-all"
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* ── RIGHT SIDE: Sidebar Widgets ── */}
+            <div className="space-y-5">
+              <div className="bg-white rounded-[2rem] border border-slate-100 shadow-sm p-6 sm:p-7">
+                <h3 className="text-[11px] font-extrabold text-slate-400 uppercase tracking-[0.2em] mb-6">
+                  Activity On This Page
+                </h3>
+                <div className="space-y-5">
+                  {approvedVerifications.slice(0, 5).map((v) => (
+                    <div key={v.id} className="flex items-start gap-3">
+                      <div className="w-9 h-9 rounded-full bg-gradient-to-br from-slate-200 to-slate-300 flex items-center justify-center text-[10px] font-extrabold text-slate-600 flex-shrink-0">
+                        {getInitials(v)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-bold text-slate-900 leading-snug">
+                          <span className="font-extrabold">{getUserName(v)}</span> was approved by Admin
+                        </p>
+                        <div className="flex items-center gap-1.5 mt-1">
+                          <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                          <p className="text-[10px] text-slate-400 font-medium">
+                            {v.created_at ? new Date(v.created_at).toLocaleDateString() : "recently"}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  {rejectedVerifications.slice(0, 5).map((v) => (
+                    <div key={v.id} className="flex items-start gap-3">
+                      <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center flex-shrink-0 text-[10px] text-slate-400 font-extrabold">
+                        {getInitials(v)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-bold text-slate-900 leading-snug">
+                          <span className="font-extrabold">{getUserName(v)}</span> was rejected
+                        </p>
+                        <div className="flex items-center gap-1.5 mt-1">
+                          <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                          <p className="text-[10px] text-slate-400 font-medium">
+                            {v.created_at ? new Date(v.created_at).toLocaleDateString() : "recently"}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  {approvedVerifications.length === 0 && rejectedVerifications.length === 0 && (
+                    <p className="text-xs text-slate-400 font-medium text-center py-4">
+                      No recent changes on this page
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Trust & Safety Guidelines Card */}
+              <div className="bg-[#0052CC] rounded-[2rem] p-6 sm:p-7 text-white shadow-xl">
+                <div className="w-10 h-10 rounded-2xl bg-white/10 flex items-center justify-center mb-5 border border-white/10">
+                  <ShieldCheck className="w-5 h-5 text-white" />
+                </div>
+                <h3 className="text-xl font-extrabold tracking-tight mb-3">
+                  Trust &amp; Safety Guidelines
+                </h3>
+                <p className="text-blue-100 text-xs font-medium leading-relaxed opacity-80">
+                  Ensure the document photo matches the live selfie. Check for valid expiration dates and clear text rendering.
                 </p>
               </div>
-              
-              <div className="flex items-center gap-3">
-                <span className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider ${getStatusStyle(activeInspection.status)}`}>
-                  {activeInspection.status}
-                </span>
-                <button 
-                  onClick={() => setActiveInspection(null)}
-                  className="p-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 transition-colors text-white"
-                  title="Close Inspection View (Esc)"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-
-            {/* Core Layout Area: Dual Image Comparison Workspace */}
-            <div 
-              onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 gap-6 my-auto items-center justify-center py-8"
-            >
-              {/* Box 1: ID Card Document File */}
-              <div className="flex flex-col gap-2">
-                <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 px-1">
-                  Provided Identity Document
-                </span>
-                <div className="bg-slate-900 border border-white/5 rounded-2xl h-[280px] sm:h-[420px] overflow-hidden flex items-center justify-center relative group shadow-2xl">
-                  {modalCardImg && !brokenCardImages[activeInspection.id] ? (
-                    <img 
-                      src={modalCardImg} 
-                      alt="ID Card Document" 
-                      className="w-full h-full object-contain"
-                    />
-                  ) : (
-                    <div className="text-center p-6 space-y-2">
-                      <ShieldCheck className="w-12 h-12 text-slate-700 mx-auto" />
-                      <p className="text-xs font-semibold text-slate-500">Identity Document Unobtainable</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Box 2: Live Verification Selfie */}
-              <div className="flex flex-col gap-2">
-                <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 px-1">
-                  User Verification Selfie
-                </span>
-                <div className="bg-slate-900 border border-white/5 rounded-2xl h-[280px] sm:h-[420px] overflow-hidden flex items-center justify-center relative group shadow-2xl">
-                  {modalSelfieImg && !brokenSelfieImages[activeInspection.id] ? (
-                    <img 
-                      src={modalSelfieImg} 
-                      alt="User Live Selfie" 
-                      className="w-full h-full object-contain"
-                    />
-                  ) : (
-                    <div className="text-center p-6 space-y-2">
-                      <Eye className="w-12 h-12 text-slate-700 mx-auto" />
-                      <p className="text-xs font-semibold text-slate-500">Selfie Image Unobtainable</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Bottom Actions Workspace Bar */}
-            <div 
-              onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-md bg-slate-900/90 border border-white/10 rounded-2xl p-4 flex items-center justify-between gap-4 shadow-2xl mb-2"
-            >
-              {activeInspection.status === "PENDING" ? (
-                <>
-                  <button
-                    onClick={() => handleReject(activeInspection.id)}
-                    disabled={rejectLoading !== null || approveLoading !== null}
-                    className="flex-1 py-3 px-4 rounded-xl bg-red-500/20 hover:bg-red-500/30 text-red-400 text-xs font-extrabold uppercase tracking-wider transition-colors flex items-center justify-center gap-2 border border-red-500/20"
-                  >
-                    <X className="w-4 h-4" />
-                    Reject Profile
-                  </button>
-                  <button
-                    onClick={() => handleApprove(activeInspection.id)}
-                    disabled={rejectLoading !== null || approveLoading !== null}
-                    className="flex-1 py-3 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-extrabold uppercase tracking-wider transition-colors flex items-center justify-center gap-2 shadow-lg shadow-blue-600/20"
-                  >
-                    <Check className="w-4 h-4" />
-                    Approve Verify
-                  </button>
-                </>
-              ) : (
-                <div className="w-full text-center space-y-2">
-                  <p className="text-xs text-slate-400 font-medium">
-                    Profile has already been marked as <span className="font-bold text-white">{activeInspection.status}</span>.
-                  </p>
-                  <button
-                    onClick={() => handleResetToPending(activeInspection.id)}
-                    className="inline-flex items-center gap-2 mx-auto px-4 py-2 text-xs font-bold text-slate-300 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-colors"
-                  >
-                    <RotateCcw className="w-3.5 h-3.5" />
-                    Reset to Pending State
-                  </button>
-                </div>
-              )}
             </div>
           </div>
-        );
-      })()}
-    </div>
+        )}
+
+        {activeInspection && (() => {
+          const modalCardImg = activeInspection.id_card_url 
+            ? (activeInspection.id_card_url.startsWith('http') ? activeInspection.id_card_url : `http://localhost:3001/${activeInspection.id_card_url}`) 
+            : null;
+          const modalSelfieImg = activeInspection.selfie_url 
+            ? (activeInspection.selfie_url.startsWith('http') ? activeInspection.selfie_url : `http://localhost:3001/${activeInspection.selfie_url}`) 
+            : null;
+
+          return (
+            <div 
+              onClick={() => setActiveInspection(null)}
+              className="fixed inset-0 bg-slate-950/95 backdrop-blur-md z-[100] flex flex-col items-center justify-between p-4 sm:p-6 md:p-8 overflow-y-auto animate-in fade-in duration-200"
+            >
+              <div className="w-full max-w-6xl flex items-center justify-between gap-4 text-white z-10 bg-slate-900/60 backdrop-blur-md px-4 py-3 rounded-2xl border border-white/10">
+                <div className="min-w-0">
+                  <h4 className="text-sm font-bold text-white truncate">
+                    Inspecting: {getUserName(activeInspection)}
+                  </h4>
+                  <p className="text-[11px] text-slate-400 font-medium truncate mt-0.5">
+                    {getUserEmail(activeInspection)}
+                  </p>
+                </div>
+                
+                <div className="flex items-center gap-3">
+                  <span className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider ${getStatusStyle(activeInspection.status)}`}>
+                    {activeInspection.status}
+                  </span>
+                  <button 
+                    onClick={() => setActiveInspection(null)}
+                    className="p-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 transition-colors text-white"
+                    title="Close Inspection View (Esc)"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              <div 
+                onClick={(e) => e.stopPropagation()}
+                className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 gap-6 my-auto items-center justify-center py-8"
+              >
+                <div className="flex flex-col gap-2">
+                  <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 px-1">
+                    Provided Identity Document
+                  </span>
+                  <div className="bg-slate-900 border border-white/5 rounded-2xl h-[280px] sm:h-[420px] overflow-hidden flex items-center justify-center relative group shadow-2xl">
+                    {modalCardImg && !brokenCardImages[activeInspection.id] ? (
+                      <img 
+                        src={modalCardImg} 
+                        alt="ID Card Document" 
+                        className="w-full h-full object-contain"
+                      />
+                    ) : (
+                      <div className="text-center p-6 space-y-2">
+                        <ShieldCheck className="w-12 h-12 text-slate-700 mx-auto" />
+                        <p className="text-xs font-semibold text-slate-500">Identity Document Unobtainable</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 px-1">
+                    User Verification Selfie
+                  </span>
+                  <div className="bg-slate-900 border border-white/5 rounded-2xl h-[280px] sm:h-[420px] overflow-hidden flex items-center justify-center relative group shadow-2xl">
+                    {modalSelfieImg && !brokenSelfieImages[activeInspection.id] ? (
+                      <img 
+                        src={modalSelfieImg} 
+                        alt="User Live Selfie" 
+                        className="w-full h-full object-contain"
+                      />
+                    ) : (
+                      <div className="text-center p-6 space-y-2">
+                        <Eye className="w-12 h-12 text-slate-700 mx-auto" />
+                        <p className="text-xs font-semibold text-slate-500">Selfie Image Unobtainable</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div 
+                onClick={(e) => e.stopPropagation()}
+                className="w-full max-w-md bg-slate-900/90 border border-white/10 rounded-2xl p-4 flex items-center justify-between gap-4 shadow-2xl mb-2"
+              >
+                {activeInspection.status === "PENDING" ? (
+                  <>
+                    <button
+                      onClick={() => openReasonModal('reject', activeInspection.id)}
+                      disabled={rejectLoading !== null || approveLoading !== null}
+                      className="flex-1 py-3 px-4 rounded-xl bg-red-500/20 hover:bg-red-500/30 text-red-400 text-xs font-extrabold uppercase tracking-wider transition-colors flex items-center justify-center gap-2 border border-red-500/20"
+                    >
+                      <X className="w-4 h-4" />
+                      Reject Profile
+                    </button>
+                    <button
+                      onClick={() => handleApprove(activeInspection.id)}
+                      disabled={rejectLoading !== null || approveLoading !== null}
+                      className="flex-1 py-3 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-extrabold uppercase tracking-wider transition-colors flex items-center justify-center gap-2 shadow-lg shadow-blue-600/20"
+                    >
+                      <Check className="w-4 h-4" />
+                      Approve Verify
+                    </button>
+                  </>
+                ) : (
+                  <div className="w-full text-center space-y-2">
+                    <p className="text-xs text-slate-400 font-medium">
+                      Profile has already been marked as <span className="font-bold text-white">{activeInspection.status}</span>.
+                    </p>
+                    <button
+                      onClick={() => openReasonModal('reset', activeInspection.id)}
+                      className="inline-flex items-center gap-2 mx-auto px-4 py-2 text-xs font-bold text-slate-300 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-colors"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" />
+                      Reset to Pending State
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })()}
+      </div>
+    </>
   );
 }

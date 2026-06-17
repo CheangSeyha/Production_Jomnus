@@ -305,7 +305,7 @@ export default function WorkerTimelineCard({
                 {/* FILE */}
                 {proof.file_url && (
                   <a
-                    href={`http://localhost:3001${proof.file_url}`}
+                    href={`${process.env.NEXT_PUBLIC_FILE_URL}${proof.file_url}`}
                     target="_blank"
                     className="
                       mt-4 inline-flex
