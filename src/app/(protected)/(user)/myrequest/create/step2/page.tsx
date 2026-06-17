@@ -1,14 +1,10 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-
 import { ArrowLeft, Send } from "lucide-react";
-
 import StepIndicator from "@/components/myrequest/StepIndicator";
 import TaskOverview from "@/components/myrequest/TaskOverview";
-
 import { useTaskStore } from "@/store/taskStore";
-
 import api from "@/lib/axios";
 import { toDateTimeLocalISOString } from "@/utils/dateTime";
 
@@ -19,7 +15,6 @@ export default function Step2Page() {
 
   const handleSubmit = async () => {
     try {
-      // VALIDATION
       if (!form.categoryId) {
         alert("Category missing");
         return;
@@ -49,7 +44,6 @@ export default function Step2Page() {
         return;
       }
 
-      // CREATE TASK
       const res = await api.post("/tasks", {
         title: form.title,
 
@@ -75,13 +69,10 @@ export default function Step2Page() {
         longitude: form.longitude,
       });
 
-      // BACKEND RETURNED TASK
       const createdTask = res.data;
 
-      // RESET FORM
       reset();
 
-      // REDIRECT TO TASK WORKSPACE
       router.push(
         `/myrequest/${createdTask.id}/applications`
       );
@@ -98,16 +89,10 @@ export default function Step2Page() {
   return (
     <div className="min-h-screen overflow-y-auto bg-slate-50">
       <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:py-10">
-        {/* STEP INDICATOR */}
         <StepIndicator currentStep={2} />
-
         <div className="space-y-5">
-          {/* TASK PREVIEW */}
           <TaskOverview task={form} />
-
-          {/* ACTIONS */}
           <div className="flex gap-3 pt-2">
-            {/* BACK */}
             <button
               onClick={() => router.back()}
               className="
@@ -121,8 +106,6 @@ export default function Step2Page() {
               <ArrowLeft size={16} />
               Back
             </button>
-
-            {/* POST */}
             <button
               onClick={handleSubmit}
               className="

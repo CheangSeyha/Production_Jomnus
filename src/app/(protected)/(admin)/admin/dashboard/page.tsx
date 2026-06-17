@@ -5,26 +5,18 @@ import { adminService } from "@/services/adminService";
 import {
   AreaChart,
   Area,
-  BarChart,
-  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  Cell,
 } from "recharts";
 import {
   Users,
   FileText,
   CheckCircle,
-  CheckCircle2,
   TrendingUp,
-  Filter,
-  Calendar,
   ChevronRight,
-  ArrowUpRight,
-  MoreVertical,
   Layers,
   FilePlus2,
   ShieldCheck,
@@ -42,6 +34,86 @@ interface DashboardStats {
   approvedVerifications: number;
 }
 
+interface DashboardUser {
+  id: number;
+  fullName: string;
+  email: string;
+  currentRole?: string;
+  createdAt?: string;
+  profileImage?: string | null;
+}
+
+interface DashboardTask {
+  id: number;
+  title: string;
+  price?: number;
+  status?: string;
+  created_at?: string;
+  requester?: {
+    id?: number;
+    fullName?: string;
+    email?: string;
+  } | null;
+}
+
+interface DashboardAssignment {
+  id: number;
+  status?: string;
+  accepted_price?: number;
+  created_at?: string;
+  task?: { title?: string } | null;
+  performer?: { fullName?: string; email?: string } | null;
+}
+
+interface DashboardApplication {
+  id: number;
+  status?: string;
+  offered_price?: number;
+  applied_at?: string;
+  task?: {
+    title?: string;
+    requester?: {
+      fullName?: string;
+      email?: string;
+    };
+  } | null;
+  performer?: {
+    fullName?: string;
+    email?: string;
+  } | null;
+}
+
+interface DashboardNotification {
+  id: number;
+  title: string;
+  message: string;
+  audience?: string;
+  is_read?: boolean;
+  task_id?: number | null;
+  created_at?: string;
+}
+
+interface RegistrationItem {
+  name: string;
+  role: string;
+  time: string;
+  avatar: string;
+}
+
+interface ActivityItem {
+  type: string;
+  title: string;
+  user: string;
+  status: string;
+  value?: string;
+  timestamp?: string;
+}
+
+interface GrowthItem {
+  name: string;
+  value: number;
+}
+
 // Sample data for charts
 const tasksVelocityData = [
   { day: "MON", created: 4000, goal: 2400 },
@@ -53,58 +125,6 @@ const tasksVelocityData = [
   { day: "SUN", created: 3490, goal: 4300 },
 ];
 
-const userGrowthData = [
-  { name: "Designers", value: 68 },
-  { name: "Developers", value: 82 },
-  { name: "Writers", value: 45 },
-];
-
-const newRegistrations = [
-  { name: "Sarah Jenkins", role: "UX Designer", time: "2m ago", avatar: "SJ" },
-  {
-    name: "Marcus Thorne",
-    role: "Fullstack Dev",
-    time: "15m ago",
-    avatar: "MT",
-  },
-  {
-    name: "Lydia Chen",
-    role: "Content Strategist",
-    time: "1h ago",
-    avatar: "LC",
-  },
-];
-
-const ongoingActivity = [
-  {
-    type: "Assignment",
-    title: "Logo Redesign for FinTech Startup",
-    user: "Sarah Jenkins",
-    status: "IN_PROGRESS",
-    value: "$1,200",
-  },
-  {
-    type: "New Task",
-    title: "Express.js API Optimization",
-    user: "TechCorp Solutions",
-    status: "PENDING",
-    value: "$850",
-  },
-  {
-    type: "Verification",
-    title: "Identity Check: Marcus Thorne",
-    user: "Manual Review Required",
-    status: "URGENT",
-  },
-  {
-    type: "Completed",
-    title: "SEO Audit for E-commerce",
-    user: "Processed Payment #9021",
-    status: "ARCHIVED",
-    value: "$450",
-  },
-];
-
 const COLORS = {
   designer: "#8B5CF6",
   developer: "#3B82F6",
@@ -113,6 +133,11 @@ const COLORS = {
 
 export default function AdminDashboardPage() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [newRegistrations, setNewRegistrations] = useState<RegistrationItem[]>([]);
+  const [ongoingActivity, setOngoingActivity] = useState<ActivityItem[]>([]);
+  const [userGrowthData, setUserGrowthData] = useState<GrowthItem[]>([]);
+  const [activeAssignmentsCount, setActiveAssignmentsCount] = useState(0);
+  const [completedAssignmentsCount, setCompletedAssignmentsCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [timeFrame, setTimeFrame] = useState<"Daily" | "Weekly" | "Monthly">(
@@ -123,8 +148,38 @@ export default function AdminDashboardPage() {
     const fetchStats = async () => {
       try {
         setLoading(true);
-        const data = await adminService.getDashboardStats();
-        setStats(data);
+        const [statsData, usersData, tasksData, applicationsData, assignmentsData, notificationsData] =
+          await Promise.all([
+            adminService.getDashboardStats(),
+            adminService.getUsers({ page: 1, limit: 5 }),
+            adminService.getTasks(),
+            adminService.getApplications({ page: 1, limit: 8 }),
+            adminService.getAssignments({ page: 1, limit: 8 }),
+            adminService.getAdminNotifications(),
+          ]);
+
+        const users = unwrapList<DashboardUser>(usersData);
+        const tasks = unwrapList<DashboardTask>(tasksData);
+        const applications = unwrapList<DashboardApplication>(applicationsData);
+        const assignments = unwrapList<DashboardAssignment>(assignmentsData);
+        const notifications = unwrapList<DashboardNotification>(notificationsData);
+
+        setStats(statsData);
+        setNewRegistrations(buildNewRegistrations(users));
+        setActiveAssignmentsCount(
+          assignments.filter((assignment) => assignment.status === "IN_PROGRESS").length,
+        );
+        setCompletedAssignmentsCount(
+          assignments.filter((assignment) => assignment.status === "COMPLETED").length,
+        );
+        setOngoingActivity(
+          buildOngoingActivity({
+            applications,
+            assignments,
+            tasks,
+            notifications,
+          }),
+        );
         setError(null);
       } catch (err) {
         setError("Failed to fetch dashboard stats");
@@ -137,10 +192,24 @@ export default function AdminDashboardPage() {
     fetchStats();
   }, []);
 
+  useEffect(() => {
+    const fetchGrowth = async () => {
+      try {
+        const data = await adminService.getUserGrowth(timeFrame);
+        setUserGrowthData(data?.data ?? []);
+      } catch (err) {
+        console.error("Failed to fetch user growth data:", err);
+        setUserGrowthData([]);
+      }
+    };
+
+    fetchGrowth();
+  }, [timeFrame]);
+
   const metrics = [
     {
       label: "Total Users",
-      value: stats?.totalUsers || 24592,
+      value: stats?.totalUsers ?? 0,
       icon: Users,
       color: "bg-blue-100",
       textColor: "text-blue-600",
@@ -149,7 +218,7 @@ export default function AdminDashboardPage() {
     },
     {
       label: "Total Tasks",
-      value: stats?.totalTasks || 12840,
+      value: stats?.totalTasks ?? 0,
       icon: FileText,
       color: "bg-purple-100",
       textColor: "text-purple-600",
@@ -158,7 +227,7 @@ export default function AdminDashboardPage() {
     },
     {
       label: "Active Assignments",
-      value: stats?.activeAssignments || 1204,
+      value: stats?.activeAssignments ?? activeAssignmentsCount,
       icon: TrendingUp,
       color: "bg-green-100",
       textColor: "text-green-600",
@@ -167,7 +236,7 @@ export default function AdminDashboardPage() {
     },
     {
       label: "Completed Tasks",
-      value: stats?.completedAssignments || 9412,
+      value: stats?.completedAssignments ?? completedAssignmentsCount,
       icon: CheckCircle,
       color: "bg-emerald-100",
       textColor: "text-emerald-600",
@@ -193,6 +262,12 @@ export default function AdminDashboardPage() {
 
   const getActivityIcon = (type: string) => {
     switch (type) {
+      case "Application":
+        return (
+          <div className="p-2.5 rounded-xl bg-cyan-50 text-cyan-600">
+            <FileText size={18} />
+          </div>
+        );
       case "Assignment":
         return (
           <div className="p-2.5 rounded-xl bg-orange-50 text-orange-500">
@@ -228,18 +303,172 @@ export default function AdminDashboardPage() {
 
   const getStatusBadgeStyle = (status: string) => {
     switch (status) {
+      case "ASSIGNED":
+        return "bg-blue-100 text-blue-700";
       case "IN_PROGRESS":
         return "bg-blue-100 text-blue-700";
+      case "ACCEPTED":
+        return "bg-emerald-100 text-emerald-700";
       case "PENDING":
         return "bg-amber-100 text-amber-700";
+      case "REJECTED":
+        return "bg-rose-100 text-rose-700";
       case "URGENT":
         return "bg-rose-100 text-rose-700";
       case "ARCHIVED":
         return "bg-slate-100 text-slate-700";
+      case "COMPLETED":
+        return "bg-emerald-100 text-emerald-700";
+      case "VERIFIED":
+        return "bg-violet-100 text-violet-700";
       default:
         return "bg-slate-100 text-slate-700";
     }
   };
+
+  function formatTimeAgo(dateLike?: string) {
+    if (!dateLike) return "just now";
+
+    const date = new Date(dateLike);
+    if (Number.isNaN(date.getTime())) return "just now";
+
+    const diffMs = Date.now() - date.getTime();
+    const diffMinutes = Math.max(1, Math.round(diffMs / 60000));
+
+    if (diffMinutes < 60) return `${diffMinutes}m ago`;
+
+    const diffHours = Math.round(diffMinutes / 60);
+    if (diffHours < 24) return `${diffHours}h ago`;
+
+    const diffDays = Math.round(diffHours / 24);
+    return `${diffDays}d ago`;
+  }
+
+  function getInitials(name?: string) {
+    if (!name) return "NA";
+    return name
+      .split(" ")
+      .filter(Boolean)
+      .map((part) => part[0])
+      .join("")
+      .slice(0, 2)
+      .toUpperCase();
+  }
+
+  function formatCurrency(amount?: number) {
+    if (typeof amount !== "number" || Number.isNaN(amount)) return undefined;
+    return `$${amount.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
+  }
+
+  function unwrapList<T>(payload: any): T[] {
+    if (Array.isArray(payload)) return payload as T[];
+    if (Array.isArray(payload?.data)) return payload.data as T[];
+    if (Array.isArray(payload?.data?.data)) return payload.data.data as T[];
+    return [];
+  }
+
+  function buildNewRegistrations(users: DashboardUser[]): RegistrationItem[] {
+    return [...users]
+      .filter((user) => user.currentRole !== "ADMIN")
+      .sort((a, b) => {
+        const aTime = new Date(a.createdAt ?? 0).getTime();
+        const bTime = new Date(b.createdAt ?? 0).getTime();
+        return bTime - aTime;
+      })
+      .slice(0, 3)
+      .map((user) => ({
+        name: user.fullName,
+        role: user.currentRole === "PERFORMER" ? "Performer" : "Requester",
+        time: formatTimeAgo(user.createdAt),
+        avatar: getInitials(user.fullName),
+      }));
+  }
+
+  const topGrowthSegment = userGrowthData.reduce<GrowthItem | null>(
+    (best, current) => {
+      if (!best) return current;
+      return current.value > best.value ? current : best;
+    },
+    null,
+  );
+
+  const maxGrowth = Math.max(...userGrowthData.map((item) => item.value), 1);
+
+  function buildOngoingActivity(params: {
+    applications: DashboardApplication[];
+    assignments: DashboardAssignment[];
+    tasks: DashboardTask[];
+    notifications: DashboardNotification[];
+  }): ActivityItem[] {
+    const applicationItems: ActivityItem[] = (params.applications ?? [])
+      .slice()
+      .sort((a, b) => new Date(b.applied_at ?? 0).getTime() - new Date(a.applied_at ?? 0).getTime())
+      .slice(0, 4)
+      .map((app) => ({
+        type: "Application",
+        title: app.task?.title ? `Application for ${app.task.title}` : `Application #${app.id}`,
+        user:
+          app.performer?.fullName ||
+          app.performer?.email ||
+          app.task?.requester?.fullName ||
+          "Unknown user",
+        status: app.status || "PENDING",
+        value: formatCurrency(app.offered_price),
+        timestamp: app.applied_at,
+      }));
+
+    const assignmentItems: ActivityItem[] = (params.assignments ?? [])
+      .slice()
+      .sort((a, b) => new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime())
+      .slice(0, 4)
+      .map((assignment) => ({
+        type: "Assignment",
+        title: assignment.task?.title ? `${assignment.task.title}` : `Assignment #${assignment.id}`,
+        user: assignment.performer?.fullName || assignment.performer?.email || "Unknown performer",
+        status: assignment.status || "ASSIGNED",
+        value: formatCurrency(assignment.accepted_price),
+        timestamp: assignment.created_at,
+      }));
+
+    const taskItems: ActivityItem[] = (params.tasks ?? [])
+      .slice()
+      .sort((a, b) => new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime())
+      .slice(0, 4)
+      .map((task) => ({
+        type: "New Task",
+        title: task.title,
+        user: task.requester?.fullName || task.requester?.email || "Task requester",
+        status: task.status || "PENDING",
+        value: formatCurrency(task.price),
+        timestamp: task.created_at,
+      }));
+
+    const notificationItems: ActivityItem[] = (params.notifications ?? [])
+      .slice()
+      .sort((a, b) => new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime())
+      .slice(0, 4)
+      .map((notification) => ({
+        type: notification.title.includes("Verification")
+          ? "Verification"
+          : notification.title.includes("Applicant")
+            ? "Application"
+            : "Completed",
+        title: notification.message.length > 80
+          ? `${notification.message.slice(0, 77)}...`
+          : notification.message,
+        user: notification.audience === "admin" ? "Admin Queue" : "System",
+        status: notification.is_read ? "ARCHIVED" : "URGENT",
+        timestamp: notification.created_at,
+      }));
+
+    return [...taskItems, ...applicationItems, ...assignmentItems, ...notificationItems]
+      .sort((a, b) => {
+        const aTime = new Date(a.timestamp ?? 0).getTime();
+        const bTime = new Date(b.timestamp ?? 0).getTime();
+        return bTime - aTime;
+      })
+      .slice(0, 4);
+  }
 
   return (
     <div className="min-h-screen p-4 space-y-8 max-w-[1600px] mx-auto">
@@ -347,7 +576,7 @@ export default function AdminDashboardPage() {
                   </div>
                 </div>
               </div>
-              <div className="h-[390px] w-full">
+              <div className="h-3/4 w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={tasksVelocityData}>
                     <defs>
@@ -396,7 +625,7 @@ export default function AdminDashboardPage() {
             <div className="bg-[#0052CC] rounded-[2rem] shadow-xl p-8 sm:p-10 text-white flex flex-col">
               <h2 className="text-xl font-bold tracking-tight">User Growth</h2>
               <p className="text-blue-100 text-sm mt-2 mb-10 opacity-70">
-                Comparison of new registrations vs churn rates this week.
+                Current distribution of platform users by role.
               </p>
 
               <div className="space-y-8 flex-1">
@@ -404,12 +633,12 @@ export default function AdminDashboardPage() {
                   <div key={item.name} className="space-y-3">
                     <div className="flex justify-between text-[11px] font-bold uppercase tracking-[0.1em] opacity-90">
                       <span>{item.name}</span>
-                      <span>{item.value}%</span>
+                      <span>{item.value} new users</span>
                     </div>
                     <div className="h-2.5 bg-blue-800/40 rounded-full overflow-hidden">
                       <div
                         className="h-full bg-white rounded-full shadow-[0_0_8px_rgba(255,255,255,0.4)]"
-                        style={{ width: `${item.value}%` }}
+                        style={{ width: `${(item.value / maxGrowth) * 100}%` }}
                       />
                     </div>
                   </div>
@@ -421,8 +650,9 @@ export default function AdminDashboardPage() {
                   Key Insight
                 </p>
                 <p className="text-sm mt-3 font-medium leading-relaxed italic opacity-90">
-                  "Developer registrations are at an all-time high, increasing by
-                  14% since Monday."
+                  {topGrowthSegment
+                    ? `${topGrowthSegment.name} are currently leading at ${topGrowthSegment.value}%.`
+                    : "No user growth data is available yet."}
                 </p>
               </div>
             </div>

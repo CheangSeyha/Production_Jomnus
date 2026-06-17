@@ -68,7 +68,7 @@ export default function Sidebar({ role, isOpen = false, onClose }: Props) {
       {/* Mobile Overlay */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/50 md:hidden z-30 transition-opacity"
+          className="fixed inset-0 bg-black/50 md:hidden z-39 transition-opacity"
           onClick={onClose}
           aria-hidden="true"
         />
@@ -77,17 +77,14 @@ export default function Sidebar({ role, isOpen = false, onClose }: Props) {
       {/* Sidebar */}
       <aside
           className={`
-    w-60 md:w-64
-    bg-white border-r border-slate-200/60
-    flex flex-col
-    h-full
-
-    fixed md:relative top-0 left-0
-
-    transform transition-transform duration-300 ease-out
-
-    ${isOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full md:translate-x-0"}
-  `}
+              w-60 md:w-64
+              bg-white border-r border-slate-200/60
+              flex flex-col
+              h-full
+              fixed md:relative top-0 left-0 z-40
+              transform transition-transform duration-300 ease-out
+              ${isOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full md:translate-x-0"}
+          `}
       >
         {/* Mobile Header */}
         <div className="md:hidden flex items-center justify-between p-4 border-b border-slate-200/80">

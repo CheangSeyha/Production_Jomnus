@@ -67,7 +67,7 @@ type UserStore = {
   user: User | null;
   isLoading: boolean;
 
-  setUser: (user: any) => void; // Using 'any' handles incoming database snake_case payloads safely
+  setUser: (user: any) => void;
   clearUser: () => void;
   updateUser: (data: Partial<User> | any) => void;
 };

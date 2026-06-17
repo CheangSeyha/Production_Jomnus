@@ -85,7 +85,7 @@ export default function TaskLocationPicker({
   return (
     <div className="space-y-4">
 
-      <div className="overflow-hidden rounded-3xl border border-slate-200 shadow-sm">
+      <div className="overflow-hidden rounded-3xl border border-sky-200 shadow-[0_14px_36px_rgba(14,165,233,0.14)]">
 
         <MapContainer
           center={
@@ -96,7 +96,7 @@ export default function TaskLocationPicker({
           zoom={13}
           className="h-[420px] w-full"
         >
-          <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" />
+          <TileLayer url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png" />
 
           <MapEvents
             selected={selected}
@@ -105,14 +105,14 @@ export default function TaskLocationPicker({
         </MapContainer>
       </div>
 
-      <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3">
+      <div className="flex flex-col gap-3 rounded-2xl border border-sky-200 bg-white px-4 py-3 shadow-sm sm:flex-row sm:items-center sm:justify-between">
 
         <div>
           <p className="text-sm font-bold text-slate-900">
             Task Location
           </p>
 
-          <p className="text-xs text-slate-500">
+          <p className="text-xs font-medium text-slate-500">
             {selected
               ? `${selected.lat.toFixed(
                   5,
@@ -121,7 +121,7 @@ export default function TaskLocationPicker({
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
 
           <button
             type="button"
@@ -136,10 +136,10 @@ export default function TaskLocationPicker({
               );
             }}
             className="
-              rounded-xl bg-slate-100
+              rounded-xl border border-sky-200 bg-sky-50
               px-4 py-2 text-sm font-bold
-              text-slate-700 transition
-              hover:bg-slate-200
+              text-sky-700 transition
+              hover:bg-sky-100
             "
           >
             Current Location
@@ -161,7 +161,7 @@ export default function TaskLocationPicker({
               transition
               ${
                 selected
-                  ? "bg-blue-600 hover:bg-blue-700"
+                  ? "bg-sky-600 hover:bg-cyan-500 shadow-sm shadow-sky-200"
                   : "cursor-not-allowed bg-slate-300"
               }
             `}

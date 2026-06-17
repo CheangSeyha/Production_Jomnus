@@ -27,11 +27,12 @@ export type Task = {
     id: number;
     fullName: string;
     profileImage?: string | null;
+    isIdentityVerified?: boolean;
   } | null;
 
   requiredWorkers?: number;
 
-  categoryId?: number;
+  categoryIds?: number[];
 
   status:
     | "POSTED"

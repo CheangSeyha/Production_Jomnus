@@ -10,9 +10,11 @@ import {
   LoaderCircle,
   Upload,
   ShieldCheck,
+  MessageCircle,
 } from "lucide-react";
 
 import api from "@/lib/axios";
+import dynamic from "next/dynamic";
 
 type Proof = {
   id: number;
@@ -27,15 +29,19 @@ type Assignment = {
   accepted_price: number;
 
   task: {
+    id: string,
     title: string;
     description: string;
     deadline: string;
     location_text?: string;
-  };
+    latitude?: number;
+    longitude?: number;
 
-  requester?: {
-    fullName: string;
-    profileImage?: string;
+    requester?: {
+      id: number;
+      fullName: string;
+      profileImage?: string;
+    };
   };
 };
 
@@ -53,6 +59,26 @@ export default function PerformerWorkspacePage() {
   const [loading, setLoading] = useState(true);
 
   const [proofText, setProofText] = useState("");
+  
+  const [proofType, setProofType] = useState<"TEXT" | "FILE" | "IMAGE" | "RECEIPT">("TEXT");
+
+  const [proofFile, setProofFile] = useState<File | null>(null);
+
+  const [submitting, setSubmitting] = useState(false);
+
+  const SharedTaskMap = dynamic(
+      () => import("@/components/map/SharedTaskMap"),
+      { ssr: false }
+  );
+
+  const startConversation = async () => {
+    try {
+      const { data } = await api.post("/conversations", { taskId: Number(assignment?.task.id) });
+      router.push(`/message?conversationId=${data.id}`);
+    } catch (err: any) {
+      console.error("Failed to start conversation:", err.response?.data);
+    }
+  };
 
   const fetchData = async () => {
     try {
@@ -61,9 +87,10 @@ export default function PerformerWorkspacePage() {
           api.get(`/assignments/${assignmentId}`),
           api.get(`/proofs/${assignmentId}`),
         ]);
-
+      console.log(assignment);
       setAssignment(assignmentRes.data);
       setProofs(proofRes.data);
+      
     } catch (err) {
       console.error(err);
     } finally {
@@ -107,19 +134,61 @@ export default function PerformerWorkspacePage() {
 
   const submitProof = async () => {
     try {
-      await api.post("/proofs", {
-        assignment_id: Number(assignmentId),
-        text_content: proofText,
-      });
+      if (
+        proofType === "TEXT" &&
+        !proofText.trim()
+      ) {
+        alert("Please enter proof details");
+        return;
+      }
+
+      if (
+        proofType !== "TEXT" &&
+        !proofFile
+      ) {
+        alert("Please select a file");
+        return;
+      }
+
+      setSubmitting(true);
+
+      const fd = new FormData();
+
+      fd.append(
+        "assignment_id",
+        String(assignmentId)
+      );
+
+      fd.append("type", proofType);
+
+      if (proofText.trim()) {
+        fd.append(
+          "text_content",
+          proofText.trim()
+        );
+      }
+
+      if (proofFile) {
+        fd.append("file", proofFile);
+      }
+
+      await api.post(
+        "/proofs/upload",
+        fd
+      );
 
       setProofText("");
+      setProofFile(null);
+      setProofType("TEXT");
 
       fetchData();
     } catch (err: any) {
       alert(
         err?.response?.data?.message ||
-          "Failed to submit proof"
+        "Failed to submit proof"
       );
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -180,6 +249,46 @@ export default function PerformerWorkspacePage() {
           </div>
         </div>
 
+        {/* REQUESTER */}
+        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <p className="text-xs font-bold uppercase tracking-wide text-slate-400">
+            Task Requester
+          </p>
+
+          <div className="mt-4 flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              {assignment.task.requester?.profileImage ? (
+                <img
+                  src={assignment.task.requester.profileImage}
+                  alt={assignment.task.requester.fullName}
+                  className="h-14 w-14 rounded-2xl object-cover"
+                />
+              ) : (
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-xl">
+                  👤
+                </div>
+              )}
+
+              <div>
+                <p className="text-lg font-black text-slate-900">
+                  {assignment.task.requester?.fullName}
+                </p>
+
+                <p className="text-sm text-slate-500">
+                  Task Creator
+                </p>
+              </div>
+            </div>
+
+            <button
+                onClick={startConversation}
+                className="flex px-5 h-11 items-center cursor-pointer justify-center gap-2 rounded-2xl border border-sky-200 bg-sky-50 text-sm font-bold text-sky-700 transition hover:bg-sky-100"
+            >
+              <MessageCircle size={16} /> Message Requester
+            </button>
+          </div>
+        </div>
+
         {/* STATUS */}
         <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
 
@@ -211,17 +320,18 @@ export default function PerformerWorkspacePage() {
               )}
 
               {assignment.status === "IN_PROGRESS" && (
-                <button
-                  onClick={completeWork}
+                <div
                   className="
-                    rounded-2xl bg-emerald-600
-                    px-5 py-3 text-sm
-                    font-bold text-white
-                    hover:bg-emerald-700
+                    rounded-2xl
+                    bg-amber-50
+                    border border-amber-200
+                    px-4 py-3
                   "
                 >
-                  Mark Completed
-                </button>
+                  <p className="text-sm font-semibold text-amber-700">
+                    Submit proof below when your work is finished.
+                  </p>
+                </div>
               )}
             </div>
           </div>
@@ -239,30 +349,24 @@ export default function PerformerWorkspacePage() {
               {
                 label: "In Progress",
                 active:
-                  assignment.status ===
-                    "IN_PROGRESS" ||
-                  assignment.status ===
-                    "COMPLETED" ||
-                  assignment.status ===
-                    "VERIFIED",
+                  assignment.status === "IN_PROGRESS" ||
+                  assignment.status === "COMPLETED" ||
+                  assignment.status === "VERIFIED",
                 icon: LoaderCircle,
               },
 
               {
                 label: "Completed",
                 active:
-                  assignment.status ===
-                    "COMPLETED" ||
-                  assignment.status ===
-                    "VERIFIED",
+                  assignment.status === "COMPLETED" ||
+                  assignment.status === "VERIFIED",
                 icon: CheckCircle2,
               },
 
               {
                 label: "Verified",
                 active:
-                  assignment.status ===
-                  "VERIFIED",
+                  assignment.status === "VERIFIED",
                 icon: ShieldCheck,
               },
             ].map((step, index) => {
@@ -310,45 +414,102 @@ export default function PerformerWorkspacePage() {
         </div>
 
         {/* SUBMIT PROOF */}
-        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+        {assignment.status === "IN_PROGRESS" && (
+          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="flex items-center gap-2">
+              <Upload size={18} className="text-blue-600" />
 
-          <div className="flex items-center gap-2">
-            <Upload size={18} className="text-blue-600" />
+              <h2 className="text-lg font-black text-slate-950">
+                Submit Proof
+              </h2>
+            </div>
+            <div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-4">
 
-            <h2 className="text-lg font-black text-slate-950">
+              {["TEXT", "IMAGE", "FILE", "RECEIPT"].map((type) => (
+                <button
+                  key={type}
+                  type="button"
+                  onClick={() => setProofType(type as any)}
+                  className={`
+                    rounded-2xl border px-4 py-3
+                    text-sm font-bold transition
+
+                    ${
+                      proofType === type
+                        ? "border-blue-600 bg-blue-600 text-white"
+                        : "border-slate-200 bg-white text-slate-700"
+                    }
+                  `}
+                >
+                  {type}
+                </button>
+              ))}
+            </div>
+            <textarea
+              value={proofText}
+              onChange={(e) =>
+                setProofText(e.target.value)
+              }
+              rows={5}
+              placeholder="Explain your completed work..."
+              className="
+                mt-5 w-full rounded-2xl
+                border border-slate-200
+                px-4 py-3 text-sm
+                outline-none
+                focus:border-blue-500
+                focus:ring-4 focus:ring-blue-100
+              "
+            />
+            {/* FILE PICKER */}
+            {proofType !== "TEXT" && (
+              <div className="mt-4">
+
+                <input
+                  type="file"
+                  onChange={(e) =>
+                    setProofFile(
+                      e.target.files?.[0] || null
+                    )
+                  }
+                  className="
+                    block w-full rounded-2xl
+                    border border-slate-200
+                    p-3 text-sm
+                  "
+                />
+
+                {proofFile && (
+                  <p className="mt-2 text-sm text-slate-600">
+                    Selected: {proofFile.name}
+                  </p>
+                )}
+              </div>
+            )}
+            <button
+              onClick={submitProof}
+              className="
+                mt-4 rounded-2xl
+                bg-blue-600 px-5 py-3
+                text-sm font-bold text-white
+                hover:bg-blue-700
+              "
+            >
               Submit Proof
-            </h2>
+            </button>
           </div>
-
-          <textarea
-            value={proofText}
-            onChange={(e) =>
-              setProofText(e.target.value)
-            }
-            rows={5}
-            placeholder="Explain your completed work..."
-            className="
-              mt-5 w-full rounded-2xl
-              border border-slate-200
-              px-4 py-3 text-sm
-              outline-none
-              focus:border-blue-500
-              focus:ring-4 focus:ring-blue-100
-            "
-          />
-
-          <button
-            onClick={submitProof}
-            className="
-              mt-4 rounded-2xl
-              bg-blue-600 px-5 py-3
-              text-sm font-bold text-white
-              hover:bg-blue-700
-            "
-          >
-            Submit Proof
-          </button>
-        </div>
+        )}
+        
+        {/* MAP */}
+        {assignment.task.latitude &&
+        assignment.task.longitude && (
+          <div className="h-[700px] overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+            <SharedTaskMap
+              lat={assignment.task.latitude}
+              lng={assignment.task.longitude}
+            />
+          </div>
+        )}
 
         {/* PROOF HISTORY */}
         <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -389,9 +550,28 @@ export default function PerformerWorkspacePage() {
                   </span>
                 </div>
 
-                <p className="mt-3 text-sm leading-6 text-slate-600">
-                  {proof.text_content}
-                </p>
+                <div className="mt-3 space-y-3">
+
+                  {proof.text_content && (
+                    <p className="text-sm text-slate-600">
+                      {proof.text_content}
+                    </p>
+                  )}
+
+                  {proof.file_url && (
+                    <a
+                      href={`${process.env.NEXT_PUBLIC_FILE_URL}${proof.file_url}`}
+                      target="_blank"
+                      className="
+                        inline-flex rounded-xl
+                        bg-slate-900 px-4 py-2
+                        text-sm font-semibold text-white
+                      "
+                    >
+                      View Attachment
+                    </a>
+                  )}
+                </div>
               </div>
             ))}
           </div>

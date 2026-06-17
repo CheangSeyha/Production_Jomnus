@@ -2,23 +2,14 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import {
-  ArrowLeft,
-  BriefcaseBusiness,
-  CalendarClock,
-  CheckCircle2,
-  ClipboardList,
-  MapPin,
-  ShieldCheck,
-  Users,
-  Wallet,
-} from "lucide-react";
+import { ArrowLeft, BriefcaseBusiness, CalendarClock, MapPin, Users, Wallet } from "lucide-react";
 import api from "@/lib/axios";
 import { toDateTimeLocalValue, toDateTimeLocalISOString } from "@/utils/dateTime";
 import ApplicationOfferCard from "@/components/myrequest/ApplicationOfferCard";
 import WorkerTimelineCard from "@/components/myrequest/WorkerTimeLineCard";
-import TaskMapPreview from "@/components/map/TaskMapPreview";
 import EditTaskModal from "@/components/myrequest/EditTaskModel";
+import { useToast } from "@/components/providers/toast-provider";
+import dynamic from "next/dynamic";
 
 type Application = {
   id: number;
@@ -108,6 +99,7 @@ const assignmentStyles: Record<string, string> = {
 export default function TaskApplicationsPage() {
   const params = useParams();
   const router = useRouter();
+  const toast = useToast();
   const taskId = params.taskId;
 
   const [task, setTask] = useState<Task | null>(null);
@@ -117,6 +109,14 @@ export default function TaskApplicationsPage() {
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState("");
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isUpdatingTask, setIsUpdatingTask] = useState(false);
+
+  const SharedTaskMap = dynamic(
+    () => import("@/components/map/SharedTaskMap"),
+    {
+      ssr: false,
+    }
+  );
 
   const [editForm, setEditForm] = useState<any>({
     title: "",
@@ -136,10 +136,6 @@ export default function TaskApplicationsPage() {
   );
   const pendingCount = useMemo(
     () => applications.filter((app) => app.status === "PENDING").length,
-    [applications],
-  );
-  const rejectedCount = useMemo(
-    () => applications.filter((app) => app.status === "REJECTED").length,
     [applications],
   );
   const canCloseApplications =
@@ -183,7 +179,7 @@ export default function TaskApplicationsPage() {
 
         startDate: taskRes.data.start_date,
 
-        categoryId: taskRes.data.category_id,
+        categoryId: taskRes.data.category_id || taskRes.data.categories?.[0]?.id,
 
         locationText:
           taskRes.data.location_text,
@@ -229,7 +225,7 @@ export default function TaskApplicationsPage() {
           taskRes.data.required_workers || 1,
 
         categoryId:
-          taskRes.data.category_id || undefined,
+          taskRes.data.category_id || taskRes.data.categories?.[0]?.id || undefined,
       });
       setApplications(appRes.data);
       setAssignments(assignmentsWithProofs);
@@ -308,6 +304,7 @@ export default function TaskApplicationsPage() {
 
   const updateTask = async () => {
     try {
+      setIsUpdatingTask(true);
       await api.patch(`/tasks/${taskId}`, {
         title: editForm.title,
 
@@ -315,7 +312,7 @@ export default function TaskApplicationsPage() {
 
         price: Number(editForm.price),
 
-        start_date: editForm.startDate
+        startDate: editForm.startDate
           ? toDateTimeLocalISOString(editForm.startDate)
           : null,
 
@@ -323,30 +320,31 @@ export default function TaskApplicationsPage() {
           ? toDateTimeLocalISOString(editForm.deadline)
           : undefined,
 
-        location_text:
-          editForm.locationText,
+        locationText: editForm.locationText,
 
-        latitude:
-          editForm.latitude,
+        latitude: editForm.latitude,
 
-        longitude:
-          editForm.longitude,
+        longitude: editForm.longitude,
 
-        required_workers:
-          Number(editForm.requiredWorkers),
+        requiredWorkers: Number(editForm.requiredWorkers),
 
-        category_id:
-          editForm.categoryId,
+        categoryIds: editForm.categoryId ? [Number(editForm.categoryId)] : undefined,
       });
 
+      toast.success({
+        title: "Task updated",
+        message: "Your changes were saved successfully.",
+      });
       setIsEditOpen(false);
 
       fetchData();
     } catch (err: any) {
-      alert(
-        err?.response?.data?.message ||
-        "Failed to update task",
-      );
+      toast.error({
+        title: "Could not update task",
+        message: err?.response?.data?.message || "Failed to update task.",
+      });
+    } finally {
+      setIsUpdatingTask(false);
     }
   };
 
@@ -378,7 +376,7 @@ export default function TaskApplicationsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen">
       <div className="mx-auto max-w-6xl space-y-5 px-4 py-6 sm:px-6 lg:py-8">
         <button
           onClick={() => router.push("/myrequest")}
@@ -494,8 +492,8 @@ export default function TaskApplicationsPage() {
             </div>
 
             {/* MAP */}
-            <div className="h-auto w-full">
-              <TaskMapPreview
+            <div className="h-[500px] w-full">
+              <SharedTaskMap
                 lat={task.latitude}
                 lng={task.longitude}
               />
@@ -597,15 +595,16 @@ export default function TaskApplicationsPage() {
             ) : (
               <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                 {applications.map((app) => (
-                  <ApplicationOfferCard
-                    key={app.id}
-                    performerName={app.performer.fullName}
-                    performerImage={app.performer.profileImage}
-                    offeredPrice={app.offered_price}
-                    status={app.status}
-                    onAccept={() => acceptApplication(app.id)}
-                    onReject={() => rejectApplication(app.id)}
-                  />
+                    <ApplicationOfferCard
+                        key={app.id}
+                        performerName={app.performer?.fullName ?? "Unknown"}
+                        performerImage={app.performer?.profileImage}
+                        offeredPrice={app.offered_price}
+                        status={app.status}
+                        taskId={task.id}
+                        onAccept={() => acceptApplication(app.id)}
+                        onReject={() => rejectApplication(app.id)}
+                    />
                 ))}
               </div>
             )}
@@ -724,8 +723,8 @@ export default function TaskApplicationsPage() {
           onClose={() => setIsEditOpen(false)}
           onSave={updateTask}
           onDelete={deleteTask}
+          saving={isUpdatingTask}
           onFormChange={(name: string, value: any) => {
-            // Keep live preview in sync while editing
             setTask((prev: any) => {
               if (!prev) return prev;
               return {

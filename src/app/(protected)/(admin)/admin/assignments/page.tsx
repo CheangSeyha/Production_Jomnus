@@ -7,9 +7,7 @@ import {
   Clock,
   BadgeCheck,
   AlertCircle,
-  SlidersHorizontal,
   ArrowUpDown,
-  Plus,
   Eye,
   ChevronLeft,
   ChevronRight,
@@ -68,7 +66,6 @@ export default function AdminAssignmentsPage() {
     fetchAssignments();
   }, [page]);
 
-  // ── Helpers ──────────────────────────────────────────────────────────────
   const getTaskId = (a: Assignment) => a.task_id ?? a.taskId ?? a.id;
   const getPerformerId = (a: Assignment) => a.performer_id ?? a.performerId;
 
@@ -117,7 +114,6 @@ export default function AdminAssignmentsPage() {
     }
   };
 
-  // ── Pagination ────────────────────────────────────────────────────────────
   const totalPages = Math.max(1, Math.ceil((assignments?.total ?? 0) / LIMIT));
 
   // Shows up to 5 page buttons centred around the current page
@@ -128,13 +124,11 @@ export default function AdminAssignmentsPage() {
     return Array.from({ length: end - start + 1 }, (_, i) => start + i);
   };
 
-  // ── Stats ─────────────────────────────────────────────────────────────────
   const stats = {
     inProgress: data.filter((a) => a.status === "IN_PROGRESS").length,
     verified:   data.filter((a) => a.status === "VERIFIED").length,
   };
 
-  // ── Render ────────────────────────────────────────────────────────────────
   return (
       <div className="min-h-screen space-y-8 max-w-[1400px] mx-auto">
 
@@ -248,7 +242,7 @@ export default function AdminAssignmentsPage() {
                 <table className="w-full text-left border-collapse">
                   <thead>
                   <tr className="bg-slate-50/50 border-b border-slate-100">
-                    {["Task", "Task ID", "Performer", "Performer ID", "Status", "Verified", "Actions"].map((h) => (
+                    {["Task", "Task ID", "Performer", "Performer ID", "Status", "Verified"].map((h) => (
                         <th key={h} className="px-8 py-4 text-[11px] font-extrabold text-slate-400 uppercase tracking-[0.15em]">
                           {h}
                         </th>
@@ -323,13 +317,6 @@ export default function AdminAssignmentsPage() {
                                   <span className="text-sm font-bold">Pending</span>
                                 </div>
                             )}
-                          </td>
-
-                          {/* Actions */}
-                          <td className="px-8 py-6">
-                            <button className="p-2 rounded-xl text-blue-500 hover:bg-blue-50 transition-colors" title="View">
-                              <Eye className="w-4 h-4" />
-                            </button>
                           </td>
                         </tr>
                     );
