@@ -560,7 +560,7 @@ export default function PerformerWorkspacePage() {
 
                   {proof.file_url && (
                     <a
-                      href={`${process.env.NEXT_PUBLIC_API_URL?.replace("/api", "")}${proof.file_url}`}
+                      href={`https://jomnusapi.gic26.tech${proof.file_url}`}
                       target="_blank"
                       className="
                         inline-flex rounded-xl
