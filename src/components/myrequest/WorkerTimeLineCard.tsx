@@ -305,7 +305,7 @@ export default function WorkerTimelineCard({
                 {/* FILE */}
                 {proof.file_url && (
                   <a
-                    href={`${process.env.NEXT_PUBLIC_FILE_URL}${proof.file_url}`}
+                    href={`${process.env.NEXT_PUBLIC_API_URL?.replace("/api", "")}${proof.file_url}`}
                     target="_blank"
                     className="
                       mt-4 inline-flex
